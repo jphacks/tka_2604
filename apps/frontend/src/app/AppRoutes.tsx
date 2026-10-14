@@ -12,6 +12,8 @@ import { LoginPage } from '../features/auth/pages/LoginPage'
 import { EventPage } from '../features/event/pages/EventPage'
 import { EventSettingsPage } from '../features/events/pages/EventSettingsPage'
 import { EventsPage } from '../features/events/pages/EventsPage'
+import { FormEditorPage } from '../features/forms/pages/FormEditorPage'
+import { RegistrationPage } from '../features/forms/pages/RegistrationPage'
 import { Brand } from '../shared/ui/Brand'
 import { LinkButton } from '../shared/ui/LinkButton'
 import { PageState } from '../shared/ui/PageState'
@@ -60,7 +62,15 @@ export function AppRoutes() {
     <Routes>
       <Route path="/" element={<Navigate to="/event" replace />} />
       <Route path="/login" element={<LoginRoute />} />
+      <Route
+        path="/event/:eventId/forms"
+        element={<EventScopedRoute component={RegistrationPage} />}
+      />
       <Route element={<ProtectedRoutes />}>
+        <Route
+          path="/event/:eventId/forms/edit"
+          element={<EventScopedRoute component={FormEditorPage} />}
+        />
         <Route path="/event" element={<EventsPage />} />
         <Route
           path="/event/:eventId"
