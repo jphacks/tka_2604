@@ -70,3 +70,14 @@ npm run check
 整形・lint・生成物一致・型・Vitest・ビルドを確認する。Pythonのテストは含まれない。スキーマの変更手順は[制約と型生成](schema.md)、開発の進め方は[開発ルール](development.md)を参照。
 
 依存関係の更新を取り込んだら`npm ci`と`uv sync --locked --directory apps/solver`を再実行する。生成物の不一致は`npm run codegen`後に差分を確認する。公開は別作業で、通常の環境構築では行わない。
+
+## フロントエンドのデモとブラウザテスト
+
+`npm run dev` で起動した画面から「デモアカウントで試す」を選ぶ。追加の認証情報は不要。操作とデータのリセットについては[フロントエンドのデモ](frontend.md)を参照。
+
+```sh
+npx playwright install chromium # ブラウザテストを初めて実行する環境のみ
+npm run test:e2e
+```
+
+ブラウザテストは通常の開発画面とは別にポート5174を使う。型検査は `npm run check` に含むが、ブラウザテストの実行は別途必要。
