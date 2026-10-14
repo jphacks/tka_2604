@@ -1,7 +1,8 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router'
 
 import { LoginPage } from '../features/auth/pages/LoginPage'
-import { AppFrame } from '../shared/ui/AppFrame'
+import { EventPage } from '../features/event/pages/EventPage'
+import { EventsPage } from '../features/events/pages/EventsPage'
 import { Brand } from '../shared/ui/Brand'
 import { LinkButton } from '../shared/ui/LinkButton'
 import { PageState } from '../shared/ui/PageState'
@@ -46,14 +47,8 @@ export function AppRoutes() {
       <Route path="/" element={<Navigate to="/event" replace />} />
       <Route path="/login" element={<LoginRoute />} />
       <Route element={<ProtectedRoutes />}>
-        <Route
-          path="/event"
-          element={
-            <AppFrame>
-              <h1 className="text-2xl font-semibold">マイイベント</h1>
-            </AppFrame>
-          }
-        />
+        <Route path="/event" element={<EventsPage />} />
+        <Route path="/event/:eventId" element={<EventPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
