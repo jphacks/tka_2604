@@ -19,6 +19,8 @@ export default defineConfig([
   globalIgnores([
     '**/dist/**',
     '**/coverage/**',
+    '**/test-results/**',
+    '**/playwright-report/**',
     '**/.wrangler/**',
     '**/.cloudflare/**',
     '**/worker-configuration.d.ts',
