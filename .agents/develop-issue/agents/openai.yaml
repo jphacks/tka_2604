@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Develop Issue'
+  short_description: 'JPHACKSのIssue取得・起票から実装・検証・PR作成まで進める'
+  default_prompt: '$develop-issue を使って、指定したIssueまたは開発依頼を、仕様と受け入れ条件の確認から実装・検証・PR作成まで進めてください。指定した作業ブランチとマージ先があれば使用してください。'

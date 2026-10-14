@@ -1,0 +1,13 @@
+{
+  "name": "@jphack-2026/backend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "npm --prefix ../.. run test -- --project backend"
+  },
+  "dependencies": {
+    "hono": "^4.13.13"
+  }
+}
