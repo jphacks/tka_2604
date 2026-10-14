@@ -1,7 +1,16 @@
-import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router'
+import type { ComponentType } from 'react'
+import {
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+  useParams,
+} from 'react-router'
 
 import { LoginPage } from '../features/auth/pages/LoginPage'
 import { EventPage } from '../features/event/pages/EventPage'
+import { EventSettingsPage } from '../features/events/pages/EventSettingsPage'
 import { EventsPage } from '../features/events/pages/EventsPage'
 import { Brand } from '../shared/ui/Brand'
 import { LinkButton } from '../shared/ui/LinkButton'
@@ -23,6 +32,11 @@ function LoginRoute() {
   const { session, loading } = useSession()
   if (loading) return <PageState />
   return session ? <Navigate to="/event" replace /> : <LoginPage />
+}
+
+function EventScopedRoute({ component: Page }: { component: ComponentType }) {
+  const { eventId = '' } = useParams()
+  return <Page key={eventId} />
 }
 
 function NotFoundPage() {
@@ -48,7 +62,14 @@ export function AppRoutes() {
       <Route path="/login" element={<LoginRoute />} />
       <Route element={<ProtectedRoutes />}>
         <Route path="/event" element={<EventsPage />} />
-        <Route path="/event/:eventId" element={<EventPage />} />
+        <Route
+          path="/event/:eventId"
+          element={<EventScopedRoute component={EventPage} />}
+        />
+        <Route
+          path="/event/:eventId/settings"
+          element={<EventScopedRoute component={EventSettingsPage} />}
+        />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
