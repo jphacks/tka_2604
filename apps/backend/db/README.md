@@ -3,10 +3,10 @@
 Cloudflareアカウント `jphack-2026` 内で、検証用と本番用に別々のD1を使います。
 どちらもHonoからは `c.env.DB` でアクセスできます。
 
-| 環境            | Worker              | D1                     | マイグレーション |
-| --------------- | ------------------- | ---------------------- | ---------------- |
-| develop（検証） | jphack-2026-develop | jphack-2026-develop-db | db/migrations    |
-| main（本番）    | jphack-2026-main    | jphack-2026-main-db    | db/migrations    |
+| 環境            | Worker | D1                     | マイグレーション |
+| --------------- | ------ | ---------------------- | ---------------- |
+| develop（検証） | dev    | jphack-2026-develop-db | db/migrations    |
+| main（本番）    | main   | jphack-2026-main-db    | db/migrations    |
 
 以下のコマンドはリポジトリのルートで実行します。
 
@@ -46,7 +46,14 @@ DBを必要とする新しいコードを公開する際は、対応するマイ
 
 ## URLとメンバー招待
 
-まずはCloudflareの `workers.dev` URLで公開します。
+Cloudflareの `workers.dev` URLで公開します。frontendとbackendは同じWorkerで配信します。
+
+| 環境            | frontend                             | backendの疎通確認                               |
+| --------------- | ------------------------------------ | ----------------------------------------------- |
+| develop（検証） | https://dev.jphack-2026.workers.dev  | https://dev.jphack-2026.workers.dev/api/health  |
+| main（本番）    | https://main.jphack-2026.workers.dev | https://main.jphack-2026.workers.dev/api/health |
+
+アカウントのWorkersサブドメインは `jphack-2026`、Worker名は検証用が `dev`、本番用が `main` です。
 独自ドメインは後から追加・変更できます。
 アカウントの「Manage account → Members → Invite members」からメンバーを招待できます。
 招待先に応じた権限を選択してください。
