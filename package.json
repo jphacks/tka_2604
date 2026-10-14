@@ -16,13 +16,13 @@
     "dev:backend": "npm run dev --workspace=@jphack-2026/backend",
     "build": "npm run build --workspace=@jphack-2026/frontend && npm run build --workspace=@jphack-2026/backend",
     "lint": "npm run cf:typegen && eslint . --max-warnings=0",
+    "lint:staged": "npm run cf:typegen && lint-staged",
     "lint:fix": "npm run lint -- --fix",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "vitest run",
-    "precommit": "npm run format:check && npm run lint && npm run typecheck",
-    "check": "npm run precommit && npm run test && npm run build",
+    "check": "npm run format:check && npm run lint && npm run codegen:check && npm run typecheck && npm run test && npm run build",
     "preview": "npm run preview --workspace=@jphack-2026/frontend",
     "deploy": "npm run check && npm run deploy --workspace=@jphack-2026/backend",
     "cf:typegen": "npm run cf:typegen --workspace=@jphack-2026/backend",
@@ -31,6 +31,10 @@
     "test:coverage": "vitest run --coverage",
     "test:frontend": "vitest run --project frontend",
     "test:backend": "vitest run --project backend"
+  },
+  "lint-staged": {
+    "*.{js,mjs,cjs,jsx,ts,tsx}": "eslint --max-warnings=0 --no-warn-ignored",
+    "*": "prettier --check --ignore-unknown"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -46,6 +50,7 @@
     "globals": "^17.12.0",
     "husky": "^9.1.7",
     "json-schema-to-typescript": "^16.0.0",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.9.10",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "typescript": "~6.0.2",

@@ -1,0 +1,6 @@
+set -e
+
+npm run lint:staged
+npm run codegen:check
+npm run typecheck
+npm run test
