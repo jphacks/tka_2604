@@ -1,6 +1,6 @@
-# DB方針（未実装）
+# DB方針
 
-Cloudflare D1 / Drizzleを採用予定。現在は依存関係、テーブル、D1 bindingとも未導入。
+Cloudflare D1のbindingは導入済み。developとmainに独立したDBを用意し、どちらもHonoから `c.env.DB` でアクセスする。Drizzleと業務テーブルは未導入。
 
 ## 保存対象の候補
 
@@ -8,9 +8,9 @@ Cloudflare D1 / Drizzleを採用予定。現在は依存関係、テーブル、
 
 ## 定義と生成
 
-`apps/backend/src/db/schema.ts`のDrizzle定義からSQLマイグレーションと取得・挿入の型を導く予定。SQLは`apps/backend/drizzle/`でGit管理する。制約JSONの正本は[apps/schema](../apps/schema)に置き、DB定義とは分ける。
+`apps/backend/src/db/schema.ts`のDrizzle定義からSQLマイグレーションと取得・挿入の型を導く予定。現在のSQLは共通の `apps/backend/db/migrations/` でGit管理し、適用先は環境別のコマンドで切り替える。制約JSONの正本は[apps/schema](../apps/schema)に置き、DB定義とは分ける。
 
-導入時に接続設定、ローカルDB準備、生成・適用コマンドを追記する。`wrangler types`はbindingの型を生成するもので、テーブルの型やJSON内容の検証を代替しない。
+適用コマンドと環境設定は[DB手順](../apps/backend/db/README.md)を参照。`0001_init.sql`は空の雛形なので、初回のスキーマを記入してから適用する。`wrangler types`はbindingの型を生成するもので、テーブルの型やJSON内容の検証を代替しない。
 
 ## 変更時
 

@@ -9,7 +9,7 @@
 | 制約の共有             | JSON Schema / json-schema-to-typescript / datamodel-code-generator | 導入済み。TypeScriptとPythonのモデルを同じ定義から生成する |
 | Python環境・入力モデル | uv / Pydantic                                                      | 導入済み。依存管理と構造化データの検証                     |
 | 最適化API              | FastAPI / OR-Tools CP-SAT                                          | 採用予定。順序・間隔の制約をPythonで扱う                   |
-| 保存                   | Cloudflare D1 / Drizzle                                            | 採用予定。Workersから利用するDBと定義の管理                |
+| 保存                   | Cloudflare D1 / Drizzle                                            | D1 binding導入済み。Drizzleと業務テーブルは未導入          |
 | テスト                 | Vitest / Testing Library                                           | 導入済み。frontend・backendの振る舞いを確認する            |
 | LLM・ソルバー公開先    | 未確定                                                             | 対応Issueで決める                                          |
 
@@ -29,7 +29,7 @@
 - LLM：対応する制約への変換と説明。任意の数式・コードを実行させない。
 - backend：入力検証、データ管理、外部呼び出し。秘密情報をブラウザに渡さない。
 - solver：固定ロジックで制約をモデル化し、出演順と探索状態を返す。OR-Tools CP-SAT / FastAPIを採用予定。
-- DB：Cloudflare D1 / Drizzleを予定。[DB方針](database.md)を参照。
+- DB：Cloudflare D1は検証用と本番用を分離。Drizzleは導入予定。[DB方針](database.md)を参照。
 
 ## APIの実装時
 
