@@ -1,3 +1,34 @@
 {
-  "python.defaultInterpreterPath": "${workspaceFolder}/apps/solver/.venv/bin/python"
+  "python.defaultInterpreterPath": "${workspaceFolder}/apps/solver/.venv/bin/python",
+  "prettier.requireConfig": true,
+  "prettier.configPath": "${workspaceFolder}/.prettierrc.json",
+  "prettier.ignorePath": "${workspaceFolder}/.prettierignore",
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "never",
+      "source.organizeImports": "never"
+    }
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "never",
+      "source.organizeImports": "never",
+      "source.fixAll.ruff": "never",
+      "source.organizeImports.ruff": "never"
+    }
+  },
+  "black-formatter.path": ["${workspaceFolder}/apps/solver/.venv/bin/black"],
+  "black-formatter.args": [
+    "--skip-string-normalization",
+    "--force-exclude",
+    "/src/generated/"
+  ]
 }
