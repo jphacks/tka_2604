@@ -37,6 +37,18 @@ export interface EventData {
   messages: ChatMessage[]
 }
 
+export function memberLabel(event: EventData, member: Member) {
+  const sameName = event.members.filter((item) => item.name === member.name)
+  const suffix =
+    sameName.length > 1
+      ? ` ${sameName.findIndex((item) => item.id === member.id) + 1}`
+      : ''
+  const bands = event.performances
+    .filter((band) => band.memberIds.includes(member.id))
+    .map((band) => band.name)
+  return `${member.name}${suffix}${bands.length ? `（${bands.join('・')}）` : '（出演枠なし）'}`
+}
+
 export function memberNames(event: EventData, performance: Performance) {
   const names = new Map(event.members.map((member) => [member.id, member.name]))
   return performance.memberIds.map((id) => names.get(id) ?? '不明なメンバー')

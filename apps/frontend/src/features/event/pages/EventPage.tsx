@@ -3,6 +3,7 @@ import { useParams } from 'react-router'
 import { AppFrame } from '../../../shared/ui/AppFrame'
 import { Button } from '../../../shared/ui/Button'
 import { PageState } from '../../../shared/ui/PageState'
+import { ConstraintsPanel } from '../components/ConstraintsPanel'
 import { SchedulePanel } from '../components/SchedulePanel'
 import { useEvent } from '../hooks/useEvent'
 
@@ -33,7 +34,10 @@ export function EventPage() {
               件の違反があります。条件を確認し、並びを調整してください。
             </p>
           )}
-          <SchedulePanel controller={controller} />
+          <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(340px,1fr)]">
+            <SchedulePanel controller={controller} />
+            <ConstraintsPanel controller={controller} />
+          </div>
         </>
       )}
       {(controller.notice || controller.error) && (
