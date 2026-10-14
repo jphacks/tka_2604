@@ -8,5 +8,4 @@ export interface EventRepository {
     message: string,
     signal?: AbortSignal,
   ): Promise<string>
-  generateDraft(eventId: string, signal?: AbortSignal): Promise<string>
 }

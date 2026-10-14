@@ -11,11 +11,14 @@ import {
   eventReducer,
   initialState,
 } from '../model/eventReducer'
+import { exportEventCsv } from '../model/export'
 import { buildSchedule, findTarget } from '../model/schedule'
 import { eventRepository } from '../repositories/eventRepository'
+import { useEventChat } from './useEventChat'
 
 export function useEvent(eventId: string) {
   const [state, dispatch] = useReducer(eventReducer, initialState)
+  const chat = useEventChat(eventId, dispatch)
   const [loadError, setLoadError] = useState('')
   const [retry, setRetry] = useState(0)
   const [showUnmet, setShowUnmet] = useState(false)
@@ -52,6 +55,7 @@ export function useEvent(eventId: string) {
     : []
   return {
     ...state,
+    ...chat,
     loadError,
     schedule: event ? buildSchedule(event) : null,
     constraintViews: views.filter(
@@ -66,6 +70,15 @@ export function useEvent(eventId: string) {
         view.constraint.hardness === 'hard' &&
         (view.status === 'unmet' || view.status === 'invalid'),
     ).length,
+    exportCsv: () => {
+      if (event) {
+        exportEventCsv(event)
+        dispatch({
+          type: 'notice',
+          message: '出演順をCSVでエクスポートしました。',
+        })
+      }
+    },
     showUnmet,
     setShowUnmet,
     retryLoad: () => setRetry((value) => value + 1),

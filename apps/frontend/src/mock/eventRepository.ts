@@ -12,8 +12,4 @@ export const mockEventRepository: EventRepository = {
     await delay(700, signal)
     return mockReplies[message.length % mockReplies.length]
   },
-  async generateDraft(_eventId, signal) {
-    await delay(1000, signal)
-    return '自動生成は準備中です。出演順は変更していません。番号入力やドラッグで調整できます。'
-  },
 }

@@ -10,11 +10,14 @@ export function AppFrame({
   children,
   eventId,
   eventName,
+  wide = false,
 }: {
   children: ReactNode
   eventId?: string
   eventName?: string
+  wide?: boolean
 }) {
+  const width = wide ? 'max-w-[1600px]' : 'max-w-[1200px]'
   const { session, signOut } = useSession()
   return (
     <div className="min-h-dvh">
@@ -44,7 +47,7 @@ export function AppFrame({
         <div className="border-b border-line bg-white">
           <nav
             aria-label="イベント内の移動"
-            className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-5 px-4 sm:px-6"
+            className={`mx-auto flex flex-wrap items-center gap-x-5 px-4 sm:px-6 ${width}`}
           >
             <Link
               to={`/event/${eventId}`}
@@ -75,8 +78,12 @@ export function AppFrame({
           </nav>
         </div>
       )}
-      <main className="mx-auto max-w-[1200px] px-6 py-9">{children}</main>
-      <footer className="mx-auto flex max-w-[1200px] justify-between px-6 py-6 text-[11px] text-muted/75">
+      <main className={`mx-auto px-4 py-7 sm:px-6 sm:py-9 ${width}`}>
+        {children}
+      </main>
+      <footer
+        className={`mx-auto flex flex-wrap justify-between gap-3 px-4 py-6 text-[11px] text-muted/75 sm:px-6 ${width}`}
+      >
         <span>セトリ · ライブの出演順を、もっとスムーズに。</span>
         <span>デモ · 再読み込みで初期化</span>
       </footer>
