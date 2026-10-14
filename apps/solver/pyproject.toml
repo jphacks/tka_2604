@@ -1,0 +1,30 @@
+[project]
+name = "solver"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "mitchi", email = "pg.saku0719@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic>=2.14.1",
+]
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "datamodel-code-generator>=0.83.0",
+]
+
+[tool.datamodel-codegen]
+input = "../schema/constraint.schema.json"
+input-file-type = "jsonschema"
+output-model-type = "pydantic_v2.BaseModel"
+use-title-as-name = true
+target-python-version = "3.13"
+output = "src/generated/constraint.py"
+disable-timestamp = true
+custom-file-header = "# Generated from apps/schema/*.schema.json. DO NOT EDIT. Run npm run codegen to regenerate."
