@@ -1,3 +1,7 @@
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+
+import { Icon } from '../../../shared/ui/Icon'
 import { NumberField } from '../../../shared/ui/NumberField'
 import type { PerformanceRow as Row, PerformanceView } from '../model/types'
 
@@ -16,12 +20,40 @@ export function PerformanceRow({
   onOrder: (id: string, value: number | null) => void
 }) {
   const performance = row.performance
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: performance.id,
+    disabled: { draggable: performance.fixed },
+  })
   return (
     <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
       data-performance={performance.id}
-      className={`${rowColumns} relative min-h-[42px] border-b border-line/55 bg-white transition-colors hover:bg-canvas/65`}
+      className={`${rowColumns} relative min-h-[42px] border-b border-line/55 bg-white transition-colors hover:bg-canvas/65 ${isDragging ? 'z-10 bg-wash opacity-35' : ''}`}
     >
-      <span />
+      <button
+        ref={setActivatorNodeRef}
+        {...attributes}
+        {...listeners}
+        disabled={performance.fixed}
+        aria-label={`${performance.name}をドラッグして移動`}
+        title={
+          performance.fixed
+            ? '固定を解除すると移動できます'
+            : 'ドラッグ、またはSpaceと矢印キーで並べ替え'
+        }
+        className="flex size-6 touch-none items-center justify-center rounded text-muted/75 hover:bg-wash hover:text-brand disabled:cursor-default disabled:opacity-35"
+      >
+        <Icon name="grip" className="size-[15px]" />
+      </button>
       <label className="flex justify-center">
         <input
           type="checkbox"
@@ -56,14 +88,21 @@ export function PerformanceRow({
 }
 
 export function EmptyPerformanceRow({ row }: { row: Row }) {
+  const { setNodeRef, isOver } = useSortable({
+    id: row.key,
+    disabled: { draggable: true },
+  })
   return (
     <div
-      className={`${rowColumns} min-h-[42px] border-b border-line/55 bg-canvas/30`}
+      ref={setNodeRef}
+      className={`${rowColumns} min-h-[42px] border-b border-line/55 ${isOver ? 'bg-brand/10 ring-1 ring-brand/40 ring-inset' : 'bg-canvas/30'}`}
     >
       <span />
       <span />
       <span className="pl-2 text-muted/60 tabular-nums">{row.order}</span>
-      <span className="col-span-2 text-xs text-muted/70">空き枠</span>
+      <span className="col-span-2 text-xs text-muted/70">
+        空き枠 · ここにドラッグして配置
+      </span>
     </div>
   )
 }

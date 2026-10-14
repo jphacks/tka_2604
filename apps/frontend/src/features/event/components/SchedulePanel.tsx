@@ -6,6 +6,7 @@ import {
   PerformanceRow,
   rowColumns,
 } from './PerformanceRow'
+import { ScheduleDragSurface, UnassignedDropZone } from './ScheduleDragSurface'
 
 export function SchedulePanel({ controller }: { controller: EventController }) {
   const { event, schedule, setOrder, setFixed, resize } = controller
@@ -46,64 +47,68 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
           </label>
         ))}
       </div>
-      <div className="max-h-[65dvh] min-h-64 scrollbar-thin overflow-auto">
-        <div
-          className={`${rowColumns} sticky top-0 z-10 min-h-9 border-b border-line bg-white text-xs text-muted`}
-        >
-          <span />
-          <span className="text-center">固定</span>
-          <span>順</span>
-          <span>出演名</span>
-          <span>メンバー</span>
-        </div>
-        {schedule.sections.map((section) => (
-          <section key={section.id} aria-label={section.name}>
-            <div className="flex min-h-9 min-w-[520px] items-center justify-between bg-wash px-4 text-xs">
-              <h3 className="font-semibold text-brand-dark">
-                {section.name} · {section.assigned}/{section.capacity}組
-              </h3>
-              <span>{section.range}番</span>
-            </div>
-            {section.rows.map((row) =>
-              row.performance ? (
+      <ScheduleDragSurface controller={controller}>
+        <div className="max-h-[65dvh] min-h-64 scrollbar-thin overflow-auto">
+          <div
+            className={`${rowColumns} sticky top-0 z-10 min-h-9 border-b border-line bg-white text-xs text-muted`}
+          >
+            <span />
+            <span className="text-center">固定</span>
+            <span>順</span>
+            <span>出演名</span>
+            <span>メンバー</span>
+          </div>
+          {schedule.sections.map((section) => (
+            <section key={section.id} aria-label={section.name}>
+              <div className="flex min-h-9 min-w-[520px] items-center justify-between bg-wash px-4 text-xs">
+                <h3 className="font-semibold text-brand-dark">
+                  {section.name} · {section.assigned}/{section.capacity}組
+                </h3>
+                <span>{section.range}番</span>
+              </div>
+              {section.rows.map((row) =>
+                row.performance ? (
+                  <PerformanceRow
+                    key={row.key}
+                    row={{ ...row, performance: row.performance }}
+                    capacity={schedule.capacity}
+                    onFixed={setFixed}
+                    onOrder={setOrder}
+                  />
+                ) : (
+                  <EmptyPerformanceRow key={row.key} row={row} />
+                ),
+              )}
+            </section>
+          ))}
+          <UnassignedDropZone>
+            <section aria-label="未配置">
+              <div className="flex min-h-9 min-w-[520px] items-center gap-3 bg-slate-100 px-4 text-xs">
+                <h3 className="font-semibold">
+                  未配置 · {schedule.unassigned.length}組
+                </h3>
+                <span className="text-muted">ドラッグまたは順番号で配置</span>
+              </div>
+              {schedule.unassigned.map((row) => (
                 <PerformanceRow
                   key={row.key}
-                  row={{ ...row, performance: row.performance }}
+                  row={row}
                   capacity={schedule.capacity}
                   onFixed={setFixed}
                   onOrder={setOrder}
                 />
-              ) : (
-                <EmptyPerformanceRow key={row.key} row={row} />
-              ),
-            )}
-          </section>
-        ))}
-        <section aria-label="未配置">
-          <div className="flex min-h-9 min-w-[520px] items-center gap-3 bg-slate-100 px-4 text-xs">
-            <h3 className="font-semibold">
-              未配置 · {schedule.unassigned.length}組
-            </h3>
-            <span className="text-muted">順番号を入力して配置</span>
-          </div>
-          {schedule.unassigned.map((row) => (
-            <PerformanceRow
-              key={row.key}
-              row={row}
-              capacity={schedule.capacity}
-              onFixed={setFixed}
-              onOrder={setOrder}
-            />
-          ))}
-          {!schedule.unassigned.length && (
-            <p className="p-4 text-xs text-muted">
-              未配置の出演枠はありません。
-            </p>
-          )}
-        </section>
-      </div>
+              ))}
+              {!schedule.unassigned.length && (
+                <p className="p-4 text-xs text-muted">
+                  未配置の出演枠はありません。
+                </p>
+              )}
+            </section>
+          </UnassignedDropZone>
+        </div>
+      </ScheduleDragSurface>
       <p className="border-t border-line px-4 py-3 text-xs leading-6 text-muted">
-        順番号を入力してEnterで確定。空欄で未配置に戻します。固定は現在の位置をハード条件として保持します。
+        ドラッグ／Spaceと矢印キー／順番号で配置。空欄で未配置に戻します。固定は現在の位置をハード条件として保持します。
       </p>
     </Panel>
   )
