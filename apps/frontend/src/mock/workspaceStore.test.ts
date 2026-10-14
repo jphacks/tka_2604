@@ -150,7 +150,7 @@ test('deleted events are removed from all access paths', () => {
 })
 
 test('performance validation and member parsing reject missing or invalid inputs', () => {
-  assert.deepEqual(parseMembers(' 佐藤、田中\n佐藤・鈴木 '), [
+  assert.deepEqual(parseMembers(' 佐藤、田中\n佐藤、鈴木 '), [
     '佐藤',
     '田中',
     '鈴木',
@@ -201,4 +201,11 @@ test('referenced bands cannot be deleted and invalid snapshots cannot be saved',
   event.unassigned.push('p1')
   assert.throws(() => store.rememberEvent(event), /欠落・重複/)
   assert.equal(store.getEvent(event.id).unassigned.length, 2)
+})
+
+test('member names preserve middle dots rather than splitting one person into two', () => {
+  assert.deepEqual(parseMembers('ジョン・スミス、田中'), [
+    'ジョン・スミス',
+    '田中',
+  ])
 })

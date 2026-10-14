@@ -38,69 +38,71 @@ export function EventSettingsPage() {
               className="space-y-5 rounded-xl border border-line bg-white p-6"
             >
               <h2 className="mb-5 text-sm font-semibold">基本情報</h2>
-              <label className="block text-xs font-medium">
-                イベント名
-                <Input
-                  value={settings.name}
-                  onChange={(event) =>
-                    controller.change({ name: event.target.value })
-                  }
-                  maxLength={80}
-                  className="mt-2 w-full"
-                />
-              </label>
-              <div className="grid grid-cols-2 gap-4">
+              <fieldset disabled={controller.busy} className="space-y-5">
                 <label className="block text-xs font-medium">
-                  開催日
+                  イベント名
                   <Input
-                    type="date"
-                    value={settings.date}
+                    value={settings.name}
                     onChange={(event) =>
-                      controller.change({ date: event.target.value })
-                    }
-                    className="mt-2 w-full"
-                  />
-                </label>
-                <label className="block text-xs font-medium">
-                  会場
-                  <Input
-                    value={settings.venue}
-                    onChange={(event) =>
-                      controller.change({ venue: event.target.value })
+                      controller.change({ name: event.target.value })
                     }
                     maxLength={80}
                     className="mt-2 w-full"
                   />
                 </label>
-              </div>
-              <label className="block text-xs font-medium">
-                イベントについて
-                <Textarea
-                  value={settings.description}
-                  onChange={(event) =>
-                    controller.change({ description: event.target.value })
-                  }
-                  maxLength={500}
-                  rows={3}
-                  className="mt-2 w-full"
-                />
-              </label>
-              <label className="block text-xs font-medium">
-                ステータス
-                <Select
-                  value={settings.status}
-                  onChange={(event) =>
-                    controller.change({
-                      status: event.target.value as EventStatus,
-                    })
-                  }
-                  className="mt-2 block w-full"
-                >
-                  <option value="planning">準備中</option>
-                  <option value="adjusting">調整中</option>
-                  <option value="confirmed">確定</option>
-                </Select>
-              </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <label className="block text-xs font-medium">
+                    開催日
+                    <Input
+                      type="date"
+                      value={settings.date}
+                      onChange={(event) =>
+                        controller.change({ date: event.target.value })
+                      }
+                      className="mt-2 w-full"
+                    />
+                  </label>
+                  <label className="block text-xs font-medium">
+                    会場
+                    <Input
+                      value={settings.venue}
+                      onChange={(event) =>
+                        controller.change({ venue: event.target.value })
+                      }
+                      maxLength={80}
+                      className="mt-2 w-full"
+                    />
+                  </label>
+                </div>
+                <label className="block text-xs font-medium">
+                  イベントについて
+                  <Textarea
+                    value={settings.description}
+                    onChange={(event) =>
+                      controller.change({ description: event.target.value })
+                    }
+                    maxLength={500}
+                    rows={3}
+                    className="mt-2 w-full"
+                  />
+                </label>
+                <label className="block text-xs font-medium">
+                  ステータス
+                  <Select
+                    value={settings.status}
+                    onChange={(event) =>
+                      controller.change({
+                        status: event.target.value as EventStatus,
+                      })
+                    }
+                    className="mt-2 block w-full"
+                  >
+                    <option value="planning">準備中</option>
+                    <option value="adjusting">調整中</option>
+                    <option value="confirmed">確定</option>
+                  </Select>
+                </label>
+              </fieldset>
               {controller.formError && (
                 <p role="alert" className="text-xs text-red-500">
                   {controller.formError}

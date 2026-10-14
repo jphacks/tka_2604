@@ -58,7 +58,7 @@ export function useEventSettings(eventId: string) {
         ...settings,
         name: settings.name.trim(),
       })
-      setDraft(null)
+      setDraft(settings)
       resource.refresh()
       setNotice('イベントの設定を更新しました。')
     } catch (cause) {

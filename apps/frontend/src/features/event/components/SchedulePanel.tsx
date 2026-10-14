@@ -1,3 +1,6 @@
+import { useRef } from 'react'
+
+import { Button } from '../../../shared/ui/Button'
 import { NumberField } from '../../../shared/ui/NumberField'
 import { Panel } from '../../../shared/ui/Panel'
 import type { EventController } from '../hooks/useEvent'
@@ -9,11 +12,28 @@ import {
 import { ScheduleDragSurface, UnassignedDropZone } from './ScheduleDragSurface'
 
 export function SchedulePanel({ controller }: { controller: EventController }) {
+  const unassignedRef = useRef<HTMLElement>(null)
   const { event, schedule, setOrder, setFixed, resize } = controller
   if (!event || !schedule) return null
   return (
     <Panel
       title="出演順"
+      action={
+        schedule.unassigned.length > 0 ? (
+          <Button
+            variant="subtle"
+            className="text-xs"
+            onClick={() =>
+              unassignedRef.current?.scrollIntoView({
+                block: 'nearest',
+                behavior: 'smooth',
+              })
+            }
+          >
+            未配置へ（{schedule.unassigned.length}）
+          </Button>
+        ) : undefined
+      }
       detail={
         <span className="text-xs text-muted">
           配置済み {schedule.assignedCount} / {event.performances.length}組
@@ -82,7 +102,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
             </section>
           ))}
           <UnassignedDropZone>
-            <section aria-label="未配置">
+            <section ref={unassignedRef} aria-label="未配置">
               <div className="flex min-h-9 min-w-[520px] items-center gap-3 bg-slate-100 px-4 text-xs">
                 <h3 className="font-semibold">
                   未配置 · {schedule.unassigned.length}組

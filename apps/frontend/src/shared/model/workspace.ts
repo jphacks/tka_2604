@@ -67,7 +67,7 @@ export function parseMembers(value: string) {
   return [
     ...new Set(
       value
-        .split(/[、,，・\n]/)
+        .split(/[、,，\n]/)
         .map((name) => name.trim())
         .filter(Boolean),
     ),

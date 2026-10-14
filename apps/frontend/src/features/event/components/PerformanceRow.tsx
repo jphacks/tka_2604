@@ -59,6 +59,7 @@ export function PerformanceRow({
           type="checkbox"
           aria-label={`${performance.name}を固定`}
           disabled={row.order === null}
+          title="解除すると、この出演枠の有効なハードの位置指定を削除します"
           checked={performance.fixed}
           onChange={(event) => onFixed(performance.id, event.target.checked)}
         />
