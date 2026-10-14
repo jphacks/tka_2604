@@ -1,0 +1,17 @@
+{
+  "name": "jphack-2026",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "codegen": "npm run codegen:ts && npm run codegen:py",
+    "codegen:ts": "json2ts -i apps/schema/constraint.schema.json -o apps/frontend/src/generated/constraint.ts --cwd apps/schema",
+    "codegen:py": "uv --directory apps/solver run datamodel-codegen"
+  },
+  "devDependencies": {
+    "json-schema-to-typescript": "^16.0.0"
+  }
+}
