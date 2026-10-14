@@ -1,12 +1,42 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "jphack-2026",
+  "account_id": "1c7a622573141d6065838cdfad8ff095",
   "main": "./apps/backend/src/index.ts",
   "compatibility_date": "2026-10-13",
+  "workers_dev": true,
+  "observability": {
+    "enabled": true,
+    "traces": { "enabled": true },
+  },
   "assets": {
     "directory": "./apps/frontend/dist",
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api", "/api/*"],
   },
   "dev": { "port": 8787 },
+  "env": {
+    "develop": {
+      "name": "jphack-2026-develop",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "jphack-2026-develop-db",
+          "database_id": "31003c0a-eb94-494a-affa-8c899907e5be",
+          "migrations_dir": "./apps/backend/db/migrations",
+        },
+      ],
+    },
+    "main": {
+      "name": "jphack-2026-main",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "jphack-2026-main-db",
+          "database_id": "20a3363d-a3d2-4645-8ad7-1ce2e82104b1",
+          "migrations_dir": "./apps/backend/db/migrations",
+        },
+      ],
+    },
+  },
 }

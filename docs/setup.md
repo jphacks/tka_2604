@@ -35,7 +35,7 @@ uv python install 3.13
 uv sync --locked --directory apps/solver
 ```
 
-現在のローカル起動にAPIキー・Cloudflareログイン・DB準備は不要。LLM・DB導入時に必要な環境変数と準備をこの資料へ追記する。秘密情報はGitに含めない。
+現在のローカル起動にAPIキー・Cloudflareログインは不要。ローカルD1はWorkersが手元に作成し、Cloudflare上の検証・本番DBは操作しない。DBの雛形と適用手順は[DB手順](../apps/backend/db/README.md)を参照。LLM導入時に必要な環境変数を追記する。秘密情報はGitに含めない。
 
 ## 起動・確認
 
