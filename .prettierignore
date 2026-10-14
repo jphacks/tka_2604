@@ -1,0 +1,8 @@
+node_modules/
+dist/
+coverage/
+.wrangler/
+.cloudflare/
+.husky/_/
+package-lock.json
+**/worker-configuration.d.ts

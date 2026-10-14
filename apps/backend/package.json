@@ -1,0 +1,20 @@
+{
+  "name": "@jphack-2026/backend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "cf:typegen": "wrangler types --env-interface CloudflareBindings",
+    "typecheck": "npm run cf:typegen && tsc -p tsconfig.json",
+    "test": "npm --prefix ../.. run test -- --project backend",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.150.0"
+  },
+  "dependencies": {
+    "hono": "^4.13.13"
+  }
+}

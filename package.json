@@ -9,9 +9,46 @@
   "scripts": {
     "codegen": "npm run codegen:ts && npm run codegen:py",
     "codegen:ts": "json2ts -i apps/schema/constraint.schema.json -o apps/frontend/src/generated/constraint.ts --cwd apps/schema",
-    "codegen:py": "uv --directory apps/solver run datamodel-codegen"
+    "codegen:py": "uv --directory apps/solver run datamodel-codegen",
+    "dev": "npm run build --workspace=@jphack-2026/frontend && concurrently --kill-others --names frontend,backend \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "npm run dev --workspace=@jphack-2026/frontend",
+    "dev:backend": "npm run dev --workspace=@jphack-2026/backend",
+    "build": "npm run build --workspace=@jphack-2026/frontend && npm run build --workspace=@jphack-2026/backend",
+    "lint": "npm run cf:typegen && eslint . --max-warnings=0",
+    "lint:fix": "npm run lint -- --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "vitest run",
+    "precommit": "npm run format:check && npm run lint && npm run typecheck",
+    "check": "npm run precommit && npm run test && npm run build",
+    "preview": "npm run preview --workspace=@jphack-2026/frontend",
+    "deploy": "npm run check && npm run deploy --workspace=@jphack-2026/backend",
+    "cf:typegen": "npm run cf:typegen --workspace=@jphack-2026/backend",
+    "prepare": "husky",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest run --coverage",
+    "test:frontend": "vitest run --project frontend",
+    "test:backend": "vitest run --project backend"
   },
   "devDependencies": {
-    "json-schema-to-typescript": "^16.0.0"
+    "@eslint/js": "^9.39.5",
+    "@vitest/coverage-v8": "^5.0.4",
+    "concurrently": "^10.0.6",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import-x": "^4.17.1",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.6",
+    "eslint-plugin-simple-import-sort": "^14.0.0",
+    "globals": "^17.12.0",
+    "husky": "^9.1.7",
+    "json-schema-to-typescript": "^16.0.0",
+    "prettier": "^3.9.10",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.69.0",
+    "vitest": "^5.0.4"
   }
 }
