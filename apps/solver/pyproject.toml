@@ -23,6 +23,7 @@ dev = [
 input = "../schema/constraint.schema.json"
 input-file-type = "jsonschema"
 output-model-type = "pydantic_v2.BaseModel"
+formatters = ["black", "isort"]
 use-title-as-name = true
 target-python-version = "3.13"
 output = "src/generated/constraint.py"

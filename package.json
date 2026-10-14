@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "codegen": "npm run codegen:ts && npm run codegen:py",
+    "codegen:check": "node scripts/codegen-check.mjs",
     "codegen:ts": "json2ts -i apps/schema/constraint.schema.json -o apps/frontend/src/generated/constraint.ts --cwd apps/schema",
     "codegen:py": "uv --directory apps/solver run datamodel-codegen",
     "dev": "npm run build --workspace=@jphack-2026/frontend && concurrently --kill-others --names frontend,backend \"npm run dev:frontend\" \"npm run dev:backend\"",
