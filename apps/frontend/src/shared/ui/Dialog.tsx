@@ -16,9 +16,13 @@ export function Dialog({
   const titleId = useId()
   const ref = useRef<HTMLDialogElement>(null)
   useEffect(() => {
+    const opener = document.activeElement
     const dialog = ref.current
     dialog?.showModal()
-    return () => dialog?.close()
+    return () => {
+      dialog?.close()
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus()
+    }
   }, [])
   return (
     <dialog
@@ -31,7 +35,7 @@ export function Dialog({
       aria-modal="true"
       className="fixed inset-0 m-auto max-h-[90dvh] w-[560px] max-w-[calc(100vw-32px)] overflow-y-auto rounded-xl border border-line bg-white p-0 text-ink shadow-xl backdrop:bg-ink/25 backdrop:backdrop-blur-[2px]"
     >
-      <div className="flex items-center justify-between border-b border-line px-5 py-4">
+      <div className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-white px-5 py-4">
         <h2 id={titleId} className="font-semibold">
           {title}
         </h2>

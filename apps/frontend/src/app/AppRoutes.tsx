@@ -18,6 +18,7 @@ import { ParticipantsPage } from '../features/participants/pages/ParticipantsPag
 import { Brand } from '../shared/ui/Brand'
 import { LinkButton } from '../shared/ui/LinkButton'
 import { PageState } from '../shared/ui/PageState'
+import { loginDestination } from './navigation'
 import { useSession } from './sessionContext'
 
 function ProtectedRoutes() {
@@ -33,8 +34,13 @@ function ProtectedRoutes() {
 
 function LoginRoute() {
   const { session, loading } = useSession()
+  const location = useLocation()
   if (loading) return <PageState />
-  return session ? <Navigate to="/event" replace /> : <LoginPage />
+  return session ? (
+    <Navigate to={loginDestination(location.state)} replace />
+  ) : (
+    <LoginPage />
+  )
 }
 
 function EventScopedRoute({ component: Page }: { component: ComponentType }) {
