@@ -13,24 +13,25 @@
     "codegen:py": "uv --directory apps/solver run datamodel-codegen",
     "dev": "npm run build --workspace=@jphack-2026/frontend && concurrently --kill-others --names frontend,backend \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "npm run dev --workspace=@jphack-2026/frontend",
-    "dev:backend": "npm run dev --workspace=@jphack-2026/backend",
-    "build": "npm run build --workspace=@jphack-2026/frontend && npm run build --workspace=@jphack-2026/backend",
+    "dev:backend": "wrangler dev",
+    "build": "npm run build --workspace=@jphack-2026/frontend && npm run build:workers",
     "lint": "npm run cf:typegen && eslint . --max-warnings=0",
     "lint:staged": "npm run cf:typegen && lint-staged",
     "lint:fix": "npm run lint -- --fix",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run cf:typegen && npm run typecheck --workspaces --if-present",
     "test": "vitest run",
     "check": "npm run format:check && npm run lint && npm run codegen:check && npm run typecheck && npm run test && npm run build",
     "preview": "npm run preview --workspace=@jphack-2026/frontend",
-    "deploy": "npm run check && npm run deploy --workspace=@jphack-2026/backend",
-    "cf:typegen": "npm run cf:typegen --workspace=@jphack-2026/backend",
+    "deploy": "npm run build && wrangler deploy",
+    "cf:typegen": "wrangler types apps/backend/worker-configuration.d.ts --env-interface CloudflareBindings",
     "prepare": "husky",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage",
     "test:frontend": "vitest run --project frontend",
-    "test:backend": "vitest run --project backend"
+    "test:backend": "vitest run --project backend",
+    "build:workers": "wrangler deploy --dry-run --outdir apps/backend/dist"
   },
   "lint-staged": {
     "*.{js,mjs,cjs,jsx,ts,tsx}": "eslint --max-warnings=0 --no-warn-ignored",
@@ -55,6 +56,7 @@
     "prettier-plugin-tailwindcss": "^0.8.1",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.69.0",
-    "vitest": "^5.0.4"
+    "vitest": "^5.0.4",
+    "wrangler": "^4.150.0"
   }
 }
