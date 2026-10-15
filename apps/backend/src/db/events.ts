@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, sql } from 'drizzle-orm'
+import { and, asc, eq, inArray } from 'drizzle-orm'
 
 import { type createDb } from './index'
 import {
@@ -114,39 +114,4 @@ export async function deleteEvent(
     )
     .returning({ eventId: events.eventId })
   if (deleted.length === 0) throw new Error('event_not_found')
-}
-
-export async function deletePart(
-  db: Database,
-  userId: string,
-  eventId: string,
-  partId: string,
-) {
-  const current = await loadEvent(db, userId, eventId)
-  if (!current) throw new Error('event_not_found')
-  const part = current.parts.find((item) => item.partId === partId)
-  if (!part) throw new Error('part_not_found')
-  const updatedAt = new Date(
-    Math.max(Date.now(), Date.parse(current.event.updatedAt) + 1),
-  ).toISOString()
-  await db.batch([
-    db
-      .update(events)
-      .set({
-        title: sql`CASE WHEN ${events.updatedAt} = ${current.event.updatedAt} AND ${events.isDeleted} = 0 AND ${events.createdUserId} = ${userId} THEN ${events.title} ELSE NULL END`,
-        updatedAt,
-      })
-      .where(eq(events.eventId, eventId)),
-    db
-      .delete(parts)
-      .where(and(eq(parts.partId, partId), eq(parts.eventId, eventId))),
-    ...current.parts
-      .filter((item) => item.sortOrder > part.sortOrder)
-      .map((item) =>
-        db
-          .update(parts)
-          .set({ sortOrder: item.sortOrder - 1 })
-          .where(eq(parts.partId, item.partId)),
-      ),
-  ])
 }

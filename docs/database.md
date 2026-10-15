@@ -6,16 +6,16 @@ Cloudflare D1をDrizzle ORMで扱う。developとmainのDBは分離し、Honoか
 
 DB設計の正は[NotionのDB設計](https://app.notion.com/p/saku-panda-0719/JPHACKS-3f7d2e9e813c80acb6c8c9f2cfcb5b25#3f8d2e9e813c802691aaf03a518c6bb8)。この資料は[Issue #14](https://github.com/jphacks/tka_2604/issues/14)と2026-10-16の合意を実装用に反映する。Notion本文を自動同期するものではない。
 
-| 場所                                | 役割                                                             |
-| ----------------------------------- | ---------------------------------------------------------------- |
-| `apps/backend/src/db/schema.ts`     | Drizzleのテーブル・キー・一意制約・CHECK。変更するDB定義の入口   |
-| `apps/backend/src/db/index.ts`      | D1 bindingからDrizzleを作成                                      |
-| `apps/backend/src/db/events.ts`     | 所有者・論理削除で絞った読み込み、イベント作成・論理削除・部削除 |
-| `apps/backend/src/db/save-event.ts` | イベント単位の一括保存と更新競合の拒否                           |
-| `apps/backend/drizzle.config.ts`    | SQLite方言、schemaとmigrationのパス。接続情報は持たない          |
-| `apps/backend/db/migrations/`       | Drizzle生成SQL、差分用のmeta、カスタムSQL。すべてGit管理         |
-| `apps/backend/db/seed.sql`          | ローカル確認用ダミーデータ                                       |
-| `apps/schema/`                      | 制約JSONの正本。DBテーブル定義とは別                             |
+| 場所                                | 役割                                                           |
+| ----------------------------------- | -------------------------------------------------------------- |
+| `apps/backend/src/db/schema.ts`     | Drizzleのテーブル・キー・一意制約・CHECK。変更するDB定義の入口 |
+| `apps/backend/src/db/index.ts`      | D1 bindingからDrizzleを作成                                    |
+| `apps/backend/src/db/events.ts`     | 所有者・論理削除で絞った読み込み、イベント作成・論理削除       |
+| `apps/backend/src/db/save-event.ts` | イベント単位の一括保存と更新競合の拒否                         |
+| `apps/backend/drizzle.config.ts`    | SQLite方言、schemaとmigrationのパス。接続情報は持たない        |
+| `apps/backend/db/migrations/`       | Drizzle生成SQL、差分用のmeta、カスタムSQL。すべてGit管理       |
+| `apps/backend/db/seed.sql`          | ローカル確認用ダミーデータ                                     |
+| `apps/schema/`                      | 制約JSONの正本。DBテーブル定義とは別                           |
 
 ## テーブルと型
 
@@ -107,7 +107,7 @@ erDiagram
 
 ## 保存・論理削除
 
-保存は操作ごとの自動保存ではなく、画面の「保存」でまとめて行う方針。D1は通常のSQL BEGINによる対話型トランザクションではなく、複数文を`batch()`にまとめる。途中の文が失敗したら全体がロールバックされることを結合テストで確認する。
+保存は操作ごとの自動保存ではなく、画面の「保存」でまとめて行う方針。部の追加・削除・並べ替えも`saveEvent`に含め、部だけを即時保存する処理は用意しない。画面上で先に未配置化・移動して空にした部の削除は、同じ一括保存に含められる。D1は通常のSQL BEGINによる対話型トランザクションではなく、複数文を`batch()`にまとめる。途中の文が失敗したら全体がロールバックされることを結合テストで確認する。
 
 Eventはis_deletedを1にする論理削除。配下は残し、通常の読み込みは所有者が一致してis_deleted=0のEventだけ返す。復元画面・保持期限・物理削除は対象外。`saveEvent`はイベントの編集可能な全データを受け取り、一括保存する。Band・Memberは残して所属・配置を置き換えるため、所属のないメンバーも名簿に残る。固定位置などの制約に違反する配置や未配置も保存できる。制約の形・達成状況の検証とエラー表示は業務API・画面側の責務。
 

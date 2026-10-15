@@ -1,7 +1,8 @@
+import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { testDatabase } from '../test/database'
-import { createEvent, deleteEvent, deletePart, loadEvent } from './events'
+import { createEvent, deleteEvent, loadEvent } from './events'
 import { createDb } from './index'
 import { bandOrder, bands, constraints, parts, users } from './schema'
 
@@ -55,11 +56,15 @@ describe('event persistence', () => {
     const saved = await createEvent(db, 'owner', { title: 'Live' })
     const eventId = saved.event.eventId
     const first = saved.parts[0].partId
-    await expect(deletePart(db, 'owner', eventId, first)).rejects.toThrow()
+    await expect(
+      db.delete(parts).where(eq(parts.partId, first)),
+    ).rejects.toThrow()
     await db.insert(parts).values({ partId: 'p2', eventId, sortOrder: 1 })
     await db.insert(bands).values({ bandId: 'b1', eventId, bandName: 'A' })
     await db.insert(bandOrder).values({ bandId: 'b1', partId: first, order: 0 })
-    await expect(deletePart(db, 'owner', eventId, first)).rejects.toThrow()
+    await expect(
+      db.delete(parts).where(eq(parts.partId, first)),
+    ).rejects.toThrow()
     await db.insert(constraints).values({
       constraintId: 'c1',
       eventId,
@@ -70,22 +75,8 @@ describe('event persistence', () => {
         params: { kind: 'parts', part_ids: [1] },
       }),
     })
-    await expect(deletePart(db, 'owner', eventId, 'p2')).rejects.toThrow()
+    await expect(
+      db.delete(parts).where(eq(parts.partId, 'p2')),
+    ).rejects.toThrow()
   })
-})
-
-it('deletes an empty unreferenced part and compacts the remaining display order', async () => {
-  const saved = await createEvent(db, 'owner', { title: 'Live' })
-  const eventId = saved.event.eventId
-  await db.insert(parts).values([
-    { partId: 'p2', eventId, sortOrder: 1 },
-    { partId: 'p3', eventId, sortOrder: 2 },
-  ])
-  await deletePart(db, 'owner', eventId, 'p2')
-  const result = await loadEvent(db, 'owner', eventId)
-  expect(result?.parts.map((part) => [part.partId, part.sortOrder])).toEqual([
-    [saved.parts[0].partId, 0],
-    ['p3', 1],
-  ])
-  expect(result?.event.updatedAt).not.toBe(saved.event.updatedAt)
 })

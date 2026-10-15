@@ -189,3 +189,26 @@ it('prevents deleting a part referenced by a remaining constraint', async () => 
   await expect(save()).rejects.toThrow('part_is_referenced_by_constraint')
   expect(await loadEvent(db, 'owner', saved.event.eventId)).toEqual(saved)
 })
+
+it('deletes an empty unreferenced part in the event-wide save and compacts its order', async () => {
+  input.parts.push({ partId: 'p3', comment: null })
+  saved = await save()
+  input.parts = input.parts.filter((part) => part.partId !== 'p2')
+  const result = await save()
+  expect(result.parts.map((part) => [part.partId, part.sortOrder])).toEqual([
+    [saved.parts[0].partId, 0],
+    ['p3', 1],
+  ])
+  expect(result.placements).toEqual(saved.placements)
+  expect(result.constraints).toEqual(saved.constraints)
+  expect(result.event.updatedAt).not.toBe(saved.event.updatedAt)
+})
+
+it('rejects deleting a part from a stale screen after another screen saves its comment', async () => {
+  saved = await save()
+  input.parts[1].comment = 'Saved in another screen'
+  const latest = await save()
+  input.parts.pop()
+  await expect(save()).rejects.toThrow('event_save_conflict')
+  expect(await loadEvent(db, 'owner', saved.event.eventId)).toEqual(latest)
+})
