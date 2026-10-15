@@ -19,6 +19,8 @@ export default defineConfig([
   globalIgnores([
     '**/dist/**',
     '**/coverage/**',
+    '**/test-results/**',
+    '**/playwright-report/**',
     '**/.wrangler/**',
     '**/.cloudflare/**',
     '**/worker-configuration.d.ts',
@@ -60,6 +62,13 @@ export default defineConfig([
     ],
     languageOptions: { globals: globals.browser },
     rules: {
+      'jsx-a11y/label-has-associated-control': [
+        'error',
+        {
+          controlComponents: ['Input', 'Select', 'Textarea', 'NumberField'],
+          depth: 3,
+        },
+      ],
       'import-x/no-extraneous-dependencies': [
         'error',
         {

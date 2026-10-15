@@ -4,20 +4,20 @@
 
 | 用途                   | 技術                                                               | 状態・理由                                                 |
 | ---------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------- |
-| フロントエンド         | React / TypeScript / Vite / Tailwind CSS                           | 導入済み。画面を素早く実装する                             |
+| フロントエンド         | React / TypeScript / Vite / Tailwind CSS / React Router / dnd-kit  | 導入済み。画面を素早く実装する                             |
 | API・配信              | Hono / Cloudflare Workers                                          | 導入済み。TypeScriptでAPIと画面配信をまとめる              |
 | 制約の共有             | JSON Schema / json-schema-to-typescript / datamodel-code-generator | 導入済み。TypeScriptとPythonのモデルを同じ定義から生成する |
 | Python環境・入力モデル | uv / Pydantic                                                      | 導入済み。依存管理と構造化データの検証                     |
 | 最適化API              | FastAPI / OR-Tools CP-SAT                                          | 採用予定。順序・間隔の制約をPythonで扱う                   |
 | 保存                   | Cloudflare D1 / Drizzle                                            | D1 binding導入済み。Drizzleと業務テーブルは未導入          |
-| テスト                 | Vitest / Testing Library                                           | 導入済み。frontend・backendの振る舞いを確認する            |
+| テスト                 | Vitest / Testing Library / Playwright                              | 導入済み。frontend・backendの振る舞いを確認する            |
 | LLM・ソルバー公開先    | 未確定                                                             | 対応Issueで決める                                          |
 
 ## 配置
 
 | 場所            | 責務・状態                                               |
 | --------------- | -------------------------------------------------------- |
-| `apps/frontend` | Reactの画面。現在はひな形                                |
+| `apps/frontend` | 画面・メモリ上のデモデータ・制約の手動編集と達成判定     |
 | `apps/backend`  | Hono APIとWorkersによる配信。現在は`GET /api/health`のみ |
 | `apps/schema`   | 共有する制約のJSON Schema。実装済み                      |
 | `apps/solver`   | Pythonの計算処理。現在は生成モデルと起動入口のみ         |
@@ -36,3 +36,26 @@
 対応Issueで入力・出力・エラー・必要な権限を具体例とともに決める。生成型だけを信頼せず、IDの存在とイベントへの所属も検証する。探索結果は成功、解なし、探索未完了、内部エラーを区別する。
 
 外部通信・LLMはテストで差し替えられるようにする。認証・公開フォームの詳細、LLMモデル、ソルバーの公開先は未確定。将来のためだけの層や汎用化は増やさない。
+
+## 現在のフロントエンド
+
+`apps/frontend/src` に配置する。画面とUI部品はモックデータを直接importせず、hooksからRepositoryを利用する。
+
+| 場所                          | 責務                                                   |
+| ----------------------------- | ------------------------------------------------------ |
+| `app/`                        | ルーティング、デモセッション、ログイン後の復帰先       |
+| `features/auth/`              | デモ開始                                               |
+| `features/events/`            | イベント一覧・作成・設定・削除                         |
+| `features/event/`             | 出演順、制約入力、チャットのデモ、CSV出力              |
+| `features/forms/`             | 出演登録とフォーム設定                                 |
+| `features/participants/`      | 出演枠・所属メンバーの編集                             |
+| `shared/model/`               | イベント・メンバーのモデル、制約の検証・説明・達成判定 |
+| `shared/ui/`・`shared/hooks/` | UI部品、取得・入力処理                                 |
+| `mock/`                       | 初期データ、メモリ上の共有ストア、Repository実装       |
+| `generated/`                  | JSON Schemaから生成した制約型。手編集禁止              |
+
+制約は生成型の `Constraint` をそのまま保持する。入力途中の文字列は `constraintDraft.ts` で扱い、保存時に検証・変換する。表示用の要約・達成状況・固定フラグは現在のデータから導く。
+
+メンバーは名前とIDを分け、出演枠は `memberIds` で所属を持つ。部の表示用IDはドラッグ操作に使い、制約の `part_ids` は部の並びに対応する0始まりの番号とする。このフロント内のモデルはDB・APIの確定済み契約ではない。
+
+現在のフローは `画面 → hooks → Repository → メモリ上のストア → 画面`。自動生成・実認証・DB・LLMには未接続。API連携時はRepositoryに実装を追加し、backendでの検証・権限確認も実装する。[デモの操作と制約](frontend.md)を参照。

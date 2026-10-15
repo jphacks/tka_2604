@@ -38,7 +38,8 @@
     "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage",
     "test:frontend": "vitest run --project frontend",
-    "test:backend": "vitest run --project backend"
+    "test:backend": "vitest run --project backend",
+    "test:e2e": "npm run test:e2e --workspace=@jphack-2026/frontend"
   },
   "lint-staged": {
     "*.{js,mjs,cjs,jsx,ts,tsx}": "eslint --max-warnings=0 --no-warn-ignored",

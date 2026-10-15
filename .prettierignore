@@ -7,3 +7,6 @@ coverage/
 package-lock.json
 **/worker-configuration.d.ts
 apps/frontend/src/generated/
+
+test-results/
+playwright-report/

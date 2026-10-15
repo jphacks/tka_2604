@@ -145,3 +145,7 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+
+# Browser verification artifacts
+test-results/
+playwright-report/
