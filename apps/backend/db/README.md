@@ -82,7 +82,7 @@ npm run test:backend
 
 ## リモートへの適用・公開
 
-以下は明示的に依頼されたときに実行する。今回の実装では実行していない。
+以下は明示的に依頼されたときに実行する。デプロイとmigrationの適用は別操作になる。
 
 ```sh
 npm run db:migrate:develop
