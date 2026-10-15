@@ -13,11 +13,13 @@ export function PerformanceRow({
   capacity,
   onFixed,
   onOrder,
+  onEdit,
 }: {
   row: Row & { performance: PerformanceView }
   capacity: number
   onFixed: (id: string, fixed: boolean) => void
   onOrder: (id: string, value: number | null) => void
+  onEdit: (id: string) => void
 }) {
   const performance = row.performance
   const {
@@ -72,12 +74,15 @@ export function PerformanceRow({
         disabled={performance.fixed}
         onCommit={(value) => onOrder(performance.id, value)}
       />
-      <span
-        className="min-w-0 truncate pr-2 font-medium"
+      <button
+        type="button"
+        aria-label={`${performance.name}を編集`}
+        onClick={() => onEdit(performance.id)}
+        className="min-w-0 truncate rounded px-1 py-1 text-left font-medium text-brand hover:bg-wash hover:underline"
         title={performance.name}
       >
         {performance.name}
-      </span>
+      </button>
       <span
         className="min-w-0 truncate text-[13px] text-muted"
         title={performance.members.join('・')}
