@@ -2,6 +2,11 @@
 
 [![IMAGE ALT TEXT HERE](https://jphacks.com/wp-content/uploads/2026/07/IMG_5316.png)](https://www.youtube.com/watch?v=piaNsc6ilBI)
 
+## 開発用リンク
+
+- [develop環境のAPIドキュメント（Swagger UI）](https://dev.jphack-2026.workers.dev/api/docs)：API仕様の閲覧と`Try it out`による動作確認。
+- [APIドキュメントの更新・公開手順](docs/api/README.md)
+
 ## 製品概要
 
 ### 背景(製品開発のきっかけ、課題等）

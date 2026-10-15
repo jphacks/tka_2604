@@ -39,6 +39,19 @@ ESLintは型を使った検査、React Hooks、アクセシビリティ、import
 
 テストはfrontendがjsdom、backendがNode環境。実Workers・外部サービスの結合確認とは別。`npm run test:coverage`は任意で、CIには含まれず最低カバレッジの設定もない。Pythonのテスト・lintは未導入。
 
+## backendのテスト追加方針
+
+Zod・OpenAPI・Drizzle導入時に、次の確認を追加する。health APIと手書きOpenAPIのGET操作・200応答・応答スキーマとの一致、仕様JSONの配信、RPC型共有を確認するテストを導入済み。`npm run test:backend`と`npm run typecheck`で確認する。契約テストはVitestとして`npm run check`と既存CIに含む。[API手順](api/README.md)を参照。D1結合テストは未導入で、導入時に実行コマンドとCIへの組み込みを追記する。
+
+| 対象                     | 確認する振る舞い                                                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| 業務ロジックの単体テスト | ID・所属・範囲の判定など、処理の正常系・境界値・異常系                                                              |
+| APIのリクエストテスト    | `app.request()`または`hono/testing`で入力検証、ステータス、応答内容。不正入力・権限エラー時に保存されないこと       |
+| D1との結合テスト         | テスト用D1に実際のマイグレーションを適用し、Drizzleによる保存・再取得・DB制約を確認する。テスト間のデータを分離する |
+| API仕様との整合性        | 手書きOpenAPIのパス・入力・ステータス・応答と、対象APIの振る舞いが一致すること。RPCクライアントの型検査も行う       |
+
+OpenAPIの応答定義だけで、実レスポンスの実行時検証が済んだとは扱わない。APIと手書き仕様は同じ変更で更新し、対象APIの契約テストとSwagger UIの表示で確認する。既存の型検査・Vitest・`npm run check`に組み込み、D1をモックしたテストだけでDB処理の確認を完了扱いにしない。
+
 ## フロントエンドのブラウザテスト
 
 `npm run test:e2e` でPlaywright / Chromiumを実行する。初回は `npx playwright install chromium` が必要。設定は `apps/frontend/playwright.config.ts`、テストは `apps/frontend/e2e/` に置く。

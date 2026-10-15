@@ -6,6 +6,9 @@
 | ---------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------- |
 | フロントエンド         | React / TypeScript / Vite / Tailwind CSS / React Router / dnd-kit  | 導入済み。画面を素早く実装する                             |
 | API・配信              | Hono / Cloudflare Workers                                          | 導入済み。TypeScriptでAPIと画面配信をまとめる              |
+| API入力検証・仕様      | Zod / OpenAPI                                                      | OpenAPIは別JSONで管理。業務入力のZod検証は今後追加         |
+| FE・BEの型共有         | Hono RPC                                                           | healthの型共有を確認済み。frontend接続は未実装             |
+| APIドキュメント閲覧    | Swagger UI                                                         | 導入済み。developドメインで仕様を共有・APIを試行する       |
 | 制約の共有             | JSON Schema / json-schema-to-typescript / datamodel-code-generator | 導入済み。TypeScriptとPythonのモデルを同じ定義から生成する |
 | Python環境・入力モデル | uv / Pydantic                                                      | 導入済み。依存管理と構造化データの検証                     |
 | 最適化API              | FastAPI / OR-Tools CP-SAT                                          | 採用予定。順序・間隔の制約をPythonで扱う                   |
@@ -15,12 +18,12 @@
 
 ## 配置
 
-| 場所            | 責務・状態                                               |
-| --------------- | -------------------------------------------------------- |
-| `apps/frontend` | 画面・メモリ上のデモデータ・制約の手動編集と達成判定     |
-| `apps/backend`  | Hono APIとWorkersによる配信。現在は`GET /api/health`のみ |
-| `apps/schema`   | 共有する制約のJSON Schema。実装済み                      |
-| `apps/solver`   | Pythonの計算処理。現在は生成モデルと起動入口のみ         |
+| 場所            | 責務・状態                                                              |
+| --------------- | ----------------------------------------------------------------------- |
+| `apps/frontend` | 画面・メモリ上のデモデータ・制約の手動編集と達成判定                    |
+| `apps/backend`  | Hono APIとWorkersによる配信。health API・OpenAPI JSON・Swagger UIを提供 |
+| `apps/schema`   | 共有する制約のJSON Schema。実装済み                                     |
+| `apps/solver`   | Pythonの計算処理。現在は生成モデルと起動入口のみ                        |
 
 ## 処理の流れ
 
@@ -33,9 +36,21 @@
 
 ## APIの実装時
 
+health APIにOpenAPI定義・RPC型共有を導入済み。業務API・Drizzle・frontend接続は今後追加する。
+
+- APIは通常のHonoの`app.get()`・`app.post()`で実装し、入力のあるAPIではZodで検証する。OpenAPI仕様は`docs/api/openapi.json`に別途手書きし、API変更時は実装・仕様・対象APIの契約テストを揃える。
+- ルート登録の返り値から`AppType`を公開し、frontendのRepositoryで`hc<AppType>()`を使う。backendからは型のみをimportし、サーバーの実装をfrontendへ持ち込まない。
+- DrizzleでD1のテーブルを定義し、SQL生成・差分確認・ローカル適用を行う。DBの行型とAPIの入出力は用途に応じて分ける。[DB方針](database.md)を参照。
+- OpenAPI 3.1.0を`/api/openapi.json`、Swagger UIを`/api/docs`で提供する。developドメインでUI・JSON・APIを配信し、共有URLから閲覧・試行できる。手書きの仕様JSONをそのまま配信し、対象APIの契約テストで実装との整合性を確認する。[更新・閲覧手順](api/README.md)を参照。
+- 制約JSONの正本は引き続き`apps/schema`。ZodやOpenAPIに同じ制約を手書きで重複定義せず、実行時検証・OpenAPIとの接続方法は制約APIの実装時に決める。
+
 対応Issueで入力・出力・エラー・必要な権限を具体例とともに決める。生成型だけを信頼せず、IDの存在とイベントへの所属も検証する。探索結果は成功、解なし、探索未完了、内部エラーを区別する。
 
 外部通信・LLMはテストで差し替えられるようにする。認証・公開フォームの詳細、LLMモデル、ソルバーの公開先は未確定。将来のためだけの層や汎用化は増やさない。
+
+既存のhealth APIでOpenAPIの配信・閲覧・RPC型共有を確認済み。次にイベントの作成・一覧でZod検証とDrizzleによる保存・取得を通す。機能ごとのテストを実装と一緒に追加する。
+
+参考：[Hono RPCの解説](https://zenn.dev/yusukebe/articles/a00721f8b3b92e#rpcを作る)、[Swagger UI](https://hono.dev/examples/swagger-ui)。
 
 ## 現在のフロントエンド
 
