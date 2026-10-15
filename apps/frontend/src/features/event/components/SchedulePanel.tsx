@@ -13,8 +13,34 @@ import {
 import { ScheduleDragSurface, UnassignedDropZone } from './ScheduleDragSurface'
 
 export function SchedulePanel({ controller }: { controller: EventController }) {
-  const unassignedRef = useRef<HTMLElement>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
+  return (
+    <>
+      <ScheduleTable controller={controller} onEdit={setEditingId} />
+      {editingId && controller.event && (
+        <PerformanceEditor
+          key={editingId}
+          eventId={controller.event.id}
+          performanceId={editingId}
+          onSaved={(updated) => {
+            controller.applyPerformanceEdits(updated)
+            setEditingId(null)
+          }}
+          onClose={() => setEditingId(null)}
+        />
+      )}
+    </>
+  )
+}
+
+function ScheduleTable({
+  controller,
+  onEdit,
+}: {
+  controller: EventController
+  onEdit: (id: string) => void
+}) {
+  const unassignedRef = useRef<HTMLElement>(null)
   const { event, schedule, setOrder, setFixed, resize } = controller
   if (!event || !schedule) return null
   return (
@@ -96,7 +122,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
                     capacity={schedule.capacity}
                     onFixed={setFixed}
                     onOrder={setOrder}
-                    onEdit={setEditingId}
+                    onEdit={onEdit}
                   />
                 ) : (
                   <EmptyPerformanceRow key={row.key} row={row} />
@@ -119,7 +145,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
                   capacity={schedule.capacity}
                   onFixed={setFixed}
                   onOrder={setOrder}
-                  onEdit={setEditingId}
+                  onEdit={onEdit}
                 />
               ))}
               {!schedule.unassigned.length && (
@@ -131,18 +157,6 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
           </UnassignedDropZone>
         </div>
       </ScheduleDragSurface>
-      {editingId && (
-        <PerformanceEditor
-          key={editingId}
-          eventId={event.id}
-          performanceId={editingId}
-          onSaved={(updated) => {
-            controller.applyPerformanceEdits(updated)
-            setEditingId(null)
-          }}
-          onClose={() => setEditingId(null)}
-        />
-      )}
       <p className="border-t border-line px-4 py-3 text-xs leading-6 text-muted">
         ドラッグ／Spaceと矢印キー／順番号で配置。空欄で未配置に戻します。固定は現在の位置をハード条件として保持します。
       </p>
