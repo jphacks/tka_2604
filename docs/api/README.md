@@ -17,7 +17,7 @@ OpenAPIの`servers`は`/`、UIが読み込む仕様は`/api/openapi.json`とし�
 
 ## ローカル開発とdevelopへの公開
 
-リポジトリルートで`npm run dev`を実行すると、`http://localhost:8787/api/docs`で同じUIを確認できる。Live Server用HTMLは用意しない。
+リポジトリルートで`npm run dev`を実行すると、`http://localhost:8787/api/docs`で同じUIを確認できる。
 
 ```sh
 npm run check
