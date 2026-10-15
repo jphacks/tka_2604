@@ -17,7 +17,7 @@ GUIの入力チェックだけに頼らず、backendで外部入力を検証す�
 最低限、次の入力を拒否する。具体的なエラー形式はAPIを作るIssueで決め、項目と理由が分かる形にする。
 
 - hardなのにpriorityがある、softなのにpriorityがnull。
-- 存在しない・別イベントのバンドやメンバーを参照している。
+- 存在しない・別イベントのバンドやメンバーを、新たな所属・配置に指定している。既存制約に対する違反は操作の拒否と分け、[DB方針](database.md)に従って表示する。
 - 位置が出演枠の外、範囲の開始が終了より大きい、countのminがmaxより大きい。
 
 解なし・探索未完了・内部エラーは入力不備と区別する。制約の詳細は[制約と型生成](schema.md)を参照。
@@ -37,11 +37,11 @@ GUIの入力チェックだけに頼らず、backendで外部入力を検証す�
 
 ESLintは型を使った検査、React Hooks、アクセシビリティ、import順序・依存関係、frontend/backend間の実装importの禁止を含む。
 
-テストはfrontendがjsdom、backendがNode環境。実Workers・外部サービスの結合確認とは別。`npm run test:coverage`は任意で、CIには含まれず最低カバレッジの設定もない。Pythonのテスト・lintは未導入。
+テストはfrontendがjsdom、backendがNode環境。DBテストはWranglerのgetPlatformProxyで起動するMiniflareのD1を使用する。公開Workers・外部サービスの結合確認とは別。`npm run test:coverage`は任意で、CIには含まれず最低カバレッジの設定もない。Pythonのテスト・lintは未導入。
 
 ## backendのテスト追加方針
 
-Zod・OpenAPI・Drizzle導入時に、次の確認を追加する。healthの200応答・Content-Type・JSON本文、仕様JSONの配信、RPC型共有を確認するテストを導入済み。`npm run test:backend`と`npm run typecheck`で確認する。APIの動作テストはVitestとして`npm run check`と既存CIに含む。[API手順](api/README.md)を参照。D1結合テストは未導入で、導入時に実行コマンドとCIへの組み込みを追記する。
+Zod・OpenAPI・Drizzle導入時に、次の確認を追加する。healthの200応答・Content-Type・JSON本文、仕様JSONの配信、RPC型共有を確認するテストを導入済み。`npm run test:backend`と`npm run typecheck`で確認する。APIの動作テストはVitestとして`npm run check`と既存CIに含む。[API手順](api/README.md)を参照。D1結合テストもbackend projectとして同じコマンド・check・pre-commit・CIで実行する。各テストに隔離されたD1へ実migrationを適用し、保存・再取得・部分更新防止・競合を確認する。[DB手順](../apps/backend/db/README.md)を参照。
 
 | 対象                     | 確認する振る舞い                                                                                                    |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------- |

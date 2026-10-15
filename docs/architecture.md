@@ -2,19 +2,19 @@
 
 ## 技術選定
 
-| 用途                   | 技術                                                               | 状態・理由                                                 |
-| ---------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------- |
-| フロントエンド         | React / TypeScript / Vite / Tailwind CSS / React Router / dnd-kit  | 導入済み。画面を素早く実装する                             |
-| API・配信              | Hono / Cloudflare Workers                                          | 導入済み。TypeScriptでAPIと画面配信をまとめる              |
-| API入力検証・仕様      | Zod / OpenAPI                                                      | OpenAPIは別JSONで管理。Zodは入力APIの実装時に導入          |
-| FE・BEの型共有         | Hono RPC                                                           | healthの型共有を確認済み。frontend接続は未実装             |
-| APIドキュメント閲覧    | Swagger UI                                                         | 導入済み。developドメインで仕様を共有・APIを試行する       |
-| 制約の共有             | JSON Schema / json-schema-to-typescript / datamodel-code-generator | 導入済み。TypeScriptとPythonのモデルを同じ定義から生成する |
-| Python環境・入力モデル | uv / Pydantic                                                      | 導入済み。依存管理と構造化データの検証                     |
-| 最適化API              | FastAPI / OR-Tools CP-SAT                                          | 採用予定。順序・間隔の制約をPythonで扱う                   |
-| 保存                   | Cloudflare D1 / Drizzle                                            | D1 binding導入済み。Drizzleと業務テーブルは未導入          |
-| テスト                 | Vitest / Testing Library / Playwright                              | 導入済み。frontend・backendの振る舞いを確認する            |
-| LLM・ソルバー公開先    | 未確定                                                             | 対応Issueで決める                                          |
+| 用途                   | 技術                                                               | 状態・理由                                                  |
+| ---------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------- |
+| フロントエンド         | React / TypeScript / Vite / Tailwind CSS / React Router / dnd-kit  | 導入済み。画面を素早く実装する                              |
+| API・配信              | Hono / Cloudflare Workers                                          | 導入済み。TypeScriptでAPIと画面配信をまとめる               |
+| API入力検証・仕様      | Zod / OpenAPI                                                      | OpenAPIは別JSONで管理。Zodは入力APIの実装時に導入           |
+| FE・BEの型共有         | Hono RPC                                                           | healthの型共有を確認済み。frontend接続は未実装              |
+| APIドキュメント閲覧    | Swagger UI                                                         | 導入済み。developドメインで仕様を共有・APIを試行する        |
+| 制約の共有             | JSON Schema / json-schema-to-typescript / datamodel-code-generator | 導入済み。TypeScriptとPythonのモデルを同じ定義から生成する  |
+| Python環境・入力モデル | uv / Pydantic                                                      | 導入済み。依存管理と構造化データの検証                      |
+| 最適化API              | FastAPI / OR-Tools CP-SAT                                          | 採用予定。順序・間隔の制約をPythonで扱う                    |
+| 保存                   | Cloudflare D1 / Drizzle                                            | 導入済み。業務テーブルとローカル保存処理。API接続は今後追加 |
+| テスト                 | Vitest / Testing Library / Playwright                              | 導入済み。frontend・backendの振る舞いを確認する             |
+| LLM・ソルバー公開先    | 未確定                                                             | 対応Issueで決める                                           |
 
 ## 配置
 
@@ -32,11 +32,11 @@
 - LLM：対応する制約への変換と説明。任意の数式・コードを実行させない。
 - backend：入力検証、データ管理、外部呼び出し。秘密情報をブラウザに渡さない。
 - solver：固定ロジックで制約をモデル化し、出演順と探索状態を返す。OR-Tools CP-SAT / FastAPIを採用予定。
-- DB：Cloudflare D1は検証用と本番用を分離。Drizzleは導入予定。[DB方針](database.md)を参照。
+- DB：Cloudflare D1は検証用と本番用を分離。Drizzle導入済み。[DB方針](database.md)を参照。
 
 ## APIの実装時
 
-health APIにOpenAPI定義・RPC型共有を導入済み。業務API・Drizzle・frontend接続は今後追加する。
+health APIにOpenAPI定義・RPC型共有を導入済み。DrizzleとDBの保存処理は導入済み。業務API・frontend接続は今後追加する。
 
 - APIは通常のHonoの`app.get()`・`app.post()`で実装し、入力のあるAPIではZodで検証する。OpenAPI仕様は`docs/api/openapi.json`に別途手書きし、API変更時は実装・仕様・対象APIの動作テストを揃える。
 - ルート登録の返り値から`AppType`を公開し、frontendのRepositoryで`hc<AppType>()`を使う。backendからは型のみをimportし、サーバーの実装をfrontendへ持ち込まない。
@@ -48,7 +48,7 @@ health APIにOpenAPI定義・RPC型共有を導入済み。業務API・Drizzle�
 
 外部通信・LLMはテストで差し替えられるようにする。認証・公開フォームの詳細、LLMモデル、ソルバーの公開先は未確定。将来のためだけの層や汎用化は増やさない。
 
-既存のhealth APIでOpenAPIの配信・閲覧・RPC型共有を確認済み。次にイベントの作成・一覧でZod検証とDrizzleによる保存・取得を通す。機能ごとのテストを実装と一緒に追加する。
+既存のhealth APIでOpenAPIの配信・閲覧・RPC型共有を確認済み。DBの保存・再取得はローカルD1で確認済み。次にイベントの作成・一覧でZod検証と業務API・frontendを接続する。機能ごとのテストを実装と一緒に追加する。
 
 参考：[Hono RPCの解説](https://zenn.dev/yusukebe/articles/a00721f8b3b92e#rpcを作る)、[Swagger UI](https://hono.dev/examples/swagger-ui)。
 
