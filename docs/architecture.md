@@ -6,7 +6,7 @@
 | ---------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------- |
 | フロントエンド         | React / TypeScript / Vite / Tailwind CSS / React Router / dnd-kit  | 導入済み。画面を素早く実装する                             |
 | API・配信              | Hono / Cloudflare Workers                                          | 導入済み。TypeScriptでAPIと画面配信をまとめる              |
-| API入力検証・仕様      | Zod / OpenAPI                                                      | OpenAPIは別JSONで管理。業務入力のZod検証は今後追加         |
+| API入力検証・仕様      | Zod / OpenAPI                                                      | OpenAPIは別JSONで管理。Zodは入力APIの実装時に導入          |
 | FE・BEの型共有         | Hono RPC                                                           | healthの型共有を確認済み。frontend接続は未実装             |
 | APIドキュメント閲覧    | Swagger UI                                                         | 導入済み。developドメインで仕様を共有・APIを試行する       |
 | 制約の共有             | JSON Schema / json-schema-to-typescript / datamodel-code-generator | 導入済み。TypeScriptとPythonのモデルを同じ定義から生成する |
