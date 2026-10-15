@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1792097655095,
+      "tag": "0000_business_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1792097664561,
+      "tag": "0001_event_integrity",
+      "breakpoints": true
+    }
+  ]
+}

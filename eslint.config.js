@@ -123,7 +123,10 @@ export default defineConfig([
     },
   },
   {
-    files: ['apps/backend/src/**/*.{test,spec}.ts'],
+    files: [
+      'apps/backend/src/**/*.{test,spec}.ts',
+      'apps/backend/src/test/**/*.ts',
+    ],
     rules: {
       'import-x/no-extraneous-dependencies': [
         'error',
