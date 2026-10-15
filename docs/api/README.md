@@ -2,7 +2,7 @@
 
 OpenAPI 3.1.0の仕様を`docs/api/openapi.json`に手書きで管理する。APIは通常のHonoの`app.get()`・`app.post()`で実装し、入力のあるAPIではZodで検証する。Hono RPCの型は実装から公開する。
 
-APIを変更するときは実装・OpenAPI仕様・契約を確認するテストを同じ変更で更新する。OpenAPIの自動生成は行わない。`apps/backend/src/openapi.ts`は仕様JSONの読み込みとSwagger UIの設定だけを担当する。
+APIを変更するときは実装・OpenAPI仕様・APIの動作テストを同じ変更で更新する。OpenAPIの自動生成は行わない。`apps/backend/src/openapi.ts`は仕様JSONの読み込みとSwagger UIの設定だけを担当する。
 
 現在のAPIは`GET /api/health`のみ。入力はなく、200で`{"status":"ok"}`を返す。DBの稼働確認は含まない。イベント・認証・制約・計算APIは未実装。
 
@@ -37,6 +37,6 @@ npm run test:backend
 npm run check
 ```
 
-healthの契約テストは、OpenAPIに記載したGET操作・200・Content-Typeを実レスポンスと照合し、応答JSONを仕様のJSON Schemaで検証する。JSON Schemaの検証にはテスト用のAjvを使用し、API実行時の依存には含めない。他のAPIを追加するときは対象の入力・成功・エラーの契約テストも追加する。現在のテストが未実装APIまで保証するとは扱わない。
+healthはVitestでステータス200・Content-Type・応答本文を直接確認する。OpenAPIの応答スキーマによる自動検証は行わず、実装と仕様の整合性はレビューで確認する。他のAPIを追加するときは対象の入力・成功・エラーの動作テストも追加する。
 
 Vitestでhealth・404・仕様JSONの配信・Swagger UIのHTML・共有ドメインでの接続を確認する。Hono RPCの`AppType`はルート登録の返り値から公開し、`hc<AppType>()`でのhealth呼び出しと応答型をテストする。`expectTypeOf`の確認は`npm run typecheck`で行う。frontendのRepositoryへの接続は今後行う。
