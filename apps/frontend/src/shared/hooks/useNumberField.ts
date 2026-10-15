@@ -44,6 +44,6 @@ export function useNumberField(
       setDraft(text)
       setInvalid(false)
     },
-    errorMessage: `${min}〜${max}の整数${allowEmpty ? '、または空欄' : ''}を入力してください。`,
+    errorMessage: `${min}〜${max}の整数${allowEmpty ? '／空欄可' : ''}`,
   }
 }

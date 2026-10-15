@@ -165,11 +165,11 @@ test('schedule edits persist during navigation and pointer dragging works', asyn
   await login(page)
   await page.getByRole('link', { name: '春ライブ 2026', exact: true }).click()
   const handle = page.getByRole('button', {
-    name: 'Pretenderをドラッグして移動',
+    name: 'Pretenderを並べ替え',
     exact: true,
   })
   const target = page.getByRole('button', {
-    name: 'VPSをドラッグして移動',
+    name: 'VPSを並べ替え',
     exact: true,
   })
   const from = await handle.boundingBox()

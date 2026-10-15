@@ -156,7 +156,7 @@ test('keyboard dragging reaches an empty slot and keeps fixed positions', async 
   await vps.press('Enter')
   await expect(vps).toHaveValue('')
   const handle = page.getByRole('button', {
-    name: 'Pretenderをドラッグして移動',
+    name: 'Pretenderを並べ替え',
     exact: true,
   })
   await handle.focus()
