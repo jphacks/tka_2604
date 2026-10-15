@@ -11,17 +11,25 @@ export function AppFrame({
   eventId,
   eventName,
   wide = false,
+  workspace = false,
 }: {
   children: ReactNode
   eventId?: string
   eventName?: string
   wide?: boolean
+  workspace?: boolean
 }) {
-  const width = wide ? 'max-w-[1600px]' : 'max-w-[1200px]'
+  const width = workspace ? '' : wide ? 'max-w-[1600px]' : 'max-w-[1200px]'
   const { session, signOut } = useSession()
   return (
-    <div className="min-h-dvh">
-      <header className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-b border-line bg-white px-6 py-3">
+    <div
+      className={
+        workspace
+          ? 'flex min-h-dvh flex-col xl:h-dvh xl:overflow-hidden'
+          : 'min-h-dvh'
+      }
+    >
+      <header className="flex min-h-16 shrink-0 flex-wrap items-center justify-between gap-3 border-b border-line bg-white px-4 py-3">
         <div className="flex items-center gap-4 sm:gap-8">
           <Brand />
           <Link to="/event" className="text-xs text-muted hover:text-brand">
@@ -44,7 +52,7 @@ export function AppFrame({
         </div>
       </header>
       {eventId && (
-        <div className="border-b border-line bg-white">
+        <div className="shrink-0 border-b border-line bg-white">
           <nav
             aria-label="イベント内の移動"
             className={`mx-auto flex flex-wrap items-center gap-x-5 px-4 sm:px-6 ${width}`}
@@ -53,7 +61,13 @@ export function AppFrame({
               to={`/event/${eventId}`}
               className="mr-auto py-4 text-sm font-semibold"
             >
-              {eventName || 'イベント'}
+              {workspace ? (
+                <h1 className="text-sm font-semibold">
+                  {eventName || 'イベント'}
+                </h1>
+              ) : (
+                eventName || 'イベント'
+              )}
             </Link>
             {[
               { path: `/event/${eventId}`, label: '出演順' },
@@ -78,15 +92,15 @@ export function AppFrame({
           </nav>
         </div>
       )}
-      <main className={`mx-auto px-4 py-7 sm:px-6 sm:py-9 ${width}`}>
+      <main
+        className={
+          workspace
+            ? 'relative flex min-h-0 min-w-0 flex-1 flex-col'
+            : `mx-auto px-4 py-7 sm:px-6 sm:py-9 ${width}`
+        }
+      >
         {children}
       </main>
-      <footer
-        className={`mx-auto flex flex-wrap justify-between gap-3 px-4 py-6 text-[11px] text-muted/75 sm:px-6 ${width}`}
-      >
-        <span>セトリ · ライブの出演順を、もっとスムーズに。</span>
-        <span>デモ · 再読み込みで初期化</span>
-      </footer>
     </div>
   )
 }
