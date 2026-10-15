@@ -8,6 +8,7 @@
     "test": "npm --prefix ../.. run test -- --project backend"
   },
   "dependencies": {
+    "@hono/swagger-ui": "^0.6.1",
     "hono": "^4.13.13"
   }
 }

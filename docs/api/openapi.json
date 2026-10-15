@@ -1,0 +1,41 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "JPHACKS 出演順作成 API",
+    "version": "0.0.0"
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "このドキュメントを配信しているbackend"
+    }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "APIの稼働状態を確認する",
+        "tags": ["Health"],
+        "responses": {
+          "200": {
+            "description": "APIは稼働中",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["ok"]
+                    }
+                  },
+                  "required": ["status"]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
