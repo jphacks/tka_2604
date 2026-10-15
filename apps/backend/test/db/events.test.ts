@@ -1,10 +1,16 @@
 import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
-import { testDatabase } from '../test/database'
-import { createEvent, deleteEvent, loadEvent } from './events'
-import { createDb } from './index'
-import { bandOrder, bands, constraints, parts, users } from './schema'
+import { createEvent, deleteEvent, loadEvent } from '../../src/db/events'
+import { createDb } from '../../src/db/index'
+import {
+  bandOrder,
+  bands,
+  constraints,
+  parts,
+  users,
+} from '../../src/db/schema'
+import { testDatabase } from '../helpers/database'
 
 let local: Awaited<ReturnType<typeof testDatabase>>
 let db: ReturnType<typeof createDb>

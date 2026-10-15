@@ -22,7 +22,7 @@ export default defineConfig({
         test: {
           name: 'backend',
           environment: 'node',
-          include: ['src/**/*.{test,spec}.ts'],
+          include: ['test/**/*.{test,spec}.ts'],
           clearMocks: true,
           restoreMocks: true,
         },

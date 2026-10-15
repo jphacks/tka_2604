@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
-import { testDatabase } from '../test/database'
-import { createDb } from './index'
+import { createDb } from '../../src/db/index'
 import {
   bandMembers,
   bandOrder,
@@ -11,7 +10,8 @@ import {
   members,
   parts,
   users,
-} from './schema'
+} from '../../src/db/schema'
+import { testDatabase } from '../helpers/database'
 
 let local: Awaited<ReturnType<typeof testDatabase>>
 let db: ReturnType<typeof createDb>

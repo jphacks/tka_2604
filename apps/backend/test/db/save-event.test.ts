@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
-import { testDatabase } from '../test/database'
-import { createEvent, loadEvent } from './events'
-import { createDb } from './index'
-import { type EventChanges, saveEvent } from './save-event'
-import { users } from './schema'
+import { createEvent, loadEvent } from '../../src/db/events'
+import { createDb } from '../../src/db/index'
+import { type EventChanges, saveEvent } from '../../src/db/save-event'
+import { users } from '../../src/db/schema'
+import { testDatabase } from '../helpers/database'
 
 let local: Awaited<ReturnType<typeof testDatabase>>
 let db: ReturnType<typeof createDb>

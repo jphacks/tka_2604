@@ -5,9 +5,7 @@ import { getPlatformProxy } from 'wrangler'
 
 export async function testDatabase() {
   const runtime = await getPlatformProxy<CloudflareBindings>({
-    configPath: fileURLToPath(
-      new URL('../../test/wrangler.jsonc', import.meta.url),
-    ),
+    configPath: fileURLToPath(new URL('../wrangler.jsonc', import.meta.url)),
     persist: false,
     remoteBindings: false,
     envFiles: [],

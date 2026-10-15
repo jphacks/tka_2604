@@ -78,7 +78,7 @@ npm run test:backend
 
 既存Wranglerの`getPlatformProxy`からMiniflareの実D1 bindingを取得する。設定は`apps/backend/test/wrangler.jsonc`で、リモート用ID・assets・本番設定は使わない。`persist: false`で各テストを空のDBから開始し、全migrationをファイル名順に適用する。`remoteBindings: false`・テスト専用の設定ディレクトリ・`envFiles: []`でリモートDBや通常の開発設定から分離し、テスト終了時にdisposeする。通常の開発DBは使わない。
 
-テストは`apps/backend/src/db/*.test.ts`、初期化は`apps/backend/src/test/database.ts`。Vitestのbackend projectとして`npm run check`・pre-commit・既存CIに含む。モックD1ではなく、Drizzle経由の保存・再取得、DBの拒否、batch失敗時のロールバック、保存競合を確認する。
+テストは`src/`と同じ相対ディレクトリ構成の`test/`配下へ置く。DBテストは`apps/backend/test/db/*.test.ts`、初期化は`apps/backend/test/helpers/database.ts`。Vitestのbackend projectとして`npm run check`・pre-commit・既存CIに含む。モックD1ではなく、Drizzle経由の保存・再取得、DBの拒否、batch失敗時のロールバック、保存競合を確認する。
 
 ## リモートへの適用・公開
 

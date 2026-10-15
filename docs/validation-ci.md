@@ -41,6 +41,8 @@ ESLintは型を使った検査、React Hooks、アクセシビリティ、import
 
 ## backendのテスト追加方針
 
+テストは`apps/backend/test/`配下に、実装の`src/`と同じ相対ディレクトリ構成で置く。例：`src/index.ts` → `test/index.test.ts`、`src/db/events.ts` → `test/db/events.test.ts`。共通の初期化・補助処理は`test/helpers/`、テスト用D1の設定は`test/wrangler.jsonc`に置く。
+
 Zod・OpenAPI・Drizzle導入時に、次の確認を追加する。healthの200応答・Content-Type・JSON本文、仕様JSONの配信、RPC型共有を確認するテストを導入済み。`npm run test:backend`と`npm run typecheck`で確認する。APIの動作テストはVitestとして`npm run check`と既存CIに含む。[API手順](api/README.md)を参照。D1結合テストもbackend projectとして同じコマンド・check・pre-commit・CIで実行する。各テストに隔離されたD1へ実migrationを適用し、保存・再取得・部分更新防止・競合を確認する。[DB手順](../apps/backend/db/README.md)を参照。
 
 | 対象                     | 確認する振る舞い                                                                                                    |

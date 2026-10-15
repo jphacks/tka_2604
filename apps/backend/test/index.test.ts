@@ -1,8 +1,8 @@
 import { hc } from 'hono/client'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 
-import app, { type AppType } from './index'
-import { openApiDocument } from './openapi'
+import app, { type AppType } from '../src/index'
+import { openApiDocument } from '../src/openapi'
 
 describe('API routing', () => {
   it('returns the API health status', async () => {
