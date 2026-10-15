@@ -19,13 +19,14 @@ export function ConstraintControls({
       <div className="inline-flex" role="group" aria-label={`${label}の強さ`}>
         {(
           [
-            { value: 'hard', text: '必ず守る' },
-            { value: 'soft', text: 'できれば守る' },
+            { value: 'hard', text: '必須', description: '必ず守る条件' },
+            { value: 'soft', text: '任意', description: 'できるだけ守る条件' },
           ] as const
         ).map((option) => (
           <button
             key={option.value}
             type="button"
+            title={option.description}
             aria-pressed={hardness === option.value}
             onClick={() => onHardness(option.value)}
             className={`min-h-9 border border-line px-2.5 text-xs first:rounded-l-md last:rounded-r-md ${hardness === option.value ? 'bg-wash font-semibold text-brand' : 'bg-white text-muted'}`}

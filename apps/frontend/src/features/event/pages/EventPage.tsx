@@ -38,7 +38,7 @@ export function EventPage() {
               role="status"
               className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
             >
-              ハード条件に{controller.hardViolationCount}
+              必須条件に{controller.hardViolationCount}
               件の違反があります。条件を確認し、並びを調整してください。
             </p>
           )}
