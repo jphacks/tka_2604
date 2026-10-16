@@ -187,6 +187,7 @@ test('schedule edits persist during navigation and pointer dragging works', asyn
   await expect(
     page.getByRole('textbox', { name: '気分上々↑↑の出演順', exact: true }),
   ).toHaveValue('1')
+  await expect(page.getByText('Pretender', { exact: true })).toHaveCount(1)
   await page.getByRole('button', { name: '手動追加' }).click()
   const dialog = page.getByRole('dialog', { name: '制約を手動追加' })
   await dialog.getByRole('button', { name: /出演の前後関係を決める/ }).click()
