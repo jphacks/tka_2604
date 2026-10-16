@@ -1,33 +1,85 @@
 # Python ソルバー
 
-Python 3.13・uv で管理するプロジェクトです。現在は起動用の `src/main.py` と、JSON Schema から生成した Pydantic v2 の制約モデルがあります。最適化処理・HTTP サーバーは未実装です。
+Python 3.13・uv で管理するプロジェクトです。FastAPI のアプリ（`src/main.py`）と、JSON Schema から生成した Pydantic v2 の制約モデルがあります。現在の API は実行先の疎通確認用で、出演順の計算 API は #20・#27 で用意します。
 
 ## 構成
 
 ```text
 apps/solver/
   .python-version       # Python 3.13
-  pyproject.toml        # 依存関係・コード生成の設定
+  .vercelignore         # Vercel に送らないファイル
+  pyproject.toml        # 依存関係・pytest・コード生成の設定
   uv.lock               # 依存関係のロックファイル
   src/
-    main.py             # 実行入口
+    main.py             # FastAPI アプリ（Vercel の入口）
     generated/
       constraint.py     # 生成された制約モデル（手編集禁止）
+  tests/
+    test_main.py        # API のテスト
 ```
 
-依存パッケージは Pydantic、開発用パッケージは datamodel-code-generator です。プロジェクト自体のパッケージ化は行いません。
+依存パッケージは FastAPI・OR-Tools・Pydantic、開発用パッケージは datamodel-code-generator・pytest・httpx・uvicorn です。プロジェクト自体のパッケージ化は行いません。
+
+## API
+
+| メソッド・パス | 認証                                       | 内容                                                                                                         |
+| -------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `GET /health`  | なし                                       | `{"status":"ok"}` を返す                                                                                     |
+| `POST /probe`  | `Authorization: Bearer <SOLVER_API_TOKEN>` | 3バンドを「AはCより前」で並べる固定モデルを CP-SAT で解き、状態・順番・計算時間・OR-Tools のバージョンを返す |
+
+`/probe` はトークンが違えば 401、サーバーに `SOLVER_API_TOKEN` が未設定なら 503 を返します（未設定のまま公開されないようにするため）。
 
 ## セットアップ・起動
 
-uv をインストールした環境で実行します。
+uv をインストールした環境で、リポジトリルートから実行します。
+
+```sh
+uv sync --locked --directory apps/solver
+SOLVER_API_TOKEN=local uv --directory apps/solver run uvicorn main:app --app-dir src --port 8000
+```
+
+```sh
+curl http://localhost:8000/health
+curl -X POST http://localhost:8000/probe -H 'Authorization: Bearer local'
+```
+
+## テスト
+
+```sh
+uv --directory apps/solver run pytest
+```
+
+`npm run check` と CI には Python のテストはまだ含まれません。
+
+## Vercel へのデプロイ
+
+`apps/solver` を1つの Vercel プロジェクトとしてデプロイします。Vercel は `src/main.py` の `app` を FastAPI の入口として検出し、`pyproject.toml`・`uv.lock` から依存関係を入れます。
 
 ```sh
 cd apps/solver
-uv sync --locked
-uv run python src/main.py
+vercel link                                 # 初回のみ。.vercel/ はコミットしない
+vercel env add SOLVER_API_TOKEN production  # 推測されにくい値を設定する
+vercel deploy --prod
 ```
 
-現在の出力は `Hello from solver!` です。
+- トークンの値は Git・ログ・チャットに残さない。Workers 側には `wrangler secret put` で同じ値を設定する（接続は #27・#28）。
+- プレビューデプロイは Vercel Authentication で保護され、Workers から直接は呼べない。Workers からは本番 URL を使う。
+
+### 検証結果（#26）
+
+2026-10-17に確認。
+
+| 項目               | 結果                                                                                                       |
+| ------------------ | ---------------------------------------------------------------------------------------------------------- |
+| URL                | `https://tka-2604-solver.vercel.app`（個人アカウント `minmmmmin` のプロジェクト `tka-2604-solver`）        |
+| ビルド             | `uv.lock` から依存を導入して成功。関数サイズ 77.5MB（Python の標準上限 500MB 内）、リージョン `iad1`       |
+| `/health`          | 200。応答 0.2〜0.5秒（日本から計測）                                                                       |
+| `/probe`           | 200・`OPTIMAL`。CP-SAT の計算 0.003〜0.09秒、応答全体 0.2〜0.5秒。OR-Tools 9.15.6755                       |
+| 認証               | トークン誤り・なしで 401                                                                                   |
+| 実行時間の上限     | Vercel の関数は既定・最大とも 300秒（Hobby）。CP-SAT の探索上限はこれより十分短くし、BE の待機上限と分ける |
+| 秘密情報の管理場所 | Vercel の環境変数 `SOLVER_API_TOKEN`（Production・Secret。値は後から読み出せない）                         |
+
+未検証：コールドスタート時間、30〜40バンドでの計算時間（#34）、Workers からの呼び出し（#27・#28）。
 
 ## 制約モデルの生成
 

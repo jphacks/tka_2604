@@ -37,7 +37,7 @@ GUIの入力チェックだけに頼らず、backendで外部入力を検証す�
 
 ESLintは型を使った検査、React Hooks、アクセシビリティ、import順序・依存関係、frontend/backend間の実装importの禁止を含む。
 
-テストはfrontendがjsdom、backendがNode環境。DBテストはWranglerのgetPlatformProxyで起動するMiniflareのD1を使用する。公開Workers・外部サービスの結合確認とは別。`npm run test:coverage`は任意で、CIには含まれず最低カバレッジの設定もない。Pythonのテスト・lintは未導入。
+テストはfrontendがjsdom、backendがNode環境。DBテストはWranglerのgetPlatformProxyで起動するMiniflareのD1を使用する。公開Workers・外部サービスの結合確認とは別。`npm run test:coverage`は任意で、CIには含まれず最低カバレッジの設定もない。Pythonはpytestを導入済み（`uv --directory apps/solver run pytest`）。lintは未導入。
 
 ## backendのテスト追加方針
 
