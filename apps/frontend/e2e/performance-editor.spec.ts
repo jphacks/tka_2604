@@ -1,5 +1,38 @@
 import { expect, test } from './fixtures'
 
+test('backdrop dismisses edits like the close button and restores focus', async ({
+  page,
+}) => {
+  await page.goto('/event/spring-live-2026')
+  await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+  const opener = page
+    .getByRole('region', { name: '出演順', exact: true })
+    .getByRole('button', { name: 'Pretenderを編集', exact: true })
+  await opener.click()
+  const dialog = page.getByRole('dialog', { name: '出演枠を編集', exact: true })
+  const name = dialog.getByRole('textbox', { name: '出演名 必須' })
+  await name.fill('保存しない名前')
+  await dialog
+    .getByRole('heading', { name: '出演枠を編集', exact: true })
+    .click()
+  await expect(dialog).toBeVisible()
+  const inputBox = await name.boundingBox()
+  if (!inputBox) throw new Error('Name input is missing')
+  await page.mouse.move(inputBox.x + 20, inputBox.y + 15)
+  await page.mouse.down()
+  await page.mouse.move(5, 5)
+  await page.mouse.up()
+  await expect(dialog).toBeVisible()
+  await page.mouse.click(5, 5)
+  await expect(dialog).toHaveCount(0)
+  await expect(opener).toBeFocused()
+  await opener.click()
+  await expect(name).toHaveValue('Pretender')
+  await dialog.getByRole('button', { name: '閉じる', exact: true }).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(opener).toBeFocused()
+})
+
 test('edits assigned and unassigned performances without losing schedule or conditions', async ({
   page,
 }) => {
