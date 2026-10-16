@@ -80,6 +80,18 @@ npm run test:backend
 
 テストは`src/`と同じ相対ディレクトリ構成の`test/`配下へ置く。DBテストは`apps/backend/test/db/*.test.ts`、初期化は`apps/backend/test/helpers/database.ts`。Vitestのbackend projectとして`npm run check`・pre-commit・既存CIに含む。モックD1ではなく、Drizzle経由の保存・再取得、DBの拒否、batch失敗時のロールバック、保存競合を確認する。
 
+最小例は`test/db/events.test.ts`。同じ場所へテストを追加する場合、既存の`beforeEach`が空のD1・全migration・テスト用Userを用意し、`afterEach`が成功・失敗にかかわらずdisposeする。初期化途中の失敗は補助処理内でdisposeする。
+
+```ts
+it('イベントを保存して再取得できる', async () => {
+  const saved = await createEvent(db, 'owner', { title: 'Live' })
+  const loaded = await loadEvent(db, 'owner', saved.event.eventId)
+  expect(loaded).toEqual(saved)
+})
+```
+
+この例は同ファイルの初期化・importを使う。単独の新規ファイルでは同様に`testDatabase()`を`beforeEach`で作り、`createDb(local.binding)`を渡し、`afterEach`で`local?.dispose()`を呼ぶ。migration・seedの手動適用やCloudflareへのログインは不要。通常の`.wrangler/state`やリモートD1は操作しない。
+
 ## リモートへの適用・公開
 
 以下は明示的に依頼されたときに実行する。デプロイとmigrationの適用は別操作になる。

@@ -37,6 +37,18 @@ npm run test:backend
 npm run check
 ```
 
-healthはVitestでステータス200・Content-Type・応答本文を直接確認する。OpenAPIの応答スキーマによる自動検証は行わず、実装と仕様の整合性はレビューで確認する。他のAPIを追加するときは対象の入力・成功・エラーの動作テストも追加する。
+healthはVitestでステータス200・Content-Type・応答本文を直接確認し、`test/openapi.test.ts`では手書きOpenAPIの応答スキーマにも照合する。共通補助処理は`test/helpers/openapi.ts`。AjvのJSON Schema 2020-12用クラスをテスト専用に使い、実行時のAPIバリデーションとは分ける。
+
+```ts
+const response = await app.request('/api/health')
+await expectJsonResponse(
+  response,
+  openApiDocument.paths['/api/health'].get.responses,
+)
+```
+
+必須項目の欠落・型・enum・仕様にないステータス・Content-Typeを拒否し、仕様側だけを変更しても不一致を検出する。仕様JSONの配信テストやRPCの型検査とは役割が異なる。
+
+現状の補助処理は、呼び出し側が選んだ操作の明示的なステータスと、インラインのJSON応答スキーマを対象にする。全APIの自動走査、入力・認証・権限、`default`応答、OpenAPI文書全体の検証は行わない。`components`への参照や`format`などを導入する場合は、対象APIのIssueで解決・検証方法とテストを追加する。他のAPIの追加時も、入力・成功・エラーの動作テストと契約テストを揃え、仕様のレビューを続ける。
 
 Vitestでhealth・404・仕様JSONの配信・Swagger UIのHTML・共有ドメインでの接続を確認する。Hono RPCの`AppType`はルート登録の返り値から公開し、`hc<AppType>()`でのhealth呼び出しと応答型をテストする。`expectTypeOf`の確認は`npm run typecheck`で行う。frontendのRepositoryへの接続は今後行う。
