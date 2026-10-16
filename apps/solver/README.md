@@ -64,6 +64,7 @@ vercel deploy --prod
 
 - トークンの値は Git・ログ・チャットに残さない。Workers 側には `wrangler secret put` で同じ値を設定する（接続は #27・#28）。
 - プレビューデプロイは Vercel Authentication で保護され、Workers から直接は呼べない。Workers からは本番 URL を使う。
+- GitHub 連携はしない。連携するとチームの全 PR で Vercel のビルドが走り、Root Directory が違うと失敗するため。公開は上記の CLI で行う。
 
 ### 検証結果（#26）
 
