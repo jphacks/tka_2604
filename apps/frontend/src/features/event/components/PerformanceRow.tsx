@@ -30,7 +30,7 @@ export function PerformanceRow({
     isDragging,
   } = useSortable({
     id: performance.id,
-    disabled: { draggable: performance.fixed },
+    disabled: { draggable: performance.fixed, droppable: performance.fixed },
   })
   return (
     <div
