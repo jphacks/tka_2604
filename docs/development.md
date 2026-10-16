@@ -2,7 +2,7 @@
 
 ハッカソンのMVPとデモを優先する。仕様は必要な分だけ書き、変更と一緒に更新する。大きな設計書や将来向けの仕組みは増やさない。
 
-技術選定は[構成・技術選定](architecture.md)、その他の開発資料は`docs/`で管理する。
+技術選定は[構成・技術選定](architecture.md)、共通の開発資料は`docs/`、backend固有の仕様は`apps/backend/docs/`で管理する。backendの構成・責務は[backendの開発ルール](../apps/backend/AGENTS.md)を参照する。
 
 ## 起動
 
@@ -42,7 +42,7 @@ backendの振る舞いを変更するときは、次の順で進める。
 3. 最小限の実装で成功させ、テストを保ちながら重複・命名を整理する。実装と仕様が変わる場合はdocsも更新する。
 4. `npm run test:backend`、`npm run check`を実行し、別実行・未確認の項目を記録する。
 
-テストは`apps/backend/test/`配下に`src/`と同じ相対パスで置く（`src/db/events.ts` → `test/db/events.test.ts`）。共通補助処理は`test/helpers/`。特定ファイルだけの実行例は`npm run test:backend -- apps/backend/test/db/events.test.ts`。実装例は[DB手順](../apps/backend/db/README.md#db結合テスト)、API契約の確認例は[API手順](api/README.md#更新と確認)を参照する。
+テストは`apps/backend/test/`配下に`src/`と同じ相対パスで置く（`src/db/events.ts` → `test/db/events.test.ts`）。共通補助処理は`test/helpers/`。特定ファイルだけの実行例は`npm run test:backend -- apps/backend/test/db/events.test.ts`。実装例は[DB手順](../apps/backend/db/README.md#db結合テスト)、API契約の確認例は[API手順](../apps/backend/docs/api/README.md#更新と確認)を参照する。
 
 - ロジック・不具合は振る舞いと境界条件をテストする。資料・文言変更の形式的なテストは不要。
 - 制約は間隔・部の境界・入力不備を確認する。ソルバーは特定の順番より、欠落・重複・ハード制約違反がないことを確認する。
