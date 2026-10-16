@@ -33,7 +33,13 @@ npm run check
 
 SQL適用と適用履歴の管理はWranglerが担当する。Drizzleの`push`でDBへ直接反映したり、DrizzleのmigrateとWranglerで履歴を二重管理したりしない。
 
-現在の初回migrationは`0000_business_tables.sql`（8テーブル）と`0001_event_integrity.sql`（同一イベントの保証・部削除のトリガー）。空だった`0001_init.sql`は未適用の雛形として除去した。適用済みmigrationは書き換えず、変更は新規ファイルで追加する。
+初回migrationは`0000_business_tables.sql`（8テーブル）と`0001_event_integrity.sql`（同一イベントの保証・部削除のトリガー）。空だった`0001_init.sql`は未適用の雛形として除去した。適用済みmigrationは書き換えず、変更は新規ファイルで追加する。
+
+### 希望・チャット・部名の追加（#45）
+
+0002は部名のリネームと希望・由来・chat_messagesの追加、0003は希望状態と同イベントの由来・返信の整合性を保証する。Bandを作り直すCHECK変更は避け、状態の組合せはカスタムSQLトリガーで検証する。既存のcomment値とNULLはpart_nameへそのまま移行する。
+
+移行テストは旧0000・0001に名簿・所属・配置・制約・名前・NULLを保存してから新migrationを適用し、データと既存トリガーの保持を確認する。ローカル確認も既存DBを消さず、必要に応じて上記手順の一時保存先を使う。
 
 ### トリガーなど生成対象外のSQL
 

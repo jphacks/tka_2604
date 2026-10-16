@@ -22,7 +22,7 @@ export interface EventChanges {
   bands: Pick<typeof bands.$inferSelect, 'bandId' | 'bandName'>[]
   members: Pick<typeof members.$inferSelect, 'memberId' | 'memberName'>[]
   memberships: (typeof bandMembers.$inferSelect)[]
-  parts: Pick<typeof parts.$inferSelect, 'partId' | 'comment'>[]
+  parts: Pick<typeof parts.$inferSelect, 'partId' | 'partName'>[]
   placements: (typeof bandOrder.$inferSelect)[]
   constraints: Pick<
     typeof constraints.$inferSelect,
@@ -115,6 +115,9 @@ export async function saveEvent(
       ...current.parts.map((part) => part.sortOrder),
       input.parts.length,
     ) + 1
+  const sourceBands = new Map(
+    current.constraints.map((item) => [item.constraintId, item.sourceBandId]),
+  )
   const eventBands = db
     .select({ id: bands.bandId })
     .from(bands)
@@ -147,7 +150,9 @@ export async function saveEvent(
       ...chunks(input.bands).map((rows) =>
         db
           .insert(bands)
-          .values(rows.map((row) => ({ ...row, eventId })))
+          .values(
+            rows.map(({ bandId, bandName }) => ({ bandId, bandName, eventId })),
+          )
           .onConflictDoUpdate({
             target: bands.bandId,
             set: {
@@ -176,7 +181,7 @@ export async function saveEvent(
             target: parts.partId,
             set: {
               sortOrder: sql`CASE WHEN ${parts.eventId} = ${eventId} THEN excluded.sort_order ELSE NULL END`,
-              comment: sql`excluded.comment`,
+              partName: sql`excluded.part_name`,
             },
           }),
       ),
@@ -192,7 +197,14 @@ export async function saveEvent(
         db.insert(bandOrder).values(rows),
       ),
       ...chunks(input.constraints).map((rows) =>
-        db.insert(constraints).values(rows.map((row) => ({ ...row, eventId }))),
+        db.insert(constraints).values(
+          rows.map(({ constraintId, constraintJson }) => ({
+            constraintId,
+            constraintJson,
+            eventId,
+            sourceBandId: sourceBands.get(constraintId) ?? null,
+          })),
+        ),
       ),
     ])
   } catch (error) {
