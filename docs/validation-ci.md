@@ -53,7 +53,7 @@ healthの200応答・Content-Type・JSON本文、仕様JSONの配信、RPC型共
 | API仕様との契約確認      | 手書きOpenAPIの応答スキーマと実レスポンスのステータス・Content-Type・JSON本文を照合する。RPCの型検査も行う          |
 | FE・BEのE2E              | 画面から業務API・DBまで接続し、登録→保存→再読込などを通す。現状は未導入                                             |
 
-契約テストの最小例は`test/openapi.test.ts`。healthの実レスポンスをAjvで検証し、項目欠落・型・enum・ステータス・Content-Typeの不一致を検出する。[API手順](api/README.md)を参照。APIと手書き仕様は同じ変更で更新し、入力・エラー・権限などはAPIの動作テストで確認する。仕様のレビューとSwagger UIでの確認も続ける。
+契約テストの最小例は`test/openapi.test.ts`。healthの実レスポンスをAjvで検証し、項目欠落・型・enum・ステータス・Content-Typeの不一致を検出する。[API手順](../apps/backend/docs/api/README.md)を参照。APIと手書き仕様は同じ変更で更新し、入力・エラー・権限などはAPIの動作テストで確認する。仕様のレビューとSwagger UIでの確認も続ける。
 
 D1は#14で導入した`test/helpers/database.ts`を再利用する。各テストに隔離したD1へ実migrationを適用し、終了時に破棄する。[保存・再取得の最小例](../apps/backend/db/README.md#db結合テスト)を参照。部分更新防止・別イベント参照・配置重複・更新競合は`test/db/database.test.ts`と`test/db/save-event.test.ts`に既存例がある。各機能Issueでも該当するケースを追加し、不正入力や失敗でデータが変わらないことをAPI経由でも確認する。D1のモックだけでDB処理を確認済みにしない。
 
