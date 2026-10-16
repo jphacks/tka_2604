@@ -14,7 +14,8 @@
 | 最適化API              | FastAPI / OR-Tools CP-SAT                                          | 採用予定。順序・間隔の制約をPythonで扱う                    |
 | 保存                   | Cloudflare D1 / Drizzle                                            | 導入済み。業務テーブルとローカル保存処理。API接続は今後追加 |
 | テスト                 | Vitest / Testing Library / Playwright                              | 導入済み。frontend・backendの振る舞いを確認する             |
-| LLM・ソルバー公開先    | 未確定                                                             | 対応Issueで決める                                           |
+| LLM                    | OpenAI Responses API / GPT-6 Luna（effort: low）                   | 採用方針を合意済み。接続は#31                               |
+| ソルバー公開先         | 未確定                                                             | 対応Issueで決める                                           |
 
 ## 配置
 
@@ -50,7 +51,7 @@ health APIにOpenAPI定義・RPC型共有を導入済み。DrizzleとDBの保存
 
 対応Issueで入力・出力・エラー・必要な権限を具体例とともに決める。生成型だけを信頼せず、IDの存在とイベントへの所属も検証する。探索結果は成功、解なし、探索未完了、内部エラーを区別する。
 
-外部通信・LLMはテストで差し替えられるようにする。認証・公開フォームの詳細、LLMモデル、ソルバーの公開先は未確定。将来のためだけの層や汎用化は増やさない。
+外部通信・LLMはテストで差し替えられるようにする。LLMはGPT-6 Luna・lowを採用する方針。処理・保存の境界は[AIチャット設計](../apps/backend/docs/AIチャット設計.md)を参照する。認証・公開フォームの詳細、ソルバーの公開先は未確定。将来のためだけの層や汎用化は増やさない。
 
 既存のhealth APIでOpenAPIの配信・閲覧・RPC型共有を確認済み。DBの保存・再取得はローカルD1で確認済み。次にイベントの作成・一覧でZod検証と業務API・frontendを接続する。機能ごとのテストを実装と一緒に追加する。
 

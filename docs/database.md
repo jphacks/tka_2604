@@ -4,7 +4,7 @@ Cloudflare D1をDrizzle ORMで扱う。developとmainのDBは分離し、Honoか
 
 ## 正本と配置
 
-DB設計の正は[NotionのDB設計](https://app.notion.com/p/saku-panda-0719/JPHACKS-3f7d2e9e813c80acb6c8c9f2cfcb5b25#3f8d2e9e813c802691aaf03a518c6bb8)。この資料は[Issue #14](https://github.com/jphacks/tka_2604/issues/14)と2026-10-16の合意を実装用に反映する。Notion本文を自動同期するものではない。
+DBのテーブル定義は`apps/backend/src/db/schema.ts`で管理する。この資料は[Issue #45](https://github.com/jphacks/tka_2604/issues/45)の希望・由来・チャット履歴・部名の追加と、[Issue #14](https://github.com/jphacks/tka_2604/issues/14)と2026-10-16の合意を実装用に反映する。
 
 | 場所                                | 役割                                                           |
 | ----------------------------------- | -------------------------------------------------------------- |
@@ -32,6 +32,8 @@ erDiagram
     Member ||--o{ Band_Member : "掛け持ち"
     Part ||--o{ Band_Order : "部内の出演順"
     Band ||--o| Band_Order : "配置"
+    Band |o--o{ Constraints : "希望の生成元"
+    Event ||--o{ Chat_Message : "チャット履歴"
 
     User {
         TEXT user_id PK "必須・ログインID"
@@ -53,6 +55,8 @@ erDiagram
         TEXT band_id PK "必須"
         TEXT event_id FK "必須"
         TEXT band_name "必須"
+        TEXT request_text "追加・任意・希望の原文"
+        TEXT request_status "追加・任意・変換状態"
     }
     Member {
         TEXT member_id PK "必須"
@@ -67,7 +71,7 @@ erDiagram
         TEXT part_id PK "必須"
         TEXT event_id FK "必須"
         INTEGER sort_order "必須・0始まり"
-        TEXT comment "任意・部の補足"
+        TEXT part_name "任意・初期値NULL"
     }
     Band_Order {
         TEXT band_id PK, FK "必須"
@@ -78,6 +82,16 @@ erDiagram
         TEXT constraint_id PK "必須"
         TEXT event_id FK "必須"
         TEXT constraint_json "必須"
+        TEXT source_band_id FK "追加・任意・希望元のバンド"
+    }
+    Chat_Message {
+        TEXT message_id PK "新規・必須"
+        TEXT event_id FK "必須"
+        INTEGER seq "必須・イベント内の順序"
+        TEXT role "必須・user／assistant"
+        TEXT text "必須・表示する発言"
+        TEXT reply_to_message_id FK "userはNULL・assistantは必須"
+        TEXT created_at "必須・UTC"
     }
 ```
 
@@ -100,7 +114,7 @@ erDiagram
 - イベント作成処理はEventと最初の空のPartを同じD1 batchで保存する。EventへのSQL INSERT単独では部の自動作成は行わない。
 - Partは空でも存在できる。枠数・空き枠は保存しない。各部のバンド数は配置の件数から求める。
 - バンド登録直後は未配置。Band_Orderに行がなければ未配置とする。
-- 部の補足はcomment、表示上の「第n部」はsort_orderから算出する。
+- 部名は任意のpart_name（初期値NULL）に保存する。未入力・空欄ならsort_orderに対応する「第n部」を表示する仕様とし、frontendの対応は#32で行う。#45はbackendの定義・取得・保存のみを変更する。保存済み部名は並べ替えで変更しない。
 - 部を並べ替えても制約JSONの番号は変更しない。制約に違反する移動・固定解除前の移動を操作段階で拒否せず、違反を表示する方針。バンドは削除ではなく未配置へ戻し、メンバーも名簿に残す。DB上の重複や別イベント参照とは区別する。
 - 配置済みの部は先にバンドを未配置または別の部へ移動する。制約参照中の部は先に制約を変更・削除する。最後の1部は削除不可。
 - 部を削除した後の表示順を詰めても、制約JSONはそのまま保持する。
@@ -120,3 +134,15 @@ Eventはis_deletedを1にする論理削除。配下は残し、通常の読み�
 画面側の「保存」ボタンの接続・制約違反の表示・Solverへの接続、入力の実行時検証は業務API・画面のIssueで扱う。未保存内容のリアルタイム同期は不要。イベントの復元UIと、Band・Memberの削除機能は今回の対象外。
 
 適用・生成・ダミーデータ・テストと作り直しは[DB手順](../apps/backend/db/README.md)を参照する。
+
+## 希望・由来・チャットの保存（#45）
+
+[AIチャット設計](../apps/backend/docs/AIチャット設計.md)を参照する。希望はBand.request_text、状態はrequest_status。両方NULLなら希望なし、原文がある場合はpending／needs_confirmation／converted／failedを指定する。convertedは制約へ変換済みを意味し、計算の成功を意味しない。
+
+Constraints.source_band_idは任意の希望元。FKと挿入・更新トリガーで同イベントのBandだけを許す。既存saveEventは、同じconstraint_idの由来とBandの希望を保持し、クライアント入力の余分な項目で上書きしない。
+
+chat_messagesはmessage_idをPK、(event_id, seq)・reply_to_message_idをそれぞれ一意にする。seqは0以上の整数。userは返信先NULL、assistantは同イベントの先行userへの返信を必須とする。event_id・seq・role・返信先は保存後に変更しない。メッセージ保存・取得のHTTP APIや自動採番は#47で追加する。発言の保存だけでEvent.updatedAtを更新しない。
+
+0002_wishes_chat_and_part_nameはDrizzle生成SQLで、commentをpart_nameへリネームし、列・履歴テーブルを追加する。0003_chat_integrityは希望状態・由来・返信の整合性を保証するカスタムトリガー。親テーブルの作り直しを避け、既存の所属・配置・名前・NULLを維持する。適用済みの0000・0001は変更していない。
+
+業務APIはまだhealth等のみのため、OpenAPIの公開契約に変更はない。後続APIではpartName・希望状態・由来を用途に応じてDTOへ写し、パスワードハッシュやDB管理項目を不用意に公開しない。
