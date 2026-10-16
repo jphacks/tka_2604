@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
+  type AnySQLiteColumn,
   check,
   integer,
   primaryKey,
@@ -62,14 +63,16 @@ export const events = sqliteTable(
 
 // 出演バンド：イベントに登録されたバンド。
 export const bands = sqliteTable('bands', {
-  // バンドID
   bandId: text('band_id').primaryKey().notNull(),
-  // イベントID
   eventId: text('event_id')
     .notNull()
     .references(() => events.eventId),
-  // バンド名
   bandName: text('band_name').notNull(),
+  // 希望の原文と変換状態。組合せの整合性はカスタムmigrationのトリガーで保証。
+  requestText: text('request_text'),
+  requestStatus: text('request_status', {
+    enum: ['pending', 'needs_confirmation', 'converted', 'failed'],
+  }),
 })
 
 // 出演者名簿：同名でもIDが異なれば別人として扱う。
@@ -112,8 +115,8 @@ export const parts = sqliteTable(
       .references(() => events.eventId),
     // 部の表示順（0始まり）。画面では「第n部」と表示する
     sortOrder: integer('sort_order').notNull(),
-    // 部の補足コメント（任意）
-    comment: text('comment'),
+    // 部名（任意）。未入力時の表示は「第n部」。
+    partName: text('part_name'),
   },
   (table) => [
     uniqueIndex('parts_event_sort_order').on(table.eventId, table.sortOrder),
@@ -161,12 +164,47 @@ export const constraints = sqliteTable(
       .references(() => events.eventId),
     // 制約のJSON。形式の正本はapps/schema、種別もJSON内に持つ
     constraintJson: text('constraint_json').notNull(),
+    // 希望の生成元。制約のtargetsとは別のメタデータ。
+    sourceBandId: text('source_band_id').references(() => bands.bandId),
   },
   (table) => [
     check('constraints_valid_json', sql`json_valid(${table.constraintJson})`),
     check(
       'constraints_identity',
       sql`json_extract(${table.constraintJson}, '$.constraint_id') is ${table.constraintId} and json_extract(${table.constraintJson}, '$.event_id') is ${table.eventId}`,
+    ),
+  ],
+)
+
+// 1イベント1会話。発言だけの保存でイベントの更新日時は変更しない。
+export const chatMessages = sqliteTable(
+  'chat_messages',
+  {
+    messageId: text('message_id').primaryKey().notNull(),
+    eventId: text('event_id')
+      .notNull()
+      .references(() => events.eventId),
+    seq: integer('seq').notNull(),
+    role: text('role', { enum: ['user', 'assistant'] }).notNull(),
+    text: text('text').notNull(),
+    replyToMessageId: text('reply_to_message_id').references(
+      (): AnySQLiteColumn => chatMessages.messageId,
+    ),
+    createdAt: text('created_at')
+      .notNull()
+      .default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`),
+  },
+  (table) => [
+    uniqueIndex('chat_messages_event_seq').on(table.eventId, table.seq),
+    uniqueIndex('chat_messages_reply').on(table.replyToMessageId),
+    check(
+      'chat_messages_seq',
+      sql`typeof(${table.seq}) = 'integer' and ${table.seq} >= 0`,
+    ),
+    check('chat_messages_role', sql`${table.role} in ('user', 'assistant')`),
+    check(
+      'chat_messages_reply_role',
+      sql`(${table.role} = 'user' and ${table.replyToMessageId} is null) or (${table.role} = 'assistant' and ${table.replyToMessageId} is not null)`,
     ),
   ],
 )

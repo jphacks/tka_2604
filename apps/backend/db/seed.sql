@@ -3,13 +3,13 @@ INSERT INTO users (user_id, password_hash)
 VALUES ('demo-owner', 'not-a-valid-password-hash') ON CONFLICT DO NOTHING;
 INSERT INTO events (event_id, created_user_id, title)
 VALUES ('demo-event', 'demo-owner', 'デモライブ') ON CONFLICT DO NOTHING;
-INSERT INTO parts (part_id, event_id, sort_order, comment) VALUES
+INSERT INTO parts (part_id, event_id, sort_order, part_name) VALUES
 ('demo-part-1', 'demo-event', 0, '前半'),
 ('demo-part-2', 'demo-event', 1, NULL) ON CONFLICT DO NOTHING;
-INSERT INTO bands (band_id, event_id, band_name) VALUES
-('demo-band-a', 'demo-event', 'バンドA'),
-('demo-band-b', 'demo-event', 'バンドB'),
-('demo-band-c', 'demo-event', '未配置バンド') ON CONFLICT DO NOTHING;
+INSERT INTO bands (band_id, event_id, band_name, request_text, request_status) VALUES
+('demo-band-a', 'demo-event', 'バンドA', '必須で先頭にする', 'converted'),
+('demo-band-b', 'demo-event', 'バンドB', NULL, NULL),
+('demo-band-c', 'demo-event', '未配置バンド', NULL, NULL) ON CONFLICT DO NOTHING;
 INSERT INTO members (member_id, event_id, member_name) VALUES
 ('demo-member-1', 'demo-event', '同名の出演者'),
 ('demo-member-2', 'demo-event', '同名の出演者') ON CONFLICT DO NOTHING;
@@ -20,7 +20,11 @@ INSERT INTO band_members (band_id, member_id) VALUES
 INSERT INTO band_order (band_id, part_id, "order") VALUES
 ('demo-band-a', 'demo-part-1', 0),
 ('demo-band-b', 'demo-part-1', 1) ON CONFLICT DO NOTHING;
-INSERT INTO constraints (constraint_id, event_id, constraint_json) VALUES (
+INSERT INTO constraints (constraint_id, event_id, constraint_json, source_band_id) VALUES (
 'demo-constraint', 'demo-event',
-'{"schema_version":"1.0.0","constraint_id":"demo-constraint","event_id":"demo-event","type":"at_position","hardness":"hard","priority":null,"enabled":true,"targets":{"band_id":"demo-band-a"},"params":{"position":0}}'
+'{"schema_version":"1.0.0","constraint_id":"demo-constraint","event_id":"demo-event","type":"at_position","hardness":"hard","priority":null,"enabled":true,"targets":{"band_id":"demo-band-a"},"params":{"position":0}}', 'demo-band-a'
 ) ON CONFLICT DO NOTHING;
+
+INSERT INTO chat_messages (message_id, event_id, seq, role, text, reply_to_message_id) VALUES
+('demo-user-message', 'demo-event', 0, 'user', '保存確認用の発言', NULL),
+('demo-assistant-message', 'demo-event', 1, 'assistant', '保存確認用の固定応答です。', 'demo-user-message') ON CONFLICT DO NOTHING;

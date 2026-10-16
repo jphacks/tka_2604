@@ -38,7 +38,7 @@ describe('event persistence', () => {
       isDeleted: false,
     })
     expect(saved.parts).toHaveLength(1)
-    expect(saved.parts[0]).toMatchObject({ sortOrder: 0, comment: null })
+    expect(saved.parts[0]).toMatchObject({ sortOrder: 0, partName: null })
     expect(saved.placements).toEqual([])
     expect(saved.event).not.toHaveProperty('passwordHash')
   })
