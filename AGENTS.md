@@ -14,3 +14,4 @@ JPHACKS向けの出演順作成アプリ。ハッカソンのMVPとデモを優�
 - 関連テストと`npm run check`で確認する。Pythonテストは現在このチェックに含まれない。未確認・失敗は明示する。
 - ユーザーの既存変更を保持し、今回の変更だけをcommitする。秘密情報をGitやログに残さない。マージ・本番デプロイ・本番DB変更は依頼がある場合に行う。
 - IssueからPRまでの依頼は[develop-issue](.agents/develop-issue/SKILL.md)に従う。通常の実装判断は自律的に進め、結果を左右する仕様の不明点は確認する。
+- Issueの整理・起票だけの依頼は[create-issue](.agents/create-issue/SKILL.md)に従う。
