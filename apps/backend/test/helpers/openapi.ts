@@ -3,7 +3,7 @@ import { expect } from 'vitest'
 
 type JsonResponses = Record<
   string,
-  { content?: Record<string, { schema?: AnySchema }> }
+  { description?: string; content?: Record<string, { schema?: AnySchema }> }
 >
 
 const ajv = new Ajv2020({ allErrors: true })

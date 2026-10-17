@@ -36,6 +36,1394 @@
           }
         }
       }
+    },
+    "/api/events": {
+      "get": {
+        "operationId": "listEvents",
+        "summary": "イベント一覧を取得する",
+        "description": "認証は#57で追加する。現在はサーバー設定EVENTS_USER_IDの所有者に限定し、クライアントから所有者IDを受け取らない。 削除済みを除き、updatedAt降順、同値ならeventId降順。ページングなし。",
+        "tags": ["Events"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "イベント一覧。対象がなければ空配列",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "eventId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "pattern": "\\S",
+                            "description": "前後の空白を除去したイベント名"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": ["planning", "adjusting", "confirmed"]
+                          },
+                          "date": {
+                            "type": ["string", "null"],
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                            "description": "実在する開催日（YYYY-MM-DD）。未設定はnull"
+                          },
+                          "venue": {
+                            "type": ["string", "null"]
+                          },
+                          "description": {
+                            "type": ["string", "null"]
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                          },
+                          "performanceCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "未配置を含む登録バンド数"
+                          },
+                          "assignedCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "配置済みバンド数"
+                          },
+                          "partCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "空の部を含む部数"
+                          },
+                          "responseCount": {
+                            "type": "null",
+                            "description": "#33・#58で回答数の定義と保存先が決まるまでnull。0件を意味しない"
+                          }
+                        },
+                        "required": [
+                          "eventId",
+                          "title",
+                          "status",
+                          "date",
+                          "venue",
+                          "description",
+                          "createdAt",
+                          "updatedAt",
+                          "performanceCount",
+                          "assignedCount",
+                          "partCount",
+                          "responseCount"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": ["events"],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "events": [
+                    {
+                      "eventId": "event-1",
+                      "title": "秋ライブ",
+                      "status": "planning",
+                      "date": "2026-11-01",
+                      "venue": null,
+                      "description": null,
+                      "createdAt": "2026-10-17T00:00:00.000Z",
+                      "updatedAt": "2026-10-17T00:00:00.000Z",
+                      "performanceCount": 0,
+                      "assignedCount": 0,
+                      "partCount": 1,
+                      "responseCount": null
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "イベントの処理に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "internal_error",
+                    "message": "イベントの処理に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "イベント所有者のサーバー設定が未完了です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_owner_not_configured"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_owner_not_configured",
+                    "message": "イベント所有者のサーバー設定が未完了です。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createEvent",
+        "summary": "イベントを作成する",
+        "description": "認証は#57で追加する。現在はサーバー設定EVENTS_USER_IDの所有者に限定し、クライアントから所有者IDを受け取らない。 planning状態のイベントと最初の空の部を同一batchで作成する。",
+        "tags": ["Events"],
+        "security": [],
+        "responses": {
+          "201": {
+            "description": "作成したイベント本体。配下のデータは含まない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "\\S",
+                      "description": "前後の空白を除去したイベント名"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": ["planning", "adjusting", "confirmed"]
+                    },
+                    "date": {
+                      "type": ["string", "null"],
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                      "description": "実在する開催日（YYYY-MM-DD）。未設定はnull"
+                    },
+                    "venue": {
+                      "type": ["string", "null"]
+                    },
+                    "description": {
+                      "type": ["string", "null"]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                    }
+                  },
+                  "required": [
+                    "eventId",
+                    "title",
+                    "status",
+                    "date",
+                    "venue",
+                    "description",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "eventId": "event-1",
+                  "title": "秋ライブ",
+                  "status": "planning",
+                  "date": "2026-11-01",
+                  "venue": null,
+                  "description": null,
+                  "createdAt": "2026-10-17T00:00:00.000Z",
+                  "updatedAt": "2026-10-17T00:00:00.000Z"
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "description": "作成したイベントの取得パス",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "/api/events/event-1"
+              }
+            }
+          },
+          "400": {
+            "description": "JSONの形式が不正です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "invalid_input",
+                    "message": "JSONの形式が不正です。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力データが不正です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "invalid_input",
+                    "message": "入力データが不正です。",
+                    "details": [
+                      {
+                        "path": "/title",
+                        "reason": "イベント名を入力してください。"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "イベントの処理に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "internal_error",
+                    "message": "イベントの処理に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "イベント所有者のサーバー設定が未完了です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_owner_not_configured"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_owner_not_configured",
+                    "message": "イベント所有者のサーバー設定が未完了です。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "\\S",
+                    "description": "前後の空白を除去したイベント名"
+                  },
+                  "date": {
+                    "type": ["string", "null"],
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "description": "実在する開催日（YYYY-MM-DD）。未設定はnull"
+                  },
+                  "venue": {
+                    "type": ["string", "null"]
+                  },
+                  "description": {
+                    "type": ["string", "null"]
+                  }
+                },
+                "required": ["title"],
+                "additionalProperties": false
+              },
+              "example": {
+                "title": "秋ライブ",
+                "date": "2026-11-01",
+                "venue": null,
+                "description": null
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{eventId}": {
+      "parameters": [
+        {
+          "name": "eventId",
+          "in": "path",
+          "required": true,
+          "description": "イベントID。UUID形式に限定せず既存IDも受け付ける",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getEvent",
+        "summary": "イベント本体を取得する",
+        "description": "認証は#57で追加する。現在はサーバー設定EVENTS_USER_IDの所有者に限定し、クライアントから所有者IDを受け取らない。 バンド・メンバー・部・配置・制約・チャットは含めない。存在しない・削除済み・対象所有者以外は404。",
+        "tags": ["Events"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "イベント本体",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "\\S",
+                      "description": "前後の空白を除去したイベント名"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": ["planning", "adjusting", "confirmed"]
+                    },
+                    "date": {
+                      "type": ["string", "null"],
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                      "description": "実在する開催日（YYYY-MM-DD）。未設定はnull"
+                    },
+                    "venue": {
+                      "type": ["string", "null"]
+                    },
+                    "description": {
+                      "type": ["string", "null"]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                    }
+                  },
+                  "required": [
+                    "eventId",
+                    "title",
+                    "status",
+                    "date",
+                    "venue",
+                    "description",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "eventId": "event-1",
+                  "title": "秋ライブ",
+                  "status": "planning",
+                  "date": "2026-11-01",
+                  "venue": null,
+                  "description": null,
+                  "createdAt": "2026-10-17T00:00:00.000Z",
+                  "updatedAt": "2026-10-17T00:00:00.000Z"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "イベントが見つかりません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_not_found"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "イベントが見つかりません。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "イベントの処理に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "internal_error",
+                    "message": "イベントの処理に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "イベント所有者のサーバー設定が未完了です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_owner_not_configured"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_owner_not_configured",
+                    "message": "イベント所有者のサーバー設定が未完了です。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateEventSettings",
+        "summary": "イベントの設定を部分更新する",
+        "description": "認証は#57で追加する。現在はサーバー設定EVENTS_USER_IDの所有者に限定し、クライアントから所有者IDを受け取らない。 expectedUpdatedAtと更新項目を1件以上指定する。省略項目は保持し、date・venue・descriptionの消去はnull。更新時刻は前回より必ず進める。競合時は保存しない。",
+        "tags": ["Events"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "更新後のイベント本体",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "\\S",
+                      "description": "前後の空白を除去したイベント名"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": ["planning", "adjusting", "confirmed"]
+                    },
+                    "date": {
+                      "type": ["string", "null"],
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                      "description": "実在する開催日（YYYY-MM-DD）。未設定はnull"
+                    },
+                    "venue": {
+                      "type": ["string", "null"]
+                    },
+                    "description": {
+                      "type": ["string", "null"]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                    }
+                  },
+                  "required": [
+                    "eventId",
+                    "title",
+                    "status",
+                    "date",
+                    "venue",
+                    "description",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "eventId": "event-1",
+                  "title": "秋ライブ2026",
+                  "status": "planning",
+                  "date": "2026-11-01",
+                  "venue": null,
+                  "description": null,
+                  "createdAt": "2026-10-17T00:00:00.000Z",
+                  "updatedAt": "2026-10-17T00:00:00.001Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSONの形式が不正です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "invalid_input",
+                    "message": "JSONの形式が不正です。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "イベントが見つかりません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_not_found"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "イベントが見つかりません。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "イベントが更新されました。再取得してください。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_save_conflict"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_save_conflict",
+                    "message": "イベントが更新されました。再取得してください。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力データが不正です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "invalid_input",
+                    "message": "入力データが不正です。",
+                    "details": [
+                      {
+                        "path": "/title",
+                        "reason": "イベント名を入力してください。"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "イベントの処理に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "internal_error",
+                    "message": "イベントの処理に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "イベント所有者のサーバー設定が未完了です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_owner_not_configured"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_owner_not_configured",
+                    "message": "イベント所有者のサーバー設定が未完了です。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "\\S",
+                    "description": "前後の空白を除去したイベント名"
+                  },
+                  "date": {
+                    "type": ["string", "null"],
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "description": "実在する開催日（YYYY-MM-DD）。未設定はnull"
+                  },
+                  "venue": {
+                    "type": ["string", "null"]
+                  },
+                  "description": {
+                    "type": ["string", "null"]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["planning", "adjusting", "confirmed"]
+                  },
+                  "expectedUpdatedAt": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                  }
+                },
+                "required": ["expectedUpdatedAt"],
+                "minProperties": 2,
+                "additionalProperties": false
+              },
+              "example": {
+                "expectedUpdatedAt": "2026-10-17T00:00:00.000Z",
+                "title": "秋ライブ2026",
+                "venue": null
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteEvent",
+        "summary": "イベントを論理削除する",
+        "description": "認証は#57で追加する。現在はサーバー設定EVENTS_USER_IDの所有者に限定し、クライアントから所有者IDを受け取らない。 is_deleted=1にし、配下の名簿・部・配置・希望・制約・チャット履歴は保持する。削除済みIDへの再実行は404。",
+        "tags": ["Events"],
+        "security": [],
+        "responses": {
+          "204": {
+            "description": "論理削除完了。レスポンス本文なし"
+          },
+          "404": {
+            "description": "イベントが見つかりません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_not_found"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "イベントが見つかりません。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "イベントの処理に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "internal_error",
+                    "message": "イベントの処理に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "イベント所有者のサーバー設定が未完了です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_owner_not_configured"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_owner_not_configured",
+                    "message": "イベント所有者のサーバー設定が未完了です。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
