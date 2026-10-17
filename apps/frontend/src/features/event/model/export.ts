@@ -1,3 +1,4 @@
+import { downloadCsv } from '../../../shared/ui/download'
 import { buildSchedule } from './schedule'
 import type { EventData } from './types'
 
@@ -33,13 +34,5 @@ export function eventCsv(event: EventData) {
 }
 
 export function exportEventCsv(event: EventData) {
-  const blob = new Blob([eventCsv(event)], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `${event.name}-出演順.csv`
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
+  downloadCsv(`${event.name}-出演順.csv`, eventCsv(event))
 }

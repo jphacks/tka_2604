@@ -1,15 +1,10 @@
 import { mockEventRepository } from '../../../mock/eventRepository'
 import { eventsApi } from '../../../shared/api/events'
-import {
-  dataSource,
-  unavailable,
-} from '../../../shared/repositories/dataSource'
+import { dataSource } from '../../../shared/repositories/dataSource'
+import { sendChatMessage } from './chatRepository'
 import type { EventRepository } from './types'
 
-export const eventRepository: EventRepository =
-  dataSource === 'api'
-    ? {
-        getEvent: (eventId, signal) => eventsApi.getEvent(eventId, signal),
-        sendMessage: unavailable,
-      }
-    : mockEventRepository
+export const eventRepository: EventRepository = {
+  ...(dataSource === 'api' ? eventsApi : mockEventRepository),
+  sendMessage: sendChatMessage,
+}

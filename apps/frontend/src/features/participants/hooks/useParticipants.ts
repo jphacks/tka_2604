@@ -30,6 +30,7 @@ export function useParticipants(eventId: string) {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [importOpen, setImportOpen] = useState(false)
   const data = resource.data?.data
   const orders = new Map(
     data
@@ -126,6 +127,7 @@ export function useParticipants(eventId: string) {
     notice,
     deletingId,
     deletingName: rows.find((row) => row.id === deletingId)?.name,
+    importOpen,
     rows: rows.filter(
       (row) =>
         (filter === 'all' ||
@@ -156,6 +158,14 @@ export function useParticipants(eventId: string) {
     },
     closeEditor: () => {
       if (!busy) setEditorOpen(false)
+    },
+    openImport: () => setImportOpen(true),
+    closeImport: () => setImportOpen(false),
+    importDone: (count: number, completed: boolean) => {
+      resource.refresh()
+      if (!completed) return
+      setImportOpen(false)
+      setNotice(`${count}組を取り込みました。未配置一覧から配置できます。`)
     },
     change: (patch: Partial<PerformanceDraft>) => {
       setDraft((value) => ({ ...value, ...patch }))

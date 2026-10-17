@@ -44,14 +44,14 @@
 health・イベント本体APIにOpenAPI定義・RPC型共有を導入済み。DrizzleとDBの保存処理をイベント本体APIへ接続済み。frontendはAPIモードで既存のイベントAPIへ接続済み。認証・他の業務APIは今後追加する。
 
 - APIは通常のHonoの`app.get()`・`app.post()`で実装し、入力のあるAPIではZodで検証する。OpenAPI仕様は`apps/backend/docs/api/openapi.json`に別途手書きし、API変更時は実装・仕様・対象APIの動作テストを揃える。
-- ルート登録の返り値から`AppType`を公開し、frontendのRepositoryで`hc<AppType>()`を使う。backendからは型のみをimportし、サーバーの実装をfrontendへ持ち込まない。
+- ルート登録の返り値から`AppType`を公開し、frontendのRepositoryで`hc<AppType>()`を使う。チャットはbindingに依存しないルート単位の`ChatAppType`を使う。backendからは型のみをimportし、サーバーの実装をfrontendへ持ち込まない。
 - DrizzleでD1のテーブルを定義し、SQL生成・差分確認・ローカル適用を行う。DBの行型とAPIの入出力は用途に応じて分ける。[DB方針](database.md)を参照。
 - OpenAPI 3.1.0を`/api/openapi.json`、Swagger UIを`/api/docs`で提供する。developドメインでUI・JSON・APIを配信し、共有URLから閲覧・試行できる。手書きの仕様JSONをそのまま配信し、APIの動作・応答仕様との整合性はVitestとレビューで確認する。healthにAjvによる契約テストを導入済み。[更新・閲覧手順](../apps/backend/docs/api/README.md)を参照。
-- 制約JSONの正本は引き続き`apps/schema`。ZodやOpenAPIに同じ制約を手書きで重複定義せず、実行時検証・OpenAPIとの接続方法は制約APIの実装時に決める。
+- 制約JSONの正本は引き続き`apps/schema`。実行時検証は`shared/constraints/schema.ts`で正本の参照を解決してZodへ渡し、イベントとチャットで共用する。OpenAPIのConstraint定義も正本と照合し、同じ制約を手書きで重複定義しない。
 
 対応Issueで入力・出力・エラー・必要な権限を具体例とともに決める。生成型だけを信頼せず、IDの存在とイベントへの所属も検証する。探索結果は成功、解なし、探索未完了、内部エラーを区別する。
 
-外部通信・LLMはテストで差し替えられるようにする。LLMはGPT-6 Luna・lowを採用する方針。処理・保存の境界は[AIチャット設計](../apps/backend/docs/AIチャット設計.md)を参照する。認証・公開フォームの詳細、ソルバーの公開先は未確定。将来のためだけの層や汎用化は増やさない。
+外部通信・LLMはテストで差し替えられるようにする。LLMはGoogle AI StudioのGemini 3.5 Flash-Lite（`gemini-3.5-flash-lite`）を使用する。Google GenAI SDKによる外部通信は`integrations/llm`、入力の組み立て・履歴の選択・変更案の検証は`services/chat`へ置く。イベント関連のDTO・取得Repository・`EventError`・共有Schema＋Zodの制約検証は、マージ済みPR #60の共通実装を使う。処理・保存の境界は[AIチャット設計](../apps/backend/docs/AIチャット設計.md)を参照する。認証・公開フォームの詳細、ソルバーの公開先は未確定。将来のためだけの層や汎用化は増やさない。
 
 health・イベント本体APIでOpenAPIの配信・閲覧・RPC型共有を確認する。イベント本体APIはZodで入力を検証し、テスト用D1への保存・再取得をAPIテストとDB結合テストで確認する。認証接続前はRoute内の仮ID定数`demo-owner`をServiceへ渡し、#57で認証済みユーザーIDへ置き換える。frontendは#19で既存APIへ接続する。配置・制約保存はPR #69のマージ後、名簿編集は#16の実装後に追加する。[イベントAPI](../apps/backend/docs/api/events.md)を参照。
 
@@ -66,7 +66,7 @@ health・イベント本体APIでOpenAPIの配信・閲覧・RPC型共有を確�
 | `app/`                        | ルーティング、デモセッション、ログイン後の復帰先       |
 | `features/auth/`              | デモ開始                                               |
 | `features/events/`            | イベント一覧・作成・設定・削除                         |
-| `features/event/`             | 出演順、制約入力、チャットのデモ、CSV出力              |
+| `features/event/`             | 出演順、制約入力、チャット送受信、CSV出力              |
 | `features/forms/`             | 出演登録とフォーム設定                                 |
 | `features/participants/`      | 出演枠・所属メンバーの編集                             |
 | `shared/model/`               | イベント・メンバーのモデル、制約の検証・説明・達成判定 |

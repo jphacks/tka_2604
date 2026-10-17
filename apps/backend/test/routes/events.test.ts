@@ -24,8 +24,10 @@ import {
   users,
 } from '../../src/db/schema'
 import app, { type AppType } from '../../src/index'
+import * as solverIntegration from '../../src/integrations/solver'
 import { openApiDocument } from '../../src/openapi'
 import * as persistence from '../../src/repositories/events'
+import { eventRoutes } from '../../src/routes/events'
 import type {
   EventDetails,
   EventSummary,
@@ -80,6 +82,89 @@ async function create() {
 }
 
 describe('event HTTP API', () => {
+  it('serves schedule and constraint saves directly from eventRoutes', async () => {
+    const created = await create()
+    const snapshot = (await loadEvent(db, 'demo-owner', created.eventId))!
+    const schedule = await eventRoutes.request(
+      `/${created.eventId}/schedule`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          expectedUpdatedAt: created.updatedAt,
+          parts: snapshot.parts.map(({ partId, partName }) => ({
+            partId,
+            partName,
+          })),
+          placements: [],
+          unassignedBandIds: [],
+        }),
+      },
+      { DB: local.binding },
+    )
+    expect(schedule.status).toBe(200)
+    await expectJsonResponse(
+      schedule,
+      openApiDocument.paths['/api/events/{eventId}/schedule'].post.responses,
+    )
+    const saved = await schedule.json<{ updatedAt: string }>()
+    const constraints = await eventRoutes.request(
+      `/${created.eventId}/constraints`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          expectedUpdatedAt: saved.updatedAt,
+          constraints: [],
+        }),
+      },
+      { DB: local.binding },
+    )
+    expect(constraints.status).toBe(200)
+    await expectJsonResponse(
+      constraints,
+      openApiDocument.paths['/api/events/{eventId}/constraints'].post.responses,
+    )
+  })
+
+  it('serves solve directly from eventRoutes with the same owner and DB', async () => {
+    const created = await create()
+    const snapshot = (await loadEvent(db, 'demo-owner', created.eventId))!
+    await db.insert(bands).values({
+      bandId: 'direct-band',
+      eventId: created.eventId,
+      bandName: 'Direct',
+    })
+    const client = vi.fn().mockResolvedValue({
+      eventId: created.eventId,
+      status: 'feasible',
+      placements: [
+        { bandId: 'direct-band', partId: snapshot.parts[0].partId, order: 0 },
+      ],
+      unassignedBandIds: [],
+      constraintResults: [],
+    })
+    vi.spyOn(solverIntegration, 'solverClient').mockReturnValueOnce(client)
+    const response = await eventRoutes.request(
+      `/${created.eventId}/solve`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expectedUpdatedAt: created.updatedAt }),
+      },
+      { DB: local.binding },
+    )
+    expect(response.status).toBe(200)
+    await expectJsonResponse(
+      response,
+      openApiDocument.paths['/api/events/{eventId}/solve'].post.responses,
+    )
+    expect(client).toHaveBeenCalledOnce()
+    expect(
+      (await loadEvent(db, 'demo-owner', created.eventId))?.placements,
+    ).toHaveLength(1)
+  })
+
   it('creates, lists, retrieves and partially updates the same basic event through D1', async () => {
     const created = await create()
     expect(created).toMatchObject({
