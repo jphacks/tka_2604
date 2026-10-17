@@ -37,6 +37,20 @@ uv sync --locked --directory apps/solver
 
 画面・health・イベントAPIのローカル起動にAPIキー・Cloudflareログインは不要。チャット送信はルートの`.env`または`.dev.vars`のどちらかに`GOOGLE_AI_API_TOKEN`を設定し、migration済みD1と有効なイベントを用意する。ローカルD1はWorkersが手元に作成し、Cloudflare上の検証・本番DBは操作しない。DBの雛形と適用手順は[DB手順](../apps/backend/db/README.md)を参照。Cloudflare上のチャット送信にはdevelop/mainごとに同名のSecretを登録する。秘密情報はGitに含めない。
 
+## Solverの環境変数
+
+計算APIを使う場合は、リポジトリルートで使う環境のファイルを用意する（既存ファイルは上書きしない）。
+
+```sh
+cp -n .env.example .env.develop
+# 本番への公開時のみ用意する
+cp -n .env.example .env.main
+```
+
+`SOLVER_API_URL`はSolverのベースURL、`SOLVER_API_TOKEN`はSolverと同じトークン。ローカルSolverではURLを`http://localhost:8000`に変更する。基本画面・イベントAPIの確認だけならトークン不要。`.dev.vars`がある場合は設定をenvファイルへ移す。
+
+ローカル起動では`.env.develop`を読み、各deployコマンドでは対応するenvファイルをWorkersのSecretとして登録する。実ファイルはGit対象外で、`.env.example`だけを共有する。ビルド・checkはenvファイルなしで実行できる。計算APIの詳細は[計算API](../apps/backend/docs/api/solver.md)を参照。
+
 ## 起動・確認
 
 実行場所：リポジトリルート。

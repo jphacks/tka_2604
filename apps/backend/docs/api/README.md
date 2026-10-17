@@ -8,11 +8,12 @@ APIを変更するときは実装・OpenAPI仕様・APIの動作テストを同�
 
 表・制約・チャット履歴は、それぞれ`GET /api/events/{eventId}/schedule`・`/constraints`・`/chat`で取得する。契約・具体例・並び順は[イベントAPI](events.md)にまとめる。チャットはページング・件数上限なしで保存済み全履歴を返す。
 
+`GET /api/health`は入力なしで200と`{"status":"ok"}`を返す。DBの稼働確認は含まない。イベント本体と3種類の情報取得を実装済み。表・制約は同じパスのPOSTで個別保存する。計算は独立した`POST /api/events/{eventId}/solve`を使う。[計算API](solver.md)を参照。認証は後続Issueで扱う。
 [チャット送信](chat.md)の`POST /api/events/{eventId}/chat`は所有者・イベントを確認し、userの先行保存、LLM生成・検証、assistant本文保存の順に処理する。履歴取得GETと同じパスで、既存の`reply`形式で返す。生成Serviceの型・検証は[AIチャット入出力](../AIチャット入出力.md)を参照。
 
 `GET /api/health`は入力なしで200と`{"status":"ok"}`を返す。DBの稼働確認は含まない。イベント本体と3種類の情報取得を実装済み。認証・制約のHTTP保存・計算APIは後続Issueで扱う。
 
-BE ↔ Solverの契約案は[BE - Solver API設計](<../BE - Solver API設計.md>)を参照。リクエスト・レスポンス例と探索状態を記載している。未実装のため、現在配信するOpenAPIには含めない。
+BE ↔ Solverの契約案は[BE - Solver API設計](<../BE - Solver API設計.md>)を参照。リクエスト・レスポンス例と探索状態を記載している。これはbackend → Solverの契約。ブラウザ → backendの計算APIは[計算API](solver.md)と配信OpenAPIに記載する。
 
 ## Markdown定義書の共通形式
 
