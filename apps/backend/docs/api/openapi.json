@@ -1669,6 +1669,486 @@
             }
           }
         }
+      },
+      "post": {
+        "operationId": "sendChatMessage",
+        "summary": "チャット本文を保存し、AIの返信を保存して返す",
+        "description": "入力検証・イベント所有者と削除状態の確認後、ユーザー発言を先に保存する。最新状態と直近6メッセージでGeminiを呼び、検証済みのmessage本文だけをassistantとして保存する。制約の適用・承認待ち案の保持・Solver実行は行わない。認証接続まではサーバー側のdemo-ownerに限定する。",
+        "tags": ["Chat"],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "example": "spring-live-2026"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000,
+                    "pattern": "\\S",
+                    "description": "前後の空白を除去して処理する本文。空白のみは不可。"
+                  },
+                  "messageId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "再送で同じ値を使う発言ID。省略時はBEで発行する。",
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  }
+                },
+                "required": ["message"],
+                "additionalProperties": false
+              },
+              "example": {
+                "message": "出演間隔を空けたい",
+                "messageId": "chat-user-1"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "ユーザー発言と検証済みAI回答の保存後の返信。再送では保存済み回答を返す。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "reply": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": ["reply"]
+                },
+                "example": {
+                  "reply": "必要な出演間隔を教えてください。"
+                }
+              }
+            },
+            "headers": {
+              "X-Chat-Message-Id": {
+                "description": "入力検証後に確定したユーザー発言ID。再送時は同じmessageIdを本文に指定する。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "壊れたJSON。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "reason"]
+                          }
+                        }
+                      },
+                      "required": ["code", "message", "details"]
+                    }
+                  },
+                  "required": ["error"]
+                },
+                "example": {
+                  "error": {
+                    "code": "invalid_input",
+                    "message": "JSONの形式が不正です。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "内部処理の失敗。例外やプロバイダーの本文は公開しない。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "reason"]
+                          }
+                        }
+                      },
+                      "required": ["code", "message", "details"]
+                    }
+                  },
+                  "required": ["error"]
+                },
+                "example": {
+                  "error": {
+                    "code": "internal_error",
+                    "message": "チャットの応答に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            },
+            "headers": {
+              "X-Chat-Message-Id": {
+                "description": "入力検証後に確定したユーザー発言ID。再送時は同じmessageIdを本文に指定する。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "本文の欠落・型違い・空白のみ・1000文字超過、JSON以外の送信、または定義外の項目。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "reason"]
+                          }
+                        }
+                      },
+                      "required": ["code", "message", "details"]
+                    }
+                  },
+                  "required": ["error"]
+                },
+                "example": {
+                  "error": {
+                    "code": "invalid_input",
+                    "message": "入力データが不正です。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Serviceがイベント不存在・他所有者・削除済みを通知した場合。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_not_found"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "reason"]
+                          }
+                        }
+                      },
+                      "required": ["code", "message", "details"]
+                    }
+                  },
+                  "required": ["error"]
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "イベントが見つかりません。",
+                    "details": []
+                  }
+                }
+              }
+            },
+            "headers": {
+              "X-Chat-Message-Id": {
+                "description": "入力検証後に確定したユーザー発言ID。再送時は同じmessageIdを本文に指定する。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "取得時点のイベント競合、または同じ発言IDを異なる本文・イベントに再利用した。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "event_save_conflict",
+                            "chat_message_conflict"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "reason"]
+                          }
+                        }
+                      },
+                      "required": ["code", "message", "details"]
+                    }
+                  },
+                  "required": ["error"]
+                },
+                "example": {
+                  "error": {
+                    "code": "event_save_conflict",
+                    "message": "イベントが更新されました。再取得してください。",
+                    "details": []
+                  }
+                }
+              }
+            },
+            "headers": {
+              "X-Chat-Message-Id": {
+                "description": "入力検証後に確定したユーザー発言ID。再送時は同じmessageIdを本文に指定する。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "LLMの通信・出力検証の失敗。ユーザー発言は保存済み。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["ai_chat_failed"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "reason"]
+                          }
+                        }
+                      },
+                      "required": ["code", "message", "details"]
+                    }
+                  },
+                  "required": ["error"]
+                },
+                "example": {
+                  "error": {
+                    "code": "ai_chat_failed",
+                    "message": "AIの応答を取得できませんでした。同じ発言IDで再試行してください。",
+                    "details": []
+                  }
+                }
+              }
+            },
+            "headers": {
+              "X-Chat-Message-Id": {
+                "description": "入力検証後に確定したユーザー発言ID。再送時は同じmessageIdを本文に指定する。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "LLMのタイムアウト。ユーザー発言は保存済み。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["ai_chat_failed"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "reason"]
+                          }
+                        }
+                      },
+                      "required": ["code", "message", "details"]
+                    }
+                  },
+                  "required": ["error"]
+                },
+                "example": {
+                  "error": {
+                    "code": "ai_chat_failed",
+                    "message": "AIの応答を取得できませんでした。同じ発言IDで再試行してください。",
+                    "details": []
+                  }
+                }
+              }
+            },
+            "headers": {
+              "X-Chat-Message-Id": {
+                "description": "入力検証後に確定したユーザー発言ID。再送時は同じmessageIdを本文に指定する。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
       }
     }
   },
