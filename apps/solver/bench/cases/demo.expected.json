@@ -1,0 +1,149 @@
+{
+  "allowedStatuses": [
+    "optimal",
+    "feasible"
+  ],
+  "reference": {
+    "eventId": "bench-demo",
+    "status": "feasible",
+    "placements": [
+      {
+        "bandId": "band-01",
+        "partId": "part-1",
+        "order": 0
+      },
+      {
+        "bandId": "band-02",
+        "partId": "part-1",
+        "order": 1
+      },
+      {
+        "bandId": "band-11",
+        "partId": "part-1",
+        "order": 2
+      },
+      {
+        "bandId": "band-03",
+        "partId": "part-1",
+        "order": 3
+      },
+      {
+        "bandId": "band-14",
+        "partId": "part-1",
+        "order": 4
+      },
+      {
+        "bandId": "band-09",
+        "partId": "part-1",
+        "order": 5
+      },
+      {
+        "bandId": "band-08",
+        "partId": "part-1",
+        "order": 6
+      },
+      {
+        "bandId": "band-10",
+        "partId": "part-1",
+        "order": 7
+      },
+      {
+        "bandId": "band-13",
+        "partId": "part-1",
+        "order": 8
+      },
+      {
+        "bandId": "band-20",
+        "partId": "part-1",
+        "order": 9
+      },
+      {
+        "bandId": "band-05",
+        "partId": "part-2",
+        "order": 0
+      },
+      {
+        "bandId": "band-04",
+        "partId": "part-2",
+        "order": 1
+      },
+      {
+        "bandId": "band-16",
+        "partId": "part-2",
+        "order": 2
+      },
+      {
+        "bandId": "band-15",
+        "partId": "part-2",
+        "order": 3
+      },
+      {
+        "bandId": "band-06",
+        "partId": "part-2",
+        "order": 4
+      },
+      {
+        "bandId": "band-07",
+        "partId": "part-2",
+        "order": 5
+      },
+      {
+        "bandId": "band-18",
+        "partId": "part-2",
+        "order": 6
+      },
+      {
+        "bandId": "band-12",
+        "partId": "part-2",
+        "order": 7
+      },
+      {
+        "bandId": "band-19",
+        "partId": "part-2",
+        "order": 8
+      },
+      {
+        "bandId": "band-17",
+        "partId": "part-2",
+        "order": 9
+      }
+    ],
+    "unassignedBandIds": []
+  },
+  "referenceResults": {
+    "c-cap-1": "met",
+    "c-cap-2": "met",
+    "c-gap-member-001": "met",
+    "c-gap-member-002": "met",
+    "c-gap-member-003": "met",
+    "c-gap-member-004": "met",
+    "c-gap-member-005": "met",
+    "c-gap-member-006": "met",
+    "c-gap-member-008": "met",
+    "c-gap-member-009": "met",
+    "c-gap-member-010": "met",
+    "c-gap-member-011": "met",
+    "c-gap-member-012": "met",
+    "c-gap-member-013": "met",
+    "c-gap-member-014": "met",
+    "c-gap-member-015": "met",
+    "c-gap-member-016": "met",
+    "c-gap-member-017": "met",
+    "c-gap-member-018": "met",
+    "c-gap-member-021": "met",
+    "c-gap-member-022": "met",
+    "c-gap-member-023": "met",
+    "c-gap-member-025": "met",
+    "c-gap-member-037": "met",
+    "c-opener": "met",
+    "c-gear": "met",
+    "c-late": "met",
+    "c-finale": "met",
+    "c-rest-member-002": "unmet",
+    "c-rest-member-012": "unmet",
+    "c-rest-member-003": "unmet",
+    "c-genre": "unmet",
+    "c-friend": "unmet",
+    "c-old": "disabled"
+  }
+}

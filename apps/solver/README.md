@@ -14,8 +14,11 @@ apps/solver/
     main.py             # FastAPI アプリ（Vercel の入口）
     generated/
       constraint.py     # 生成された制約モデル（手編集禁止）
+  bench/                # 計測用の仮名データ・判定・計測スクリプト（bench/README.md）
   tests/
     test_main.py        # API のテスト
+    test_bench.py       # 計測用データと判定のテスト
+    test_csv_to_request.py  # 名簿CSVの変換のテスト
 ```
 
 依存パッケージは FastAPI・OR-Tools・Pydantic、開発用パッケージは datamodel-code-generator・pytest・httpx・uvicorn です。プロジェクト自体のパッケージ化は行いません。

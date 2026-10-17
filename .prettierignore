@@ -14,3 +14,6 @@ playwright-report/
 
 # Drizzle Kit generated migration metadata
 apps/backend/db/migrations/meta/
+
+# 生成スクリプトの出力（apps/solver/bench/generate.pyで再生成する）
+apps/solver/bench/cases/
