@@ -133,7 +133,7 @@ export function ConstraintFields({
           />
           <p className="text-xs text-muted">
             イベント全体の1〜{capacity}
-            番。「必ず守る」にすると、指定位置にいる出演枠を固定します。
+            番。「必須」にすると、指定位置にいる出演枠を固定します。
           </p>
         </>
       )}

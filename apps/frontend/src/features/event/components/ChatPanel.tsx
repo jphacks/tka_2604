@@ -15,7 +15,7 @@ export function ChatPanel({ controller }: { controller: EventController }) {
     <Panel title="AIチャット" action={<Badge>デモ · AI未接続</Badge>}>
       <div
         ref={endRef}
-        className="max-h-[55dvh] min-h-64 scrollbar-thin overflow-y-auto px-4 pt-5 pb-4"
+        className="max-h-[55dvh] min-h-64 scrollbar-thin overflow-y-auto p-3 xl:max-h-none xl:min-h-0 xl:flex-1"
       >
         <div
           role="log"
@@ -77,7 +77,7 @@ export function ChatPanel({ controller }: { controller: EventController }) {
           event.preventDefault()
           void controller.sendMessage()
         }}
-        className="shrink-0 px-4 pt-2 pb-4"
+        className="shrink-0 border-t border-line p-3"
       >
         <div className="rounded-lg border border-[#cbd9ed] p-3 transition-colors focus-within:border-brand">
           <textarea

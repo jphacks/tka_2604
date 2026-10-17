@@ -24,7 +24,7 @@ it('guides a person from a condition choice through validation, preview, and a t
     '1',
   )
   expect(dialog.getByText('Pretenderを1番にする')).toBeVisible()
-  await user.click(dialog.getByRole('button', { name: 'できれば守る' }))
+  await user.click(dialog.getByRole('button', { name: '任意' }))
   await user.selectOptions(
     dialog.getByRole('combobox', { name: '追加する制約の優先度' }),
     'mid',
