@@ -35,106 +35,134 @@ beforeEach(() => {
   api.getEvent.mockResolvedValue(structuredClone(event))
 })
 
-it('keeps unsaved edits after a failed save and sends the displayed revision on retry', async () => {
-  const { result } = renderHook(() => useEvent('e'))
-  await waitFor(() => expect(result.current.event).not.toBeNull())
-  act(() => result.current.setOrder('b', 1))
-  expect(result.current.scheduleDirty).toBe(true)
-  expect(result.current.notice).not.toContain('保存しました')
-  api.saveSchedule.mockRejectedValueOnce(new Error('通信失敗'))
-  await act(() => result.current.saveSchedule())
-  expect(result.current.event?.sections[0].slots).toEqual(['b', 'a'])
-  expect(result.current.scheduleDirty).toBe(true)
-  expect(result.current.error).toBe('通信失敗')
-  api.saveSchedule.mockResolvedValueOnce({
-    updatedAt: '2026-10-17T00:00:00.001Z',
-  })
-  await act(() => result.current.saveSchedule())
-  expect(api.saveSchedule.mock.calls[1][0].updatedAt).toBe(event.updatedAt)
-  expect(result.current.scheduleDirty).toBe(false)
-  act(() => result.current.setFixed('b', true))
-  api.saveConstraints.mockResolvedValueOnce({
+it('automatically persists order and constraint edits using the latest revision', async () => {
+  api.saveSchedule.mockResolvedValue({ updatedAt: '2026-10-17T00:00:00.001Z' })
+  api.saveConstraints.mockResolvedValue({
     updatedAt: '2026-10-17T00:00:00.002Z',
     constraintSources: {},
   })
-  await act(() => result.current.saveConstraints())
+  const { result } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
+  act(() => result.current.setOrder('b', 1))
+  await waitFor(() => expect(api.saveSchedule).toHaveBeenCalledTimes(1))
+  await waitFor(() => expect(result.current.scheduleDirty).toBe(false))
+  expect(api.saveSchedule.mock.calls[0][0].sections[0].slots).toEqual([
+    'b',
+    'a',
+  ])
+  act(() => result.current.setFixed('b', true))
+  await waitFor(() => expect(api.saveConstraints).toHaveBeenCalledTimes(1))
+  await waitFor(() => expect(result.current.constraintsDirty).toBe(false))
   expect(api.saveConstraints.mock.calls[0][0].updatedAt).toBe(
     '2026-10-17T00:00:00.001Z',
   )
 })
 
-it('preserves both edits on a conflict and blocks duplicate saves and edits while saving', async () => {
+it('keeps failed edits without a retry loop and persists them on explicit retry', async () => {
+  api.saveSchedule.mockRejectedValueOnce(new Error('通信失敗'))
   const { result } = renderHook(() => useEvent('e'))
   await waitFor(() => expect(result.current.event).not.toBeNull())
-  act(() => {
-    result.current.setOrder('b', 1)
-    result.current.setFixed('a', true)
+  act(() => result.current.setOrder('b', 1))
+  await waitFor(() => expect(result.current.error).toBe('通信失敗'))
+  expect(result.current.event?.sections[0].slots).toEqual(['b', 'a'])
+  expect(result.current.scheduleDirty).toBe(true)
+  expect(result.current.notice).not.toContain('保存しました')
+  act(() => result.current.setFixed('b', true))
+  expect(api.saveSchedule).toHaveBeenCalledTimes(1)
+  expect(api.saveConstraints).not.toHaveBeenCalled()
+  api.saveSchedule.mockResolvedValueOnce({
+    updatedAt: '2026-10-17T00:00:00.001Z',
   })
+  api.saveConstraints.mockResolvedValueOnce({
+    updatedAt: '2026-10-17T00:00:00.002Z',
+  })
+  act(() => result.current.retrySave())
+  await waitFor(() => expect(result.current.constraintsDirty).toBe(false))
+  expect(result.current.scheduleDirty).toBe(false)
+  expect(api.saveSchedule.mock.calls[1][0].updatedAt).toBe(event.updatedAt)
+  expect(api.saveConstraints.mock.calls[0][0].updatedAt).toBe(
+    '2026-10-17T00:00:00.001Z',
+  )
+})
+
+it('preserves both edits on conflict and blocks further edits during the request', async () => {
   let reject!: (error: Error) => void
   api.saveSchedule.mockReturnValue(
     new Promise((_resolve, fail) => {
       reject = fail
     }),
   )
-  let saving!: Promise<void>
+  const { result } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
   act(() => {
-    saving = result.current.saveSchedule()
+    result.current.setOrder('b', 1)
+    result.current.setFixed('a', true)
   })
-  act(() => {
-    void result.current.saveConstraints()
-    result.current.setOrder('a', 1)
-  })
+  await waitFor(() => expect(result.current.saving).toBe(true))
+  act(() => result.current.setOrder('a', 1))
   expect(api.saveConstraints).not.toHaveBeenCalled()
-  await act(async () => {
+  act(() => {
     reject(new Error('再取得してください'))
-    await saving
   })
+  await waitFor(() => expect(result.current.saveFailed).toBe(true))
   expect(result.current.scheduleDirty).toBe(true)
   expect(result.current.constraintsDirty).toBe(true)
   expect(result.current.event?.sections[0].slots).toEqual(['b', 'a'])
   expect(result.current.event?.constraints).toHaveLength(1)
   expect(api.getEvent).toHaveBeenCalledTimes(1)
+  expect(api.saveSchedule).toHaveBeenCalledTimes(1)
 })
 
-it('retains validation errors and prevents edits while a confirmed reload is pending', async () => {
+it('retains validation errors and prevents edits during a confirmed reload after failure', async () => {
   const dense = { ...structuredClone(event), scheduleMode: 'dense' as const }
   api.getEvent.mockResolvedValueOnce(dense)
+  api.saveSchedule.mockRejectedValueOnce(new Error('再取得してください'))
   const { result } = renderHook(() => useEvent('e'))
   await waitFor(() => expect(result.current.event).not.toBeNull())
   act(() => result.current.setOrder('b', 99))
   expect(result.current.error).toContain('1〜2')
+  expect(api.saveSchedule).not.toHaveBeenCalled()
   act(() => result.current.setOrder('b', 1))
+  await waitFor(() => expect(result.current.saveFailed).toBe(true))
   const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
   let resolve!: (value: EventData) => void
-  const reloaded = new Promise<EventData>((done) => {
-    resolve = done
-  })
-  api.getEvent.mockReturnValueOnce(reloaded)
+  api.getEvent.mockReturnValueOnce(
+    new Promise<EventData>((done) => {
+      resolve = done
+    }),
+  )
   act(() => result.current.retryLoad())
   await waitFor(() => expect(api.getEvent).toHaveBeenCalledTimes(2))
   act(() => result.current.setOrder('a', null))
   expect(result.current.event?.unassigned).toEqual([])
-  await act(async () => {
+  act(() => {
     resolve(dense)
-    await reloaded
   })
+  await waitFor(() => expect(result.current.refreshing).toBe(false))
   expect(result.current.scheduleDirty).toBe(false)
   expect(result.current.refreshing).toBe(false)
+  expect(result.current.saveFailed).toBe(false)
   confirm.mockRestore()
 })
 
-it('keeps frame capacity in the current view without marking a server change', async () => {
+it('keeps local frame capacity without a server write, including after order saving', async () => {
   api.getEvent.mockResolvedValueOnce({
     ...event,
     scheduleMode: 'dense',
     sections: [{ id: 'p1', slots: ['a', 'b', null, null] }],
+  })
+  api.saveSchedule.mockResolvedValueOnce({
+    updatedAt: '2026-10-17T00:00:00.001Z',
   })
   const { result } = renderHook(() => useEvent('e'))
   await waitFor(() => expect(result.current.event).not.toBeNull())
   act(() => result.current.resize(6, 'p1'))
   expect(result.current.event?.sections[0].slots).toHaveLength(6)
   expect(result.current.scheduleDirty).toBe(false)
+  expect(api.saveSchedule).not.toHaveBeenCalled()
   act(() => result.current.setOrder('b', 1))
+  await waitFor(() => expect(api.saveSchedule).toHaveBeenCalledTimes(1))
+  await waitFor(() => expect(result.current.scheduleDirty).toBe(false))
   expect(result.current.event?.sections[0].slots).toEqual([
     'b',
     'a',
@@ -143,11 +171,4 @@ it('keeps frame capacity in the current view without marking a server change', a
     null,
     null,
   ])
-  expect(result.current.scheduleDirty).toBe(true)
-  api.saveSchedule.mockResolvedValueOnce({
-    updatedAt: '2026-10-17T00:00:00.001Z',
-  })
-  await act(() => result.current.saveSchedule())
-  expect(result.current.event?.sections[0].slots).toHaveLength(6)
-  expect(result.current.scheduleDirty).toBe(false)
 })

@@ -88,11 +88,6 @@ export function ChatPanel({ controller }: { controller: EventController }) {
         }}
         className="shrink-0 border-t border-line p-3"
       >
-        {controller.chatBlocked && (
-          <p role="status" className="mb-2 text-xs text-muted">
-            出演順・制約の変更を保存してから送信してください。
-          </p>
-        )}
         <div className="rounded-lg border border-[#cbd9ed] p-3 transition-colors focus-within:border-brand">
           <textarea
             aria-label="AIへのメッセージ"

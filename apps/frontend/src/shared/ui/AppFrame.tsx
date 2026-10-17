@@ -2,7 +2,6 @@ import type { ReactNode } from 'react'
 import { Link, NavLink } from 'react-router'
 
 import { useSession } from '../../app/sessionContext'
-import { dataSource } from '../repositories/dataSource'
 import { Brand } from './Brand'
 import { Button } from './Button'
 import { Icon } from './Icon'
@@ -52,11 +51,6 @@ export function AppFrame({
           </Button>
         </div>
       </header>
-      <p className="shrink-0 border-b border-line bg-wash px-4 py-2 text-xs text-muted">
-        {dataSource === 'api'
-          ? 'API接続 · 出演順・制約は保存ボタンでDBへ保存します。ログインはデモです。'
-          : 'デモ · モックデータを使用しています。変更はサーバーへ保存されません。'}
-      </p>
       {eventId && (
         <div className="shrink-0 border-b border-line bg-white">
           <nav

@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef, useState } from 'react'
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 
 import type { Constraint } from '../../../generated/constraint'
 import {
@@ -22,6 +22,7 @@ export function useEvent(eventId: string) {
   const [state, dispatch] = useReducer(eventReducer, initialState)
   const [baseline, setBaseline] = useState<EventData | null>(null)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [refreshing, setRefreshing] = useState(false)
   const busy = useRef(false)
   const lifetime = useRef<AbortController | null>(null)
@@ -58,6 +59,7 @@ export function useEvent(eventId: string) {
           dispatch({ type: 'loaded', event })
           setBaseline(event)
           setLoadError('')
+          setSaveError('')
         }
       })
       .catch((error: unknown) => {
@@ -86,44 +88,59 @@ export function useEvent(eventId: string) {
     return () => window.removeEventListener('beforeunload', warn)
   }, [dirty])
 
-  async function save(kind: 'schedule' | 'constraints') {
-    if (!event || busy.current || refreshing || chat.sending || !persistent)
-      return
-    busy.current = true
-    setSaving(true)
-    const signal = lifetime.current?.signal
-    dispatch({ type: 'notice', message: '' })
-    try {
-      const saved =
-        kind === 'schedule'
-          ? await eventRepository.saveSchedule(event)
-          : await eventRepository.saveConstraints(event)
-      if (signal?.aborted) return
-      const constraintSources = saved.constraintSources
-      dispatch({ type: 'saved', updatedAt: saved.updatedAt, constraintSources })
-      setBaseline(
-        (current) =>
-          current && {
-            ...current,
-            updatedAt: saved.updatedAt,
-            ...(kind === 'schedule'
-              ? { sections: event.sections, unassigned: event.unassigned }
-              : { constraints: event.constraints }),
-          },
-      )
-    } catch (error) {
-      if (!signal?.aborted)
+  const save = useCallback(
+    async (kind: 'schedule' | 'constraints') => {
+      if (!event || busy.current || refreshing || chat.sending || !persistent)
+        return
+      busy.current = true
+      setSaving(true)
+      const signal = lifetime.current?.signal
+      dispatch({ type: 'notice', message: '' })
+      try {
+        const saved =
+          kind === 'schedule'
+            ? await eventRepository.saveSchedule(event)
+            : await eventRepository.saveConstraints(event)
+        if (signal?.aborted) return
+        const constraintSources = saved.constraintSources
         dispatch({
-          type: 'notice',
-          error: true,
-          message:
-            error instanceof Error ? error.message : '保存に失敗しました。',
+          type: 'saved',
+          updatedAt: saved.updatedAt,
+          constraintSources,
         })
-    } finally {
-      busy.current = false
-      if (!signal?.aborted) setSaving(false)
+        setBaseline(
+          (current) =>
+            current && {
+              ...current,
+              updatedAt: saved.updatedAt,
+              ...(kind === 'schedule'
+                ? { sections: event.sections, unassigned: event.unassigned }
+                : { constraints: event.constraints }),
+            },
+        )
+      } catch (error) {
+        if (!signal?.aborted)
+          setSaveError(
+            error instanceof Error ? error.message : '保存に失敗しました。',
+          )
+      } finally {
+        busy.current = false
+        if (!signal?.aborted) setSaving(false)
+      }
+    },
+    [event, refreshing, chat.sending, persistent],
+  )
+
+  useEffect(() => {
+    if (!dirty || saving || refreshing || chat.sending || saveError) return
+    let cancelled = false
+    queueMicrotask(() => {
+      if (!cancelled) void save(scheduleDirty ? 'schedule' : 'constraints')
+    })
+    return () => {
+      cancelled = true
     }
-  }
+  }, [dirty, scheduleDirty, saving, refreshing, chat.sending, saveError, save])
   const views = event
     ? event.constraints.map((constraint) => ({
         constraint,
@@ -138,14 +155,15 @@ export function useEvent(eventId: string) {
   return {
     ...state,
     ...chat,
+    error: state.error || saveError,
+    saveFailed: Boolean(saveError),
+    retrySave: () => setSaveError(''),
     loadError,
     persistent,
     saving,
     refreshing,
     scheduleDirty,
     constraintsDirty,
-    saveSchedule: () => save('schedule'),
-    saveConstraints: () => save('constraints'),
     schedule: event ? buildSchedule(event) : null,
     constraintViews: views.filter(
       (view) =>

@@ -45,56 +45,23 @@ function ScheduleTable({
   if (!event || !schedule) return null
   return (
     <Panel
+      inert={controller.saving || controller.refreshing || controller.sending}
       title="出演順"
       action={
-        <div className="flex items-center gap-2">
-          {controller.persistent && (
-            <>
-              <Button
-                aria-label="出演順を保存"
-                className="text-xs"
-                variant={controller.scheduleDirty ? 'primary' : 'secondary'}
-                disabled={
-                  !controller.scheduleDirty ||
-                  controller.saving ||
-                  controller.refreshing ||
-                  controller.sending
-                }
-                onClick={() => void controller.saveSchedule()}
-              >
-                {controller.saving ? '保存中…' : '保存'}
-                {controller.scheduleDirty && ' *'}
-              </Button>
-              <Button
-                aria-label="最新の状態を取得"
-                className="text-xs"
-                variant="ghost"
-                disabled={
-                  controller.saving ||
-                  controller.refreshing ||
-                  controller.sending
-                }
-                onClick={controller.retryLoad}
-              >
-                再取得
-              </Button>
-            </>
-          )}
-          {schedule.unassigned.length > 0 && (
-            <Button
-              variant="subtle"
-              className="text-xs"
-              onClick={() =>
-                unassignedRef.current?.scrollIntoView({
-                  block: 'nearest',
-                  behavior: 'smooth',
-                })
-              }
-            >
-              未配置へ（{schedule.unassigned.length}）
-            </Button>
-          )}
-        </div>
+        schedule.unassigned.length > 0 ? (
+          <Button
+            variant="subtle"
+            className="text-xs"
+            onClick={() =>
+              unassignedRef.current?.scrollIntoView({
+                block: 'nearest',
+                behavior: 'smooth',
+              })
+            }
+          >
+            未配置へ（{schedule.unassigned.length}）
+          </Button>
+        ) : undefined
       }
       detail={
         <span className="text-xs text-muted">
@@ -121,15 +88,7 @@ function ScheduleTable({
           />
         </label>
         {schedule.sections.map((section, index) => (
-          <label
-            key={section.id}
-            className="flex items-center gap-2"
-            title={
-              controller.persistent
-                ? '空き枠はこの画面内だけ保持されます'
-                : undefined
-            }
-          >
+          <label key={section.id} className="flex items-center gap-2">
             第{index + 1}部
             <NumberField
               label={`第${index + 1}部の組数`}
@@ -160,7 +119,11 @@ function ScheduleTable({
                 <h3 className="font-semibold text-brand-dark">
                   {section.name} · {section.assigned}/{section.capacity}組
                 </h3>
-                <span>{section.assigned ? `${section.range}番` : '—'}</span>
+                <span>
+                  {controller.persistent && !section.assigned
+                    ? '—'
+                    : `${section.range}番`}
+                </span>
               </div>
               {section.rows.map((row) =>
                 row.performance ? (

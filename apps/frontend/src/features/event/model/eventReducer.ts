@@ -77,7 +77,7 @@ export function eventReducer(
           constraintSources:
             action.constraintSources ?? event.constraintSources,
         },
-        notice: '保存しました。',
+        notice: state.notice,
         error: '',
       }
     case 'messages':

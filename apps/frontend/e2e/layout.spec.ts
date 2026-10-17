@@ -12,6 +12,8 @@ for (const width of [1280, 1600]) {
     const constraints = page.getByRole('region', { name: '制約', exact: true })
     const chat = page.getByRole('region', { name: 'AIチャット', exact: true })
     await expect(chat).toBeVisible()
+    await expect(page.getByText(/デモ · モックデータ/)).toHaveCount(0)
+    await expect(constraints).toHaveCSS('border-right-width', '1px')
     const boxes = await Promise.all([
       schedule.boundingBox(),
       constraints.boundingBox(),

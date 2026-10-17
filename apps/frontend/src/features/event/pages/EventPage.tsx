@@ -43,15 +43,8 @@ function EventWorkspace({ eventId }: { eventId: string }) {
             </div>
           )}
           <div className="grid min-h-0 min-w-0 flex-1 xl:grid-cols-[minmax(0,1fr)_300px_320px]">
-            <fieldset
-              disabled={
-                controller.saving || controller.refreshing || controller.sending
-              }
-              className="contents"
-            >
-              <SchedulePanel controller={controller} />
-              <ConstraintsPanel controller={controller} />
-            </fieldset>
+            <SchedulePanel controller={controller} />
+            <ConstraintsPanel controller={controller} />
             <ChatPanel controller={controller} />
           </div>
         </>
@@ -62,13 +55,20 @@ function EventWorkspace({ eventId }: { eventId: string }) {
           className={`fixed right-3 bottom-3 left-3 z-40 flex items-center justify-between gap-3 rounded-lg border bg-white p-3 shadow-sm xl:right-auto xl:max-w-xl ${controller.error || controller.loadError ? 'border-red-200 text-red-700' : 'border-brand/30 text-brand'}`}
         >
           <p>{controller.error || controller.loadError || controller.notice}</p>
-          <Button
-            variant="ghost"
-            aria-label="通知を閉じる"
-            onClick={controller.dismissNotice}
-          >
-            閉じる
-          </Button>
+          {controller.saveFailed ? (
+            <>
+              <Button onClick={controller.retrySave}>保存を再試行</Button>
+              <Button onClick={controller.retryLoad}>最新の状態を取得</Button>
+            </>
+          ) : (
+            <Button
+              variant="ghost"
+              aria-label="通知を閉じる"
+              onClick={controller.dismissNotice}
+            >
+              閉じる
+            </Button>
+          )}
         </div>
       )}
     </AppFrame>
