@@ -1,6 +1,6 @@
 # 制約と型生成
 
-正本は`apps/schema/*.schema.json`。入口は`constraint.schema.json`、共通部品は`common.schema.json`。Notionは検討履歴として参照する。
+正本は`apps/schema/*.schema.json`。入口は`constraint.schema.json`、共通部品は`common.schema.json`。
 
 ## 制約の意味
 

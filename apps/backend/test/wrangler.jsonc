@@ -1,0 +1,13 @@
+{
+  "$schema": "../../../node_modules/wrangler/config-schema.json",
+  "name": "backend-db-tests",
+  "compatibility_date": "2026-10-13",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "backend-db-tests",
+      "database_id": "00000000-0000-0000-0000-000000000014",
+      "remote": false,
+    },
+  ],
+}

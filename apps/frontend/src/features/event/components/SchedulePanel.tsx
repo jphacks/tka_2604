@@ -1,8 +1,9 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 
 import { Button } from '../../../shared/ui/Button'
 import { NumberField } from '../../../shared/ui/NumberField'
 import { Panel } from '../../../shared/ui/Panel'
+import { PerformanceEditor } from '../../participants/components/PerformanceEditor'
 import type { EventController } from '../hooks/useEvent'
 import {
   EmptyPerformanceRow,
@@ -12,6 +13,33 @@ import {
 import { ScheduleDragSurface, UnassignedDropZone } from './ScheduleDragSurface'
 
 export function SchedulePanel({ controller }: { controller: EventController }) {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  return (
+    <>
+      <ScheduleTable controller={controller} onEdit={setEditingId} />
+      {editingId && controller.event && (
+        <PerformanceEditor
+          key={editingId}
+          eventId={controller.event.id}
+          performanceId={editingId}
+          onSaved={(updated) => {
+            controller.applyPerformanceEdits(updated)
+            setEditingId(null)
+          }}
+          onClose={() => setEditingId(null)}
+        />
+      )}
+    </>
+  )
+}
+
+function ScheduleTable({
+  controller,
+  onEdit,
+}: {
+  controller: EventController
+  onEdit: (id: string) => void
+}) {
   const unassignedRef = useRef<HTMLElement>(null)
   const { event, schedule, setOrder, setFixed, resize } = controller
   if (!event || !schedule) return null
@@ -94,6 +122,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
                     capacity={schedule.capacity}
                     onFixed={setFixed}
                     onOrder={setOrder}
+                    onEdit={onEdit}
                   />
                 ) : (
                   <EmptyPerformanceRow key={row.key} row={row} />
@@ -116,6 +145,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
                   capacity={schedule.capacity}
                   onFixed={setFixed}
                   onOrder={setOrder}
+                  onEdit={onEdit}
                 />
               ))}
               {!schedule.unassigned.length && (

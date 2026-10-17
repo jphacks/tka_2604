@@ -23,6 +23,10 @@ export type ConstraintPatch = Partial<
 >
 export type EventAction =
   | { type: 'loaded'; event: EventData }
+  | {
+      type: 'performances-updated'
+      event: Pick<EventData, 'members' | 'performances'>
+    }
   | { type: 'notice'; message: string; error?: boolean }
   | { type: 'move'; id: string; target: MoveTarget }
   | { type: 'order'; id: string; value: number | null }
@@ -55,6 +59,15 @@ export function eventReducer(
   })
   const fail = (error: string) => ({ ...state, error, notice: '' })
   switch (action.type) {
+    case 'performances-updated':
+      return success(
+        {
+          ...event,
+          members: action.event.members,
+          performances: action.event.performances,
+        },
+        '出演枠を更新しました。',
+      )
     case 'move':
     case 'order':
     case 'resize': {
