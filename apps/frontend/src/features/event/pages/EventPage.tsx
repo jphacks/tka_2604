@@ -18,6 +18,11 @@ export function EventPage() {
         <PageState
           error={controller.loadError}
           onRetry={controller.retryLoad}
+          action={
+            <LinkButton primary to="/event?create=1">
+              イベントを作成
+            </LinkButton>
+          }
         />
       ) : (
         <>
