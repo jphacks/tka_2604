@@ -1,0 +1,258 @@
+{
+  "allowedStatuses": [
+    "partial",
+    "infeasible"
+  ],
+  "reference": {
+    "eventId": "bench-hard_conflict",
+    "status": "partial",
+    "placements": [
+      {
+        "bandId": "band-23",
+        "partId": "part-1",
+        "order": 0
+      },
+      {
+        "bandId": "band-18",
+        "partId": "part-1",
+        "order": 1
+      },
+      {
+        "bandId": "band-13",
+        "partId": "part-1",
+        "order": 2
+      },
+      {
+        "bandId": "band-08",
+        "partId": "part-1",
+        "order": 3
+      },
+      {
+        "bandId": "band-32",
+        "partId": "part-1",
+        "order": 4
+      },
+      {
+        "bandId": "band-35",
+        "partId": "part-1",
+        "order": 5
+      },
+      {
+        "bandId": "band-06",
+        "partId": "part-1",
+        "order": 6
+      },
+      {
+        "bandId": "band-22",
+        "partId": "part-1",
+        "order": 7
+      },
+      {
+        "bandId": "band-29",
+        "partId": "part-1",
+        "order": 8
+      },
+      {
+        "bandId": "band-19",
+        "partId": "part-1",
+        "order": 9
+      },
+      {
+        "bandId": "band-26",
+        "partId": "part-1",
+        "order": 10
+      },
+      {
+        "bandId": "band-37",
+        "partId": "part-1",
+        "order": 11
+      },
+      {
+        "bandId": "band-02",
+        "partId": "part-2",
+        "order": 0
+      },
+      {
+        "bandId": "band-36",
+        "partId": "part-2",
+        "order": 1
+      },
+      {
+        "bandId": "band-21",
+        "partId": "part-2",
+        "order": 2
+      },
+      {
+        "bandId": "band-31",
+        "partId": "part-2",
+        "order": 3
+      },
+      {
+        "bandId": "band-38",
+        "partId": "part-2",
+        "order": 4
+      },
+      {
+        "bandId": "band-05",
+        "partId": "part-2",
+        "order": 5
+      },
+      {
+        "bandId": "band-30",
+        "partId": "part-2",
+        "order": 6
+      },
+      {
+        "bandId": "band-28",
+        "partId": "part-2",
+        "order": 7
+      },
+      {
+        "bandId": "band-17",
+        "partId": "part-2",
+        "order": 8
+      },
+      {
+        "bandId": "band-07",
+        "partId": "part-2",
+        "order": 9
+      },
+      {
+        "bandId": "band-12",
+        "partId": "part-2",
+        "order": 10
+      },
+      {
+        "bandId": "band-33",
+        "partId": "part-2",
+        "order": 11
+      },
+      {
+        "bandId": "band-09",
+        "partId": "part-3",
+        "order": 0
+      },
+      {
+        "bandId": "band-15",
+        "partId": "part-3",
+        "order": 1
+      },
+      {
+        "bandId": "band-20",
+        "partId": "part-3",
+        "order": 2
+      },
+      {
+        "bandId": "band-27",
+        "partId": "part-3",
+        "order": 3
+      },
+      {
+        "bandId": "band-16",
+        "partId": "part-3",
+        "order": 4
+      },
+      {
+        "bandId": "band-11",
+        "partId": "part-3",
+        "order": 5
+      },
+      {
+        "bandId": "band-24",
+        "partId": "part-3",
+        "order": 6
+      },
+      {
+        "bandId": "band-01",
+        "partId": "part-3",
+        "order": 7
+      },
+      {
+        "bandId": "band-25",
+        "partId": "part-3",
+        "order": 8
+      },
+      {
+        "bandId": "band-14",
+        "partId": "part-3",
+        "order": 9
+      },
+      {
+        "bandId": "band-04",
+        "partId": "part-3",
+        "order": 10
+      },
+      {
+        "bandId": "band-03",
+        "partId": "part-3",
+        "order": 11
+      }
+    ],
+    "unassignedBandIds": [
+      "band-10",
+      "band-34"
+    ]
+  },
+  "referenceResults": {
+    "c-cap": "unchecked",
+    "c-gap-member-003": "met",
+    "c-gap-member-004": "met",
+    "c-gap-member-005": "met",
+    "c-gap-member-006": "met",
+    "c-gap-member-008": "met",
+    "c-gap-member-009": "met",
+    "c-gap-member-010": "met",
+    "c-gap-member-011": "met",
+    "c-gap-member-012": "met",
+    "c-gap-member-013": "met",
+    "c-gap-member-019": "met",
+    "c-gap-member-020": "met",
+    "c-gap-member-021": "met",
+    "c-gap-member-022": "met",
+    "c-gap-member-023": "met",
+    "c-gap-member-024": "met",
+    "c-gap-member-025": "met",
+    "c-gap-member-026": "met",
+    "c-gap-member-027": "met",
+    "c-gap-member-028": "met",
+    "c-gap-member-029": "met",
+    "c-gap-member-031": "met",
+    "c-gap-member-033": "met",
+    "c-gap-member-034": "met",
+    "c-gap-member-035": "met",
+    "c-gap-member-036": "met",
+    "c-gap-member-038": "met",
+    "c-gap-member-039": "met",
+    "c-gap-member-040": "met",
+    "c-gap-member-041": "unchecked",
+    "c-gap-member-042": "met",
+    "c-gap-member-043": "met",
+    "c-gap-member-044": "met",
+    "c-gap-member-046": "met",
+    "c-gap-member-047": "met",
+    "c-gap-member-048": "met",
+    "c-gap-member-049": "met",
+    "c-gap-member-051": "met",
+    "c-gap-member-054": "met",
+    "c-gap-member-055": "met",
+    "c-gap-member-056": "met",
+    "c-gap-member-057": "met",
+    "c-gap-member-058": "met",
+    "c-gap-member-063": "met",
+    "c-gap-member-065": "met",
+    "c-gap-member-066": "met",
+    "c-gap-member-073": "met",
+    "c-gap-member-074": "met",
+    "c-gap-member-078": "met",
+    "c-opener": "met",
+    "c-gear": "met",
+    "c-late": "met",
+    "c-finale": "met",
+    "c-rest-member-010": "unmet",
+    "c-rest-member-027": "unmet",
+    "c-rest-member-029": "unmet",
+    "c-genre": "met",
+    "c-friend": "unmet",
+    "c-old": "disabled"
+  }
+}
