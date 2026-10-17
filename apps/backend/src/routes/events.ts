@@ -4,6 +4,7 @@ import { validator } from 'hono/validator'
 import type { z } from 'zod'
 
 import { createDb } from '../db/index'
+import { solverClient } from '../integrations/solver'
 import { eventsRepository } from '../repositories/events'
 import { schedulingRepository } from '../repositories/scheduling'
 import { EventError } from '../services/events/errors'
@@ -18,12 +19,16 @@ import {
   saveConstraintsSchema,
   saveScheduleSchema,
 } from '../services/scheduling/validation'
+import { solveInputSchema } from '../services/solver/contract'
+import { SolverError } from '../services/solver/errors'
+import { solverService } from '../services/solver/service'
 
 type EventEnv = {
   Bindings: CloudflareBindings
   Variables: {
     eventService: ReturnType<typeof eventService>
     scheduling: ReturnType<typeof schedulingService>
+    solve: ReturnType<typeof solverService>
   }
 }
 
@@ -44,6 +49,17 @@ function jsonInput<T extends z.ZodType>(schema: T) {
 
 export const eventRoutes = new Hono<EventEnv>()
   .onError((error, c) => {
+    if (error instanceof SolverError)
+      return c.json(
+        {
+          error: {
+            code: error.code,
+            message: 'Solverの呼出しまたは応答の検証に失敗しました。',
+            details: [],
+          },
+        },
+        error.status,
+      )
     if (error instanceof SchedulingError) {
       const status =
         error.code === 'event_not_found'
@@ -110,6 +126,17 @@ export const eventRoutes = new Hono<EventEnv>()
     const scheduling = schedulingRepository(db)
     c.set('eventService', eventService(eventsRepository(db), userId))
     c.set('scheduling', schedulingService(scheduling, userId))
+    c.set(
+      'solve',
+      solverService(
+        scheduling,
+        userId,
+        solverClient({
+          url: c.env.SOLVER_API_URL,
+          token: c.env.SOLVER_API_TOKEN,
+        }),
+      ),
+    )
     await next()
   })
   .get('/', async (c) =>
@@ -189,6 +216,15 @@ export const eventRoutes = new Hono<EventEnv>()
     await c.var.eventService.remove(c.req.param('eventId'))
     return c.body(null, 204)
   })
+  .post('/:eventId/solve', jsonInput(solveInputSchema), async (c) =>
+    c.json(
+      await c.var.solve(
+        c.req.param('eventId'),
+        c.req.valid('json').expectedUpdatedAt,
+      ),
+      200,
+    ),
+  )
   .post('/:eventId/schedule', jsonInput(saveScheduleSchema), async (c) =>
     c.json(
       await c.var.scheduling.saveSchedule(

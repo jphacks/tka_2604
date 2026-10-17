@@ -19,6 +19,7 @@
 | GET          | `/api/events/{eventId}/constraints` | 制約JSONと由来の取得         | 200    |
 | POST         | `/api/events/{eventId}/schedule`    | 部・配置・未配置の保存       | 200    |
 | POST         | `/api/events/{eventId}/constraints` | 制約一覧の保存               | 200    |
+| POST         | `/api/events/{eventId}/solve`       | 保存済みデータから計算・保存 | 200    |
 | GET          | `/api/events/{eventId}/chat`        | チャット全履歴の取得         | 200    |
 
 - 呼出し元 → 呼出し先：ブラウザ → backend。本文の形式は`application/json`。削除成功時は本文なし。
@@ -295,6 +296,7 @@ HTTP 200。1イベント1会話として`seq`昇順。履歴なしは`messages: 
 - 認証自体は未実装。#57でRoute内の仮IDを認証済みユーザーIDへ置き換える。`demo-owner`は事前にDBへ投入する。定数による所有者の指定は認証を代替しない。
 - 公開フォームの取得・回答受付は#58・#46で実装し、削除済みイベントを対象外にする判定を揃える。今回フォームAPIは追加しない。
 - `responseCount`の数値化は#33・#58の合意後。バンド数から推測しない。
+- 計算中の更新は許可し、結果保存時の`updatedAt`競合検出で古い結果の上書きを拒否する。計算APIは[計算API](solver.md)を参照。
 
 ローカル確認は[API手順](README.md)・[セットアップ](../../../../docs/setup.md)を参照。
 
