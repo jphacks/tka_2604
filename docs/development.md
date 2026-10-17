@@ -23,6 +23,8 @@
 
 PR本文でIssueを閉じる場合は`Closes #123`、参照だけなら`Refs #123`。タイトルだけでは完了扱いにしない。AIで一連の作業を進める場合は`$develop-issue`を使う。
 
+Issueの整理・起票だけを依頼する場合は[create-issue](../.agents/create-issue/SKILL.md)を使う。重複を確認し、[開発タスクのテンプレート](../.github/ISSUE_TEMPLATE/task.md)に沿って起票する。実装からPR作成まで進める依頼は[develop-issue](../.agents/develop-issue/SKILL.md)で扱う。
+
 ## テスト・完了条件
 
 入力検証、各チェックの内容、commitフック、CIの範囲は[バリデーション・チェック・CI](validation-ci.md)を参照。
