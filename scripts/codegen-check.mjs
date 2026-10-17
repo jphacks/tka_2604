@@ -41,6 +41,7 @@ try {
   let matches = true
   for (const [current, generated] of [
     ['apps/frontend/src/generated/constraint.ts', generatedTs],
+    ['apps/backend/src/generated/constraint.ts', generatedTs],
     ['apps/solver/src/generated/constraint.py', generatedPy],
   ]) {
     const expected = await readFile(generated)

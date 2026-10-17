@@ -2,7 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "JPHACKS 出演順作成 API",
-    "version": "0.0.0"
+    "version": "0.0.0",
+    "description": "イベント本体・表情報・制約情報・チャット履歴のAPI。認証は#57で追加し、現段階はサーバー側のデモユーザーで所有者を絞り込む。"
   },
   "servers": [
     {
@@ -31,6 +32,2466 @@
                   },
                   "required": ["status"]
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events": {
+      "get": {
+        "operationId": "listEvents",
+        "summary": "イベント一覧を取得する",
+        "description": "認証は#57で追加する。現在はデモユーザーdemo-ownerのイベントに限定し、クライアントから所有者IDを受け取らない。 削除済みを除き、updatedAt降順、同値ならeventId降順。ページングなし。",
+        "tags": ["Events"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "イベント一覧。対象がなければ空配列",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "eventId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "pattern": "\\S",
+                            "description": "前後の空白を除去したイベント名"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": ["planning", "adjusting", "confirmed"]
+                          },
+                          "date": {
+                            "type": ["string", "null"],
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                            "description": "実在する開催日（YYYY-MM-DD）。未設定はnull"
+                          },
+                          "venue": {
+                            "type": ["string", "null"]
+                          },
+                          "description": {
+                            "type": ["string", "null"]
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                          },
+                          "performanceCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "未配置を含む登録バンド数"
+                          },
+                          "assignedCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "配置済みバンド数"
+                          },
+                          "partCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "空の部を含む部数"
+                          },
+                          "responseCount": {
+                            "type": "null",
+                            "description": "#33・#58で回答数の定義と保存先が決まるまでnull。0件を意味しない"
+                          }
+                        },
+                        "required": [
+                          "eventId",
+                          "title",
+                          "status",
+                          "date",
+                          "venue",
+                          "description",
+                          "createdAt",
+                          "updatedAt",
+                          "performanceCount",
+                          "assignedCount",
+                          "partCount",
+                          "responseCount"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": ["events"],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "events": [
+                    {
+                      "eventId": "event-1",
+                      "title": "秋ライブ",
+                      "status": "planning",
+                      "date": "2026-11-01",
+                      "venue": null,
+                      "description": null,
+                      "createdAt": "2026-10-17T00:00:00.000Z",
+                      "updatedAt": "2026-10-17T00:00:00.000Z",
+                      "performanceCount": 0,
+                      "assignedCount": 0,
+                      "partCount": 1,
+                      "responseCount": null
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "イベントの処理に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "internal_error",
+                    "message": "イベントの処理に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createEvent",
+        "summary": "イベントを作成する",
+        "description": "認証は#57で追加する。現在はデモユーザーdemo-ownerのイベントに限定し、クライアントから所有者IDを受け取らない。 planning状態のイベントと最初の空の部を同一batchで作成する。",
+        "tags": ["Events"],
+        "security": [],
+        "responses": {
+          "201": {
+            "description": "作成したイベント本体。配下のデータは含まない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "\\S",
+                      "description": "前後の空白を除去したイベント名"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": ["planning", "adjusting", "confirmed"]
+                    },
+                    "date": {
+                      "type": ["string", "null"],
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                      "description": "実在する開催日（YYYY-MM-DD）。未設定はnull"
+                    },
+                    "venue": {
+                      "type": ["string", "null"]
+                    },
+                    "description": {
+                      "type": ["string", "null"]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                    }
+                  },
+                  "required": [
+                    "eventId",
+                    "title",
+                    "status",
+                    "date",
+                    "venue",
+                    "description",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "eventId": "event-1",
+                  "title": "秋ライブ",
+                  "status": "planning",
+                  "date": "2026-11-01",
+                  "venue": null,
+                  "description": null,
+                  "createdAt": "2026-10-17T00:00:00.000Z",
+                  "updatedAt": "2026-10-17T00:00:00.000Z"
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "description": "作成したイベントの取得パス",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "/api/events/event-1"
+              }
+            }
+          },
+          "400": {
+            "description": "JSONの形式が不正です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "invalid_input",
+                    "message": "JSONの形式が不正です。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力データが不正です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "invalid_input",
+                    "message": "入力データが不正です。",
+                    "details": [
+                      {
+                        "path": "/title",
+                        "reason": "イベント名を入力してください。"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "イベントの処理に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "internal_error",
+                    "message": "イベントの処理に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "\\S",
+                    "description": "前後の空白を除去したイベント名"
+                  },
+                  "date": {
+                    "type": ["string", "null"],
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "description": "実在する開催日（YYYY-MM-DD）。未設定はnull"
+                  },
+                  "venue": {
+                    "type": ["string", "null"]
+                  },
+                  "description": {
+                    "type": ["string", "null"]
+                  }
+                },
+                "required": ["title"],
+                "additionalProperties": false
+              },
+              "example": {
+                "title": "秋ライブ",
+                "date": "2026-11-01",
+                "venue": null,
+                "description": null
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{eventId}": {
+      "parameters": [
+        {
+          "name": "eventId",
+          "in": "path",
+          "required": true,
+          "description": "イベントID。UUID形式に限定せず既存IDも受け付ける",
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getEvent",
+        "summary": "イベント本体を取得する",
+        "description": "認証は#57で追加する。現在はデモユーザーdemo-ownerのイベントに限定し、クライアントから所有者IDを受け取らない。 バンド・メンバー・部・配置・制約・チャットは含めない。存在しない・削除済み・対象所有者以外は404。",
+        "tags": ["Events"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "イベント本体",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "\\S",
+                      "description": "前後の空白を除去したイベント名"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": ["planning", "adjusting", "confirmed"]
+                    },
+                    "date": {
+                      "type": ["string", "null"],
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                      "description": "実在する開催日（YYYY-MM-DD）。未設定はnull"
+                    },
+                    "venue": {
+                      "type": ["string", "null"]
+                    },
+                    "description": {
+                      "type": ["string", "null"]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                    }
+                  },
+                  "required": [
+                    "eventId",
+                    "title",
+                    "status",
+                    "date",
+                    "venue",
+                    "description",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "eventId": "event-1",
+                  "title": "秋ライブ",
+                  "status": "planning",
+                  "date": "2026-11-01",
+                  "venue": null,
+                  "description": null,
+                  "createdAt": "2026-10-17T00:00:00.000Z",
+                  "updatedAt": "2026-10-17T00:00:00.000Z"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "イベントが見つかりません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_not_found"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "イベントが見つかりません。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "イベントの処理に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "internal_error",
+                    "message": "イベントの処理に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateEventSettings",
+        "summary": "イベントの設定を部分更新する",
+        "description": "認証は#57で追加する。現在はデモユーザーdemo-ownerのイベントに限定し、クライアントから所有者IDを受け取らない。 expectedUpdatedAtと更新項目を1件以上指定する。省略項目は保持し、date・venue・descriptionの消去はnull。更新時刻は前回より必ず進める。競合時は保存しない。",
+        "tags": ["Events"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "更新後のイベント本体",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "\\S",
+                      "description": "前後の空白を除去したイベント名"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": ["planning", "adjusting", "confirmed"]
+                    },
+                    "date": {
+                      "type": ["string", "null"],
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                      "description": "実在する開催日（YYYY-MM-DD）。未設定はnull"
+                    },
+                    "venue": {
+                      "type": ["string", "null"]
+                    },
+                    "description": {
+                      "type": ["string", "null"]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                    }
+                  },
+                  "required": [
+                    "eventId",
+                    "title",
+                    "status",
+                    "date",
+                    "venue",
+                    "description",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "eventId": "event-1",
+                  "title": "秋ライブ2026",
+                  "status": "planning",
+                  "date": "2026-11-01",
+                  "venue": null,
+                  "description": null,
+                  "createdAt": "2026-10-17T00:00:00.000Z",
+                  "updatedAt": "2026-10-17T00:00:00.001Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSONの形式が不正です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "invalid_input",
+                    "message": "JSONの形式が不正です。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "イベントが見つかりません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_not_found"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "イベントが見つかりません。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "イベントが更新されました。再取得してください。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_save_conflict"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_save_conflict",
+                    "message": "イベントが更新されました。再取得してください。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力データが不正です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "invalid_input",
+                    "message": "入力データが不正です。",
+                    "details": [
+                      {
+                        "path": "/title",
+                        "reason": "イベント名を入力してください。"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "イベントの処理に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "internal_error",
+                    "message": "イベントの処理に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "\\S",
+                    "description": "前後の空白を除去したイベント名"
+                  },
+                  "date": {
+                    "type": ["string", "null"],
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "description": "実在する開催日（YYYY-MM-DD）。未設定はnull"
+                  },
+                  "venue": {
+                    "type": ["string", "null"]
+                  },
+                  "description": {
+                    "type": ["string", "null"]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["planning", "adjusting", "confirmed"]
+                  },
+                  "expectedUpdatedAt": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                  }
+                },
+                "required": ["expectedUpdatedAt"],
+                "minProperties": 2,
+                "additionalProperties": false
+              },
+              "example": {
+                "expectedUpdatedAt": "2026-10-17T00:00:00.000Z",
+                "title": "秋ライブ2026",
+                "venue": null
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteEvent",
+        "summary": "イベントを論理削除する",
+        "description": "認証は#57で追加する。現在はデモユーザーdemo-ownerのイベントに限定し、クライアントから所有者IDを受け取らない。 is_deleted=1にし、配下の名簿・部・配置・希望・制約・チャット履歴は保持する。削除済みIDへの再実行は404。",
+        "tags": ["Events"],
+        "security": [],
+        "responses": {
+          "204": {
+            "description": "論理削除完了。レスポンス本文なし"
+          },
+          "404": {
+            "description": "イベントが見つかりません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_not_found"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "イベントが見つかりません。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "イベントの処理に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "internal_error",
+                    "message": "イベントの処理に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{eventId}/schedule": {
+      "get": {
+        "operationId": "getEventSchedule",
+        "summary": "表情報を取得する",
+        "description": "認証は#57で追加する。現在はdemo-ownerの所有する未削除イベントに限定し、クライアントから所有者IDを受け取らない。取得でデータ保存・LLM・Solverの呼出しを行わない。 バンド・メンバー・所属・部・配置・未配置を返す。バンドと未配置はbandId昇順、メンバーはmemberId昇順、所属はbandId・memberId昇順、部はsortOrder昇順、配置は部の順・order昇順。sortOrder・orderは0始まり。枠数・空き枠は保存しない。",
+        "tags": ["Events"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "example": "event-1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "表情報。空の部も含み、未配置はunassignedBandIdsに返す",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventSchedule"
+                },
+                "example": {
+                  "eventId": "event-1",
+                  "updatedAt": "2026-10-17T00:00:00.000Z",
+                  "bands": [
+                    {
+                      "bandId": "band-1",
+                      "bandName": "バンドA",
+                      "requestText": null,
+                      "requestStatus": null
+                    },
+                    {
+                      "bandId": "band-2",
+                      "bandName": "バンドB",
+                      "requestText": null,
+                      "requestStatus": null
+                    }
+                  ],
+                  "members": [
+                    {
+                      "memberId": "member-1",
+                      "memberName": "田中"
+                    }
+                  ],
+                  "memberships": [
+                    {
+                      "bandId": "band-1",
+                      "memberId": "member-1"
+                    },
+                    {
+                      "bandId": "band-2",
+                      "memberId": "member-1"
+                    }
+                  ],
+                  "parts": [
+                    {
+                      "partId": "part-1",
+                      "partName": "第1部",
+                      "sortOrder": 0
+                    }
+                  ],
+                  "placements": [
+                    {
+                      "bandId": "band-1",
+                      "partId": "part-1",
+                      "order": 0
+                    }
+                  ],
+                  "unassignedBandIds": ["band-2"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "イベントが見つかりません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_not_found"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "イベントが見つかりません。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "イベントの処理に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "internal_error",
+                    "message": "イベントの処理に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{eventId}/constraints": {
+      "get": {
+        "operationId": "getEventConstraints",
+        "summary": "制約情報を取得する",
+        "description": "認証は#57で追加する。現在はdemo-ownerの所有する未削除イベントに限定し、クライアントから所有者IDを受け取らない。取得でデータ保存・LLM・Solverの呼出しを行わない。 共有Schemaで検証したConstraintオブジェクトとsourceBandIdをconstraint_id昇順で返す。無効な制約も含む。DB内のJSONやhardness/priorityの対応が不正なら500とし、一部だけの成功応答は返さない。",
+        "tags": ["Events"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "example": "event-1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "有効・無効を含む保存済み制約と生成元",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventConstraints"
+                },
+                "example": {
+                  "eventId": "event-1",
+                  "updatedAt": "2026-10-17T00:00:00.000Z",
+                  "constraints": [
+                    {
+                      "constraint": {
+                        "schema_version": "1.0.0",
+                        "constraint_id": "constraint-1",
+                        "event_id": "event-1",
+                        "type": "at_position",
+                        "hardness": "hard",
+                        "priority": null,
+                        "enabled": true,
+                        "source_text": "Aを先頭に固定",
+                        "targets": {
+                          "band_id": "band-1"
+                        },
+                        "params": {
+                          "position": 0
+                        }
+                      },
+                      "sourceBandId": null
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "イベントが見つかりません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_not_found"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "イベントが見つかりません。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "イベントの処理に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "internal_error",
+                    "message": "イベントの処理に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{eventId}/chat": {
+      "get": {
+        "operationId": "getEventChat",
+        "summary": "チャット履歴を取得する",
+        "description": "認証は#57で追加する。現在はdemo-ownerの所有する未削除イベントに限定し、クライアントから所有者IDを受け取らない。取得でデータ保存・LLM・Solverの呼出しを行わない。 1イベント1会話のuser/assistant発言をseq昇順で全件返す。ページング・件数上限は設けない。発言追加だけではEvent.updatedAtは変わらない。",
+        "tags": ["Events"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "example": "event-1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "保存済みの全発言。履歴なしはmessagesが空配列",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventChat"
+                },
+                "example": {
+                  "eventId": "event-1",
+                  "messages": [
+                    {
+                      "messageId": "message-1",
+                      "seq": 0,
+                      "role": "user",
+                      "text": "Aを先頭に固定して",
+                      "replyToMessageId": null,
+                      "createdAt": "2026-10-17T00:00:00.000Z"
+                    },
+                    {
+                      "messageId": "message-2",
+                      "seq": 1,
+                      "role": "assistant",
+                      "text": "バンドAを先頭に固定する条件を確認してください。",
+                      "replyToMessageId": "message-1",
+                      "createdAt": "2026-10-17T00:00:01.000Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "イベントが見つかりません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_not_found"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "イベントが見つかりません。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "イベントの処理に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "internal_error",
+                    "message": "イベントの処理に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "EventSchedule": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "UTCのISO 8601日時"
+          },
+          "bands": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bandId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "bandName": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "requestText": {
+                  "type": ["string", "null"]
+                },
+                "requestStatus": {
+                  "type": ["string", "null"],
+                  "enum": [
+                    "pending",
+                    "needs_confirmation",
+                    "converted",
+                    "failed",
+                    null
+                  ]
+                }
+              },
+              "required": ["bandId", "bandName", "requestText", "requestStatus"]
+            }
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "memberId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "memberName": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": ["memberId", "memberName"]
+            }
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bandId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "memberId": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": ["bandId", "memberId"]
+            }
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "partId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "partName": {
+                  "type": ["string", "null"]
+                },
+                "sortOrder": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": ["partId", "partName", "sortOrder"]
+            }
+          },
+          "placements": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bandId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "partId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "order": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": ["bandId", "partId", "order"]
+            }
+          },
+          "unassignedBandIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": [
+          "eventId",
+          "updatedAt",
+          "bands",
+          "members",
+          "memberships",
+          "parts",
+          "placements",
+          "unassignedBandIds"
+        ]
+      },
+      "EventConstraints": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "UTCのISO 8601日時"
+          },
+          "constraints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "constraint": {
+                  "$ref": "#/components/schemas/Constraint"
+                },
+                "sourceBandId": {
+                  "type": ["string", "null"],
+                  "description": "フォーム希望の生成元バンドID。手動・チャット由来などはnull。Constraint JSONには混ぜない。"
+                }
+              },
+              "required": ["constraint", "sourceBandId"]
+            }
+          }
+        },
+        "required": ["eventId", "updatedAt", "constraints"]
+      },
+      "EventChat": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "messageId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "seq": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "role": {
+                  "type": "string",
+                  "enum": ["user", "assistant"]
+                },
+                "text": {
+                  "type": "string"
+                },
+                "replyToMessageId": {
+                  "type": ["string", "null"]
+                },
+                "createdAt": {
+                  "type": "string",
+                  "description": "UTCのISO 8601日時"
+                }
+              },
+              "required": [
+                "messageId",
+                "seq",
+                "role",
+                "text",
+                "replyToMessageId",
+                "createdAt"
+              ]
+            }
+          }
+        },
+        "required": ["eventId", "messages"]
+      },
+      "Constraint": {
+        "title": "Constraint",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ConstraintMinGapMember"
+          },
+          {
+            "$ref": "#/components/schemas/ConstraintMinGapBands"
+          },
+          {
+            "$ref": "#/components/schemas/ConstraintBefore"
+          },
+          {
+            "$ref": "#/components/schemas/ConstraintAtPosition"
+          },
+          {
+            "$ref": "#/components/schemas/ConstraintInRange"
+          },
+          {
+            "$ref": "#/components/schemas/ConstraintCount"
+          }
+        ]
+      },
+      "ConstraintCommon": {
+        "$defs": {
+          "SchemaVersion": {
+            "title": "SchemaVersion",
+            "type": "string",
+            "enum": ["1.0.0"]
+          },
+          "Hardness": {
+            "title": "Hardness",
+            "type": "string",
+            "enum": ["hard", "soft"]
+          },
+          "Priority": {
+            "title": "Priority",
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": ["high", "mid", "low"]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "ConstraintMinGapMember": {
+        "title": "MinGapMemberConstraint",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "constraint_id",
+          "event_id",
+          "type",
+          "hardness",
+          "priority",
+          "enabled",
+          "targets",
+          "params"
+        ],
+        "properties": {
+          "schema_version": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/SchemaVersion"
+          },
+          "constraint_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "event_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": ["min_gap_member"]
+          },
+          "hardness": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Hardness"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Priority"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "source_text": {
+            "type": "string"
+          },
+          "targets": {
+            "$ref": "#/components/schemas/ConstraintMinGapMember/$defs/MinGapMemberTargets"
+          },
+          "params": {
+            "$ref": "#/components/schemas/ConstraintMinGapMember/$defs/MinGapMemberParams"
+          }
+        },
+        "$defs": {
+          "MinGapMemberTargets": {
+            "title": "MinGapMemberTargets",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["member_id"],
+            "properties": {
+              "member_id": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "MinGapMemberParams": {
+            "title": "MinGapMemberParams",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["min_diff", "same_part_only"],
+            "properties": {
+              "min_diff": {
+                "type": "integer",
+                "minimum": 2
+              },
+              "same_part_only": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "ConstraintMinGapBands": {
+        "title": "MinGapBandsConstraint",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "constraint_id",
+          "event_id",
+          "type",
+          "hardness",
+          "priority",
+          "enabled",
+          "targets",
+          "params"
+        ],
+        "properties": {
+          "schema_version": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/SchemaVersion"
+          },
+          "constraint_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "event_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": ["min_gap_bands"]
+          },
+          "hardness": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Hardness"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Priority"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "source_text": {
+            "type": "string"
+          },
+          "targets": {
+            "$ref": "#/components/schemas/ConstraintMinGapBands/$defs/MinGapBandsTargets"
+          },
+          "params": {
+            "$ref": "#/components/schemas/ConstraintMinGapBands/$defs/MinGapBandsParams"
+          }
+        },
+        "$defs": {
+          "MinGapBandsTargets": {
+            "title": "MinGapBandsTargets",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["band_ids"],
+            "properties": {
+              "band_ids": {
+                "type": "array",
+                "minItems": 2,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "MinGapBandsParams": {
+            "title": "MinGapBandsParams",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["min_diff", "same_part_only"],
+            "properties": {
+              "min_diff": {
+                "type": "integer",
+                "minimum": 2
+              },
+              "same_part_only": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "ConstraintBefore": {
+        "title": "BeforeConstraint",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "constraint_id",
+          "event_id",
+          "type",
+          "hardness",
+          "priority",
+          "enabled",
+          "targets",
+          "params"
+        ],
+        "properties": {
+          "schema_version": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/SchemaVersion"
+          },
+          "constraint_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "event_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": ["before"]
+          },
+          "hardness": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Hardness"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Priority"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "source_text": {
+            "type": "string"
+          },
+          "targets": {
+            "$ref": "#/components/schemas/ConstraintBefore/$defs/BeforeTargets"
+          },
+          "params": {
+            "$ref": "#/components/schemas/ConstraintBefore/$defs/BeforeParams"
+          }
+        },
+        "$defs": {
+          "BeforeTargets": {
+            "title": "BeforeTargets",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["before_band_id", "after_band_id"],
+            "properties": {
+              "before_band_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "after_band_id": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "BeforeParams": {
+            "title": "BeforeParams",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {}
+          }
+        }
+      },
+      "ConstraintAtPosition": {
+        "title": "AtPositionConstraint",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "constraint_id",
+          "event_id",
+          "type",
+          "hardness",
+          "priority",
+          "enabled",
+          "targets",
+          "params"
+        ],
+        "properties": {
+          "schema_version": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/SchemaVersion"
+          },
+          "constraint_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "event_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": ["at_position"]
+          },
+          "hardness": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Hardness"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Priority"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "source_text": {
+            "type": "string"
+          },
+          "targets": {
+            "$ref": "#/components/schemas/ConstraintAtPosition/$defs/AtPositionTargets"
+          },
+          "params": {
+            "$ref": "#/components/schemas/ConstraintAtPosition/$defs/AtPositionParams"
+          }
+        },
+        "$defs": {
+          "AtPositionTargets": {
+            "title": "AtPositionTargets",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["band_id"],
+            "properties": {
+              "band_id": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "AtPositionParams": {
+            "title": "AtPositionParams",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["position"],
+            "properties": {
+              "position": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      },
+      "ConstraintInRange": {
+        "title": "InRangeConstraint",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "constraint_id",
+          "event_id",
+          "type",
+          "hardness",
+          "priority",
+          "enabled",
+          "targets",
+          "params"
+        ],
+        "properties": {
+          "schema_version": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/SchemaVersion"
+          },
+          "constraint_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "event_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": ["in_range"]
+          },
+          "hardness": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Hardness"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Priority"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "source_text": {
+            "type": "string"
+          },
+          "targets": {
+            "$ref": "#/components/schemas/ConstraintInRange/$defs/InRangeTargets"
+          },
+          "params": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConstraintInRange/$defs/InRangePositionParams"
+              },
+              {
+                "$ref": "#/components/schemas/ConstraintInRange/$defs/InRangePartParams"
+              }
+            ]
+          }
+        },
+        "$defs": {
+          "InRangeTargets": {
+            "title": "InRangeTargets",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["band_ids"],
+            "properties": {
+              "band_ids": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "InRangePositionParams": {
+            "title": "InRangePositionParams",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "position_from", "position_to"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["positions"]
+              },
+              "position_from": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "position_to": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "InRangePartParams": {
+            "title": "InRangePartParams",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "part_ids"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["parts"]
+              },
+              "part_ids": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        }
+      },
+      "ConstraintCount": {
+        "title": "CountConstraint",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "constraint_id",
+          "event_id",
+          "type",
+          "hardness",
+          "priority",
+          "enabled",
+          "targets",
+          "params"
+        ],
+        "properties": {
+          "schema_version": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/SchemaVersion"
+          },
+          "constraint_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "event_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": ["count"]
+          },
+          "hardness": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Hardness"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Priority"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "source_text": {
+            "type": "string"
+          },
+          "targets": {
+            "$ref": "#/components/schemas/ConstraintCount/$defs/CountTargets"
+          },
+          "params": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConstraintCount/$defs/CountPerPartParams"
+              },
+              {
+                "$ref": "#/components/schemas/ConstraintCount/$defs/CountInPartsParams"
+              }
+            ]
+          }
+        },
+        "$defs": {
+          "CountTargets": {
+            "title": "CountTargets",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["band_ids"],
+            "properties": {
+              "band_ids": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "CountPerPartParams": {
+            "title": "CountPerPartParams",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["scope", "min", "max"],
+            "properties": {
+              "scope": {
+                "type": "string",
+                "enum": ["per_part"]
+              },
+              "min": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "CountInPartsParams": {
+            "title": "CountInPartsParams",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["scope", "part_ids", "min", "max"],
+            "properties": {
+              "scope": {
+                "type": "string",
+                "enum": ["in_parts"]
+              },
+              "part_ids": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "min": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 0
               }
             }
           }
