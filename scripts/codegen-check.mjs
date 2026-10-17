@@ -18,10 +18,6 @@ function run(command, args) {
 try {
   const generatedTs = join(temporaryDirectory, 'constraint.ts')
   const generatedPy = join(temporaryDirectory, 'constraint.py')
-  const generatedValidator = join(
-    temporaryDirectory,
-    'constraint-validator.cjs',
-  )
 
   run(process.execPath, [
     'node_modules/json-schema-to-typescript/dist/src/cli.js',
@@ -41,20 +37,11 @@ try {
     '--output',
     generatedPy,
   ])
-  run(process.execPath, [
-    'scripts/codegen-backend-constraint.mjs',
-    generatedValidator,
-  ])
 
   let matches = true
   for (const [current, generated] of [
     ['apps/frontend/src/generated/constraint.ts', generatedTs],
     ['apps/backend/src/generated/constraint.ts', generatedTs],
-    ['apps/backend/src/generated/constraint-validator.cjs', generatedValidator],
-    [
-      'apps/backend/src/generated/constraint-validator.d.cts',
-      generatedValidator.replace(/\.cjs$/, '.d.cts'),
-    ],
     ['apps/solver/src/generated/constraint.py', generatedPy],
   ]) {
     const expected = await readFile(generated)

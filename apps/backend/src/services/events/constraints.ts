@@ -1,4 +1,4 @@
-import validate from '../../generated/constraint-validator.cjs'
+import { validateConstraint } from '../../shared/constraints/schema'
 import type { EventConstraints, StoredEventConstraints } from './types'
 
 export function decodeConstraints(
@@ -10,7 +10,7 @@ export function decodeConstraints(
     constraints: stored.constraints.map((row) => {
       const value: unknown = JSON.parse(row.constraintJson)
       if (
-        !validate(value) ||
+        !validateConstraint(value) ||
         value.constraint_id !== row.constraintId ||
         value.event_id !== stored.eventId ||
         (value.hardness === 'hard'

@@ -219,7 +219,7 @@ HTTP 200。有効・無効を含む全保存済み制約を`constraint_id`昇順
 }
 ```
 
-`constraint`は共有Constraint JSONをパース・検証したオブジェクト。`sourceBandId`はフォーム希望の生成元を示すメタデータで、共有JSONへ混ぜない。手動・チャット由来などは`null`。実行時検証は共有Schemaから生成したstandaloneバリデーターを使う。JSONの形式・列とJSONのID一致・hard/priorityの対応を確認する。不正な保存データは500とし、黙って除外しない。OpenAPIのConstraint定義は同じ正本から参照を移して掲載し、テストで正本との差分と実応答を照合する。
+`constraint`は共有Constraint JSONをパース・検証したオブジェクト。`sourceBandId`はフォーム希望の生成元を示すメタデータで、共有JSONへ混ぜない。手動・チャット由来などは`null`。実行時検証は`shared/constraints/schema.ts`で共有JSON Schemaを参照し、既存のZodで行う。JSONの形式・列とJSONのID一致・hard/priorityの対応を確認する。不正な保存データは500とし、黙って除外しない。OpenAPIのConstraint定義は同じ正本から参照を移して掲載し、テストで正本との差分と実応答を照合する。
 
 ### チャット：GET /chat
 
