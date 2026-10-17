@@ -9,6 +9,7 @@ import { Input, Select } from '../../../shared/ui/Input'
 import { LinkButton } from '../../../shared/ui/LinkButton'
 import { PageState } from '../../../shared/ui/PageState'
 import { PerformanceFields } from '../../forms/components/PerformanceFields'
+import { RosterImportDialog } from '../components/RosterImportDialog'
 import { useParticipants } from '../hooks/useParticipants'
 
 export function ParticipantsPage() {
@@ -31,6 +32,10 @@ export function ParticipantsPage() {
             <Icon name="form" />
             回答フォーム
           </LinkButton>
+          <Button onClick={controller.openImport} disabled={!controller.data}>
+            <Icon name="list" />
+            CSVを取り込む
+          </Button>
           <Button variant="primary" onClick={() => controller.openEditor()}>
             <Icon name="plus" />
             出演枠を追加
@@ -230,6 +235,14 @@ export function ParticipantsPage() {
             </div>
           </form>
         </Dialog>
+      )}
+      {controller.importOpen && controller.data && (
+        <RosterImportDialog
+          eventId={eventId}
+          registered={controller.data.data.members}
+          onDone={controller.importDone}
+          onClose={controller.closeImport}
+        />
       )}
       {controller.deletingId && (
         <ConfirmDialog
