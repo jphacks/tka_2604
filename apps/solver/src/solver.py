@@ -1,6 +1,7 @@
 """CP-SAT calculation for the BE-to-Solver contract."""
 
 from dataclasses import dataclass
+from itertools import combinations
 
 from ortools.sat.python import cp_model
 
@@ -117,6 +118,39 @@ def _build_model(request: SolveRequest, allow_partial: bool) -> ModelVariables:
             model.add(
                 global_position[before_index] < global_position[after_index]
             ).only_enforce_if([present[before_index], present[after_index]])
+        elif constraint.type in ("min_gap_member", "min_gap_bands"):
+            if constraint.type == "min_gap_member":
+                target_bands = [
+                    membership.bandId
+                    for membership in request.memberships
+                    if membership.memberId == target.member_id
+                ]
+            else:
+                target_bands = [band_id.root for band_id in target.band_ids]
+            for pair_index, (left_id, right_id) in enumerate(
+                combinations(target_bands, 2)
+            ):
+                left_index = band_indexes[left_id]
+                right_index = band_indexes[right_id]
+                difference = model.new_int_var(
+                    0, band_count - 1, f"gap_{constraint.constraint_id}_{pair_index}"
+                )
+                model.add_abs_equality(
+                    difference,
+                    global_position[left_index] - global_position[right_index],
+                )
+                if params.same_part_only:
+                    for part_index in range(part_count):
+                        model.add(difference >= params.min_diff).only_enforce_if(
+                            [
+                                assignment[left_index, part_index],
+                                assignment[right_index, part_index],
+                            ]
+                        )
+                else:
+                    model.add(difference >= params.min_diff).only_enforce_if(
+                        [present[left_index], present[right_index]]
+                    )
 
     return ModelVariables(model, assignment, present, local_order, global_position)
 
@@ -163,6 +197,29 @@ def _constraint_results(
                 result = (
                     "met" if positions[before_id] < positions[after_id] else "unmet"
                 )
+        elif constraint.type in ("min_gap_member", "min_gap_bands"):
+            if constraint.type == "min_gap_member":
+                target_bands = [
+                    membership.bandId
+                    for membership in request.memberships
+                    if membership.memberId == constraint.targets.member_id
+                ]
+            else:
+                target_bands = [band_id.root for band_id in constraint.targets.band_ids]
+            if any(band_id not in positions for band_id in target_bands):
+                result = "unchecked"
+            else:
+                part_by_band = {
+                    placement.bandId: placement.partId for placement in placements
+                }
+                satisfied = all(
+                    abs(positions[left_id] - positions[right_id])
+                    >= constraint.params.min_diff
+                    for left_id, right_id in combinations(target_bands, 2)
+                    if not constraint.params.same_part_only
+                    or part_by_band[left_id] == part_by_band[right_id]
+                )
+                result = "met" if satisfied else "unmet"
         else:
             # Unsupported active constraints are rejected before model construction.
             raise NotImplementedError(f"未対応の制約です: {constraint.type}")
@@ -211,7 +268,8 @@ def solve_request(request: SolveRequest) -> SolveResponse:
         if item.root.enabled
         and (
             item.root.hardness != "hard"
-            or item.root.type not in ("at_position", "before")
+            or item.root.type
+            not in ("at_position", "before", "min_gap_member", "min_gap_bands")
         )
     ]
     if unsupported:
