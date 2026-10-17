@@ -1,0 +1,26 @@
+{
+  "context": {
+    "event": { "title": "秋ライブ" },
+    "parts": [
+      { "partId": "part-1", "sortOrder": 0, "partName": "第1部" },
+      { "partId": "part-2", "sortOrder": 1, "partName": "第2部" }
+    ],
+    "bands": [
+      { "bandId": "band-a", "bandName": "A" },
+      { "bandId": "band-b", "bandName": "B" }
+    ],
+    "members": [{ "memberId": "member-1", "memberName": "田中" }],
+    "memberships": [
+      { "bandId": "band-a", "memberId": "member-1" },
+      { "bandId": "band-b", "memberId": "member-1" }
+    ],
+    "constraints": [],
+    "currentPlacements": [
+      { "bandId": "band-a", "partId": "part-1", "order": 0 },
+      { "bandId": "band-b", "partId": "part-1", "order": 1 }
+    ]
+  },
+  "recentMessages": [],
+  "userMessage": "Aを第2部にしたい",
+  "pendingProposal": null
+}
