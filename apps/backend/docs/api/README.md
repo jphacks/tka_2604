@@ -61,7 +61,7 @@ npm run test:backend
 npm run check
 ```
 
-healthはVitestでステータス200・Content-Type・応答本文を直接確認し、`test/openapi.test.ts`では手書きOpenAPIの応答スキーマにも照合する。共通補助処理は`test/helpers/openapi.ts`。契約テストではAjvのJSON Schema 2020-12用クラスを使う。保存済みConstraintの実行時検証には、同じ正本から`npm run codegen`で生成したstandaloneバリデーターを使い、Workersで動的コード生成を行わない。
+healthはVitestでステータス200・Content-Type・応答本文を直接確認し、`test/openapi.test.ts`では手書きOpenAPIの応答スキーマにも照合する。共通補助処理は`test/helpers/openapi.ts`。契約テストではAjvのJSON Schema 2020-12用クラスを使う。AjvはOpenAPIの契約テスト専用の開発依存とする。保存済みConstraintとSolver入力の実行時検証は、共有JSON Schemaを参照するZodの共通処理で行う。
 
 ```ts
 const response = await app.request('/api/health')

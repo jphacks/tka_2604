@@ -27,7 +27,9 @@ npm run codegen
 npm run codegen:check
 ```
 
-生成先はfrontend・backendの`src/generated/constraint.ts`、`apps/solver/src/generated/constraint.py`、backendの`src/generated/constraint-validator.cjs`と型宣言。backendの検証コードはAjv standaloneで事前生成し、Workersでの`eval`・`Function`による動的コンパイルを避ける。手編集せず、スキーマと生成差分を一緒にGit管理する。TypeScriptの型は実行時検証にならず、生成したPydanticモデルにも業務上の検証が必要。
+生成先はfrontend・backendの`src/generated/constraint.ts`と`apps/solver/src/generated/constraint.py`の3ファイル。手編集せず、スキーマと生成差分を一緒にGit管理する。TypeScriptの型は実行時検証にならず、生成したPydanticモデルにも業務上の検証が必要。
+
+backendの実行時検証は`shared/constraints/schema.ts`で共有Schemaの参照を解決し、Zodの`fromJSONSchema`を利用する。6種類の制約・union分岐・配列の一意性・未知の項目の拒否をテストする。`fromJSONSchema`はZod 4.6の実験的APIのため、Zod更新時もこれらの互換性を確認する。AjvはOpenAPI契約テストにだけ使用し、検証用JavaScript・型宣言の生成は行わない。
 
 実行時検証とCIが保証する範囲は[バリデーション・チェック・CI](validation-ci.md)を参照。
 

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import validateConstraint from '../../generated/constraint-validator.cjs'
+import { validateConstraint } from '../../shared/constraints/schema'
 import { SolverError } from './errors'
 import { evaluateConstraint, targetBandIds } from './evaluation'
 import type { SolveInput, SolverRequest, SolverResult } from './types'
