@@ -1,0 +1,2414 @@
+{
+  "eventId": "bench-soft_conflict",
+  "parts": [
+    {
+      "partId": "part-1",
+      "sortOrder": 0
+    },
+    {
+      "partId": "part-2",
+      "sortOrder": 1
+    },
+    {
+      "partId": "part-3",
+      "sortOrder": 2
+    }
+  ],
+  "bands": [
+    {
+      "bandId": "band-01"
+    },
+    {
+      "bandId": "band-02"
+    },
+    {
+      "bandId": "band-03"
+    },
+    {
+      "bandId": "band-04"
+    },
+    {
+      "bandId": "band-05"
+    },
+    {
+      "bandId": "band-06"
+    },
+    {
+      "bandId": "band-07"
+    },
+    {
+      "bandId": "band-08"
+    },
+    {
+      "bandId": "band-09"
+    },
+    {
+      "bandId": "band-10"
+    },
+    {
+      "bandId": "band-11"
+    },
+    {
+      "bandId": "band-12"
+    },
+    {
+      "bandId": "band-13"
+    },
+    {
+      "bandId": "band-14"
+    },
+    {
+      "bandId": "band-15"
+    },
+    {
+      "bandId": "band-16"
+    },
+    {
+      "bandId": "band-17"
+    },
+    {
+      "bandId": "band-18"
+    },
+    {
+      "bandId": "band-19"
+    },
+    {
+      "bandId": "band-20"
+    },
+    {
+      "bandId": "band-21"
+    },
+    {
+      "bandId": "band-22"
+    },
+    {
+      "bandId": "band-23"
+    },
+    {
+      "bandId": "band-24"
+    },
+    {
+      "bandId": "band-25"
+    },
+    {
+      "bandId": "band-26"
+    },
+    {
+      "bandId": "band-27"
+    },
+    {
+      "bandId": "band-28"
+    },
+    {
+      "bandId": "band-29"
+    },
+    {
+      "bandId": "band-30"
+    },
+    {
+      "bandId": "band-31"
+    },
+    {
+      "bandId": "band-32"
+    },
+    {
+      "bandId": "band-33"
+    },
+    {
+      "bandId": "band-34"
+    },
+    {
+      "bandId": "band-35"
+    },
+    {
+      "bandId": "band-36"
+    },
+    {
+      "bandId": "band-37"
+    },
+    {
+      "bandId": "band-38"
+    }
+  ],
+  "members": [
+    {
+      "memberId": "member-001"
+    },
+    {
+      "memberId": "member-002"
+    },
+    {
+      "memberId": "member-003"
+    },
+    {
+      "memberId": "member-004"
+    },
+    {
+      "memberId": "member-005"
+    },
+    {
+      "memberId": "member-006"
+    },
+    {
+      "memberId": "member-007"
+    },
+    {
+      "memberId": "member-008"
+    },
+    {
+      "memberId": "member-009"
+    },
+    {
+      "memberId": "member-010"
+    },
+    {
+      "memberId": "member-011"
+    },
+    {
+      "memberId": "member-012"
+    },
+    {
+      "memberId": "member-013"
+    },
+    {
+      "memberId": "member-014"
+    },
+    {
+      "memberId": "member-015"
+    },
+    {
+      "memberId": "member-016"
+    },
+    {
+      "memberId": "member-017"
+    },
+    {
+      "memberId": "member-018"
+    },
+    {
+      "memberId": "member-019"
+    },
+    {
+      "memberId": "member-020"
+    },
+    {
+      "memberId": "member-021"
+    },
+    {
+      "memberId": "member-022"
+    },
+    {
+      "memberId": "member-023"
+    },
+    {
+      "memberId": "member-024"
+    },
+    {
+      "memberId": "member-025"
+    },
+    {
+      "memberId": "member-026"
+    },
+    {
+      "memberId": "member-027"
+    },
+    {
+      "memberId": "member-028"
+    },
+    {
+      "memberId": "member-029"
+    },
+    {
+      "memberId": "member-030"
+    },
+    {
+      "memberId": "member-031"
+    },
+    {
+      "memberId": "member-032"
+    },
+    {
+      "memberId": "member-033"
+    },
+    {
+      "memberId": "member-034"
+    },
+    {
+      "memberId": "member-035"
+    },
+    {
+      "memberId": "member-036"
+    },
+    {
+      "memberId": "member-037"
+    },
+    {
+      "memberId": "member-038"
+    },
+    {
+      "memberId": "member-039"
+    },
+    {
+      "memberId": "member-040"
+    },
+    {
+      "memberId": "member-041"
+    },
+    {
+      "memberId": "member-042"
+    },
+    {
+      "memberId": "member-043"
+    },
+    {
+      "memberId": "member-044"
+    },
+    {
+      "memberId": "member-045"
+    },
+    {
+      "memberId": "member-046"
+    },
+    {
+      "memberId": "member-047"
+    },
+    {
+      "memberId": "member-048"
+    },
+    {
+      "memberId": "member-049"
+    },
+    {
+      "memberId": "member-050"
+    },
+    {
+      "memberId": "member-051"
+    },
+    {
+      "memberId": "member-052"
+    },
+    {
+      "memberId": "member-053"
+    },
+    {
+      "memberId": "member-054"
+    },
+    {
+      "memberId": "member-055"
+    },
+    {
+      "memberId": "member-056"
+    },
+    {
+      "memberId": "member-057"
+    },
+    {
+      "memberId": "member-058"
+    },
+    {
+      "memberId": "member-059"
+    },
+    {
+      "memberId": "member-060"
+    },
+    {
+      "memberId": "member-061"
+    },
+    {
+      "memberId": "member-062"
+    },
+    {
+      "memberId": "member-063"
+    },
+    {
+      "memberId": "member-064"
+    },
+    {
+      "memberId": "member-065"
+    },
+    {
+      "memberId": "member-066"
+    },
+    {
+      "memberId": "member-067"
+    },
+    {
+      "memberId": "member-068"
+    },
+    {
+      "memberId": "member-069"
+    },
+    {
+      "memberId": "member-070"
+    },
+    {
+      "memberId": "member-071"
+    },
+    {
+      "memberId": "member-072"
+    },
+    {
+      "memberId": "member-073"
+    },
+    {
+      "memberId": "member-074"
+    },
+    {
+      "memberId": "member-075"
+    },
+    {
+      "memberId": "member-076"
+    },
+    {
+      "memberId": "member-077"
+    },
+    {
+      "memberId": "member-078"
+    },
+    {
+      "memberId": "member-079"
+    },
+    {
+      "memberId": "member-080"
+    },
+    {
+      "memberId": "member-081"
+    },
+    {
+      "memberId": "member-082"
+    },
+    {
+      "memberId": "member-083"
+    }
+  ],
+  "memberships": [
+    {
+      "bandId": "band-01",
+      "memberId": "member-001"
+    },
+    {
+      "bandId": "band-01",
+      "memberId": "member-002"
+    },
+    {
+      "bandId": "band-01",
+      "memberId": "member-003"
+    },
+    {
+      "bandId": "band-01",
+      "memberId": "member-004"
+    },
+    {
+      "bandId": "band-01",
+      "memberId": "member-005"
+    },
+    {
+      "bandId": "band-02",
+      "memberId": "member-006"
+    },
+    {
+      "bandId": "band-02",
+      "memberId": "member-003"
+    },
+    {
+      "bandId": "band-02",
+      "memberId": "member-007"
+    },
+    {
+      "bandId": "band-02",
+      "memberId": "member-008"
+    },
+    {
+      "bandId": "band-02",
+      "memberId": "member-009"
+    },
+    {
+      "bandId": "band-02",
+      "memberId": "member-010"
+    },
+    {
+      "bandId": "band-03",
+      "memberId": "member-011"
+    },
+    {
+      "bandId": "band-03",
+      "memberId": "member-012"
+    },
+    {
+      "bandId": "band-03",
+      "memberId": "member-013"
+    },
+    {
+      "bandId": "band-03",
+      "memberId": "member-014"
+    },
+    {
+      "bandId": "band-03",
+      "memberId": "member-015"
+    },
+    {
+      "bandId": "band-04",
+      "memberId": "member-016"
+    },
+    {
+      "bandId": "band-04",
+      "memberId": "member-017"
+    },
+    {
+      "bandId": "band-04",
+      "memberId": "member-018"
+    },
+    {
+      "bandId": "band-05",
+      "memberId": "member-019"
+    },
+    {
+      "bandId": "band-05",
+      "memberId": "member-020"
+    },
+    {
+      "bandId": "band-05",
+      "memberId": "member-021"
+    },
+    {
+      "bandId": "band-05",
+      "memberId": "member-022"
+    },
+    {
+      "bandId": "band-05",
+      "memberId": "member-023"
+    },
+    {
+      "bandId": "band-05",
+      "memberId": "member-024"
+    },
+    {
+      "bandId": "band-06",
+      "memberId": "member-025"
+    },
+    {
+      "bandId": "band-06",
+      "memberId": "member-026"
+    },
+    {
+      "bandId": "band-06",
+      "memberId": "member-027"
+    },
+    {
+      "bandId": "band-06",
+      "memberId": "member-028"
+    },
+    {
+      "bandId": "band-06",
+      "memberId": "member-020"
+    },
+    {
+      "bandId": "band-06",
+      "memberId": "member-029"
+    },
+    {
+      "bandId": "band-06",
+      "memberId": "member-010"
+    },
+    {
+      "bandId": "band-07",
+      "memberId": "member-026"
+    },
+    {
+      "bandId": "band-07",
+      "memberId": "member-027"
+    },
+    {
+      "bandId": "band-07",
+      "memberId": "member-013"
+    },
+    {
+      "bandId": "band-07",
+      "memberId": "member-030"
+    },
+    {
+      "bandId": "band-07",
+      "memberId": "member-023"
+    },
+    {
+      "bandId": "band-07",
+      "memberId": "member-024"
+    },
+    {
+      "bandId": "band-08",
+      "memberId": "member-008"
+    },
+    {
+      "bandId": "band-08",
+      "memberId": "member-031"
+    },
+    {
+      "bandId": "band-08",
+      "memberId": "member-032"
+    },
+    {
+      "bandId": "band-08",
+      "memberId": "member-033"
+    },
+    {
+      "bandId": "band-08",
+      "memberId": "member-034"
+    },
+    {
+      "bandId": "band-08",
+      "memberId": "member-029"
+    },
+    {
+      "bandId": "band-09",
+      "memberId": "member-035"
+    },
+    {
+      "bandId": "band-09",
+      "memberId": "member-036"
+    },
+    {
+      "bandId": "band-09",
+      "memberId": "member-037"
+    },
+    {
+      "bandId": "band-09",
+      "memberId": "member-038"
+    },
+    {
+      "bandId": "band-09",
+      "memberId": "member-039"
+    },
+    {
+      "bandId": "band-09",
+      "memberId": "member-040"
+    },
+    {
+      "bandId": "band-10",
+      "memberId": "member-041"
+    },
+    {
+      "bandId": "band-11",
+      "memberId": "member-042"
+    },
+    {
+      "bandId": "band-11",
+      "memberId": "member-025"
+    },
+    {
+      "bandId": "band-12",
+      "memberId": "member-043"
+    },
+    {
+      "bandId": "band-12",
+      "memberId": "member-036"
+    },
+    {
+      "bandId": "band-12",
+      "memberId": "member-044"
+    },
+    {
+      "bandId": "band-12",
+      "memberId": "member-045"
+    },
+    {
+      "bandId": "band-12",
+      "memberId": "member-029"
+    },
+    {
+      "bandId": "band-12",
+      "memberId": "member-046"
+    },
+    {
+      "bandId": "band-13",
+      "memberId": "member-047"
+    },
+    {
+      "bandId": "band-13",
+      "memberId": "member-048"
+    },
+    {
+      "bandId": "band-13",
+      "memberId": "member-044"
+    },
+    {
+      "bandId": "band-13",
+      "memberId": "member-049"
+    },
+    {
+      "bandId": "band-13",
+      "memberId": "member-005"
+    },
+    {
+      "bandId": "band-13",
+      "memberId": "member-010"
+    },
+    {
+      "bandId": "band-14",
+      "memberId": "member-050"
+    },
+    {
+      "bandId": "band-14",
+      "memberId": "member-024"
+    },
+    {
+      "bandId": "band-15",
+      "memberId": "member-051"
+    },
+    {
+      "bandId": "band-15",
+      "memberId": "member-012"
+    },
+    {
+      "bandId": "band-15",
+      "memberId": "member-043"
+    },
+    {
+      "bandId": "band-15",
+      "memberId": "member-052"
+    },
+    {
+      "bandId": "band-15",
+      "memberId": "member-053"
+    },
+    {
+      "bandId": "band-15",
+      "memberId": "member-054"
+    },
+    {
+      "bandId": "band-16",
+      "memberId": "member-055"
+    },
+    {
+      "bandId": "band-16",
+      "memberId": "member-038"
+    },
+    {
+      "bandId": "band-16",
+      "memberId": "member-039"
+    },
+    {
+      "bandId": "band-16",
+      "memberId": "member-043"
+    },
+    {
+      "bandId": "band-16",
+      "memberId": "member-056"
+    },
+    {
+      "bandId": "band-17",
+      "memberId": "member-049"
+    },
+    {
+      "bandId": "band-17",
+      "memberId": "member-006"
+    },
+    {
+      "bandId": "band-17",
+      "memberId": "member-035"
+    },
+    {
+      "bandId": "band-17",
+      "memberId": "member-038"
+    },
+    {
+      "bandId": "band-17",
+      "memberId": "member-005"
+    },
+    {
+      "bandId": "band-17",
+      "memberId": "member-010"
+    },
+    {
+      "bandId": "band-18",
+      "memberId": "member-025"
+    },
+    {
+      "bandId": "band-18",
+      "memberId": "member-036"
+    },
+    {
+      "bandId": "band-18",
+      "memberId": "member-057"
+    },
+    {
+      "bandId": "band-18",
+      "memberId": "member-008"
+    },
+    {
+      "bandId": "band-18",
+      "memberId": "member-058"
+    },
+    {
+      "bandId": "band-18",
+      "memberId": "member-039"
+    },
+    {
+      "bandId": "band-19",
+      "memberId": "member-003"
+    },
+    {
+      "bandId": "band-19",
+      "memberId": "member-059"
+    },
+    {
+      "bandId": "band-19",
+      "memberId": "member-013"
+    },
+    {
+      "bandId": "band-19",
+      "memberId": "member-058"
+    },
+    {
+      "bandId": "band-19",
+      "memberId": "member-039"
+    },
+    {
+      "bandId": "band-20",
+      "memberId": "member-060"
+    },
+    {
+      "bandId": "band-20",
+      "memberId": "member-061"
+    },
+    {
+      "bandId": "band-20",
+      "memberId": "member-062"
+    },
+    {
+      "bandId": "band-20",
+      "memberId": "member-004"
+    },
+    {
+      "bandId": "band-20",
+      "memberId": "member-063"
+    },
+    {
+      "bandId": "band-20",
+      "memberId": "member-042"
+    },
+    {
+      "bandId": "band-21",
+      "memberId": "member-047"
+    },
+    {
+      "bandId": "band-21",
+      "memberId": "member-022"
+    },
+    {
+      "bandId": "band-21",
+      "memberId": "member-064"
+    },
+    {
+      "bandId": "band-21",
+      "memberId": "member-019"
+    },
+    {
+      "bandId": "band-21",
+      "memberId": "member-065"
+    },
+    {
+      "bandId": "band-21",
+      "memberId": "member-042"
+    },
+    {
+      "bandId": "band-22",
+      "memberId": "member-055"
+    },
+    {
+      "bandId": "band-22",
+      "memberId": "member-006"
+    },
+    {
+      "bandId": "band-22",
+      "memberId": "member-057"
+    },
+    {
+      "bandId": "band-22",
+      "memberId": "member-008"
+    },
+    {
+      "bandId": "band-22",
+      "memberId": "member-049"
+    },
+    {
+      "bandId": "band-22",
+      "memberId": "member-066"
+    },
+    {
+      "bandId": "band-22",
+      "memberId": "member-058"
+    },
+    {
+      "bandId": "band-23",
+      "memberId": "member-022"
+    },
+    {
+      "bandId": "band-23",
+      "memberId": "member-047"
+    },
+    {
+      "bandId": "band-23",
+      "memberId": "member-031"
+    },
+    {
+      "bandId": "band-23",
+      "memberId": "member-019"
+    },
+    {
+      "bandId": "band-23",
+      "memberId": "member-023"
+    },
+    {
+      "bandId": "band-23",
+      "memberId": "member-010"
+    },
+    {
+      "bandId": "band-24",
+      "memberId": "member-067"
+    },
+    {
+      "bandId": "band-24",
+      "memberId": "member-068"
+    },
+    {
+      "bandId": "band-24",
+      "memberId": "member-069"
+    },
+    {
+      "bandId": "band-24",
+      "memberId": "member-063"
+    },
+    {
+      "bandId": "band-24",
+      "memberId": "member-046"
+    },
+    {
+      "bandId": "band-24",
+      "memberId": "member-054"
+    },
+    {
+      "bandId": "band-25",
+      "memberId": "member-046"
+    },
+    {
+      "bandId": "band-25",
+      "memberId": "member-070"
+    },
+    {
+      "bandId": "band-25",
+      "memberId": "member-044"
+    },
+    {
+      "bandId": "band-25",
+      "memberId": "member-009"
+    },
+    {
+      "bandId": "band-25",
+      "memberId": "member-071"
+    },
+    {
+      "bandId": "band-25",
+      "memberId": "member-072"
+    },
+    {
+      "bandId": "band-26",
+      "memberId": "member-022"
+    },
+    {
+      "bandId": "band-26",
+      "memberId": "member-035"
+    },
+    {
+      "bandId": "band-26",
+      "memberId": "member-011"
+    },
+    {
+      "bandId": "band-26",
+      "memberId": "member-041"
+    },
+    {
+      "bandId": "band-26",
+      "memberId": "member-065"
+    },
+    {
+      "bandId": "band-26",
+      "memberId": "member-029"
+    },
+    {
+      "bandId": "band-27",
+      "memberId": "member-019"
+    },
+    {
+      "bandId": "band-27",
+      "memberId": "member-025"
+    },
+    {
+      "bandId": "band-27",
+      "memberId": "member-048"
+    },
+    {
+      "bandId": "band-28",
+      "memberId": "member-019"
+    },
+    {
+      "bandId": "band-28",
+      "memberId": "member-048"
+    },
+    {
+      "bandId": "band-28",
+      "memberId": "member-051"
+    },
+    {
+      "bandId": "band-28",
+      "memberId": "member-027"
+    },
+    {
+      "bandId": "band-28",
+      "memberId": "member-041"
+    },
+    {
+      "bandId": "band-28",
+      "memberId": "member-073"
+    },
+    {
+      "bandId": "band-29",
+      "memberId": "member-012"
+    },
+    {
+      "bandId": "band-29",
+      "memberId": "member-027"
+    },
+    {
+      "bandId": "band-29",
+      "memberId": "member-074"
+    },
+    {
+      "bandId": "band-29",
+      "memberId": "member-033"
+    },
+    {
+      "bandId": "band-29",
+      "memberId": "member-042"
+    },
+    {
+      "bandId": "band-29",
+      "memberId": "member-075"
+    },
+    {
+      "bandId": "band-30",
+      "memberId": "member-006"
+    },
+    {
+      "bandId": "band-30",
+      "memberId": "member-076"
+    },
+    {
+      "bandId": "band-30",
+      "memberId": "member-077"
+    },
+    {
+      "bandId": "band-30",
+      "memberId": "member-009"
+    },
+    {
+      "bandId": "band-30",
+      "memberId": "member-029"
+    },
+    {
+      "bandId": "band-30",
+      "memberId": "member-010"
+    },
+    {
+      "bandId": "band-31",
+      "memberId": "member-078"
+    },
+    {
+      "bandId": "band-31",
+      "memberId": "member-074"
+    },
+    {
+      "bandId": "band-31",
+      "memberId": "member-049"
+    },
+    {
+      "bandId": "band-31",
+      "memberId": "member-020"
+    },
+    {
+      "bandId": "band-31",
+      "memberId": "member-029"
+    },
+    {
+      "bandId": "band-31",
+      "memberId": "member-054"
+    },
+    {
+      "bandId": "band-32",
+      "memberId": "member-056"
+    },
+    {
+      "bandId": "band-32",
+      "memberId": "member-027"
+    },
+    {
+      "bandId": "band-32",
+      "memberId": "member-036"
+    },
+    {
+      "bandId": "band-32",
+      "memberId": "member-049"
+    },
+    {
+      "bandId": "band-32",
+      "memberId": "member-058"
+    },
+    {
+      "bandId": "band-32",
+      "memberId": "member-040"
+    },
+    {
+      "bandId": "band-33",
+      "memberId": "member-054"
+    },
+    {
+      "bandId": "band-33",
+      "memberId": "member-079"
+    },
+    {
+      "bandId": "band-33",
+      "memberId": "member-078"
+    },
+    {
+      "bandId": "band-33",
+      "memberId": "member-056"
+    },
+    {
+      "bandId": "band-33",
+      "memberId": "member-023"
+    },
+    {
+      "bandId": "band-34",
+      "memberId": "member-080"
+    },
+    {
+      "bandId": "band-35",
+      "memberId": "member-013"
+    },
+    {
+      "bandId": "band-35",
+      "memberId": "member-031"
+    },
+    {
+      "bandId": "band-35",
+      "memberId": "member-055"
+    },
+    {
+      "bandId": "band-35",
+      "memberId": "member-081"
+    },
+    {
+      "bandId": "band-35",
+      "memberId": "member-046"
+    },
+    {
+      "bandId": "band-35",
+      "memberId": "member-054"
+    },
+    {
+      "bandId": "band-36",
+      "memberId": "member-021"
+    },
+    {
+      "bandId": "band-36",
+      "memberId": "member-012"
+    },
+    {
+      "bandId": "band-36",
+      "memberId": "member-074"
+    },
+    {
+      "bandId": "band-36",
+      "memberId": "member-073"
+    },
+    {
+      "bandId": "band-36",
+      "memberId": "member-058"
+    },
+    {
+      "bandId": "band-36",
+      "memberId": "member-041"
+    },
+    {
+      "bandId": "band-37",
+      "memberId": "member-047"
+    },
+    {
+      "bandId": "band-37",
+      "memberId": "member-036"
+    },
+    {
+      "bandId": "band-37",
+      "memberId": "member-082"
+    },
+    {
+      "bandId": "band-37",
+      "memberId": "member-049"
+    },
+    {
+      "bandId": "band-37",
+      "memberId": "member-066"
+    },
+    {
+      "bandId": "band-37",
+      "memberId": "member-042"
+    },
+    {
+      "bandId": "band-38",
+      "memberId": "member-033"
+    },
+    {
+      "bandId": "band-38",
+      "memberId": "member-027"
+    },
+    {
+      "bandId": "band-38",
+      "memberId": "member-083"
+    },
+    {
+      "bandId": "band-38",
+      "memberId": "member-028"
+    },
+    {
+      "bandId": "band-38",
+      "memberId": "member-034"
+    },
+    {
+      "bandId": "band-38",
+      "memberId": "member-010"
+    }
+  ],
+  "constraints": [
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-cap-1",
+      "event_id": "bench-soft_conflict",
+      "source_text": "第1部は13組",
+      "type": "count",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "band_ids": [
+          "band-01",
+          "band-02",
+          "band-03",
+          "band-04",
+          "band-05",
+          "band-06",
+          "band-07",
+          "band-08",
+          "band-09",
+          "band-10",
+          "band-11",
+          "band-12",
+          "band-13",
+          "band-14",
+          "band-15",
+          "band-16",
+          "band-17",
+          "band-18",
+          "band-19",
+          "band-20",
+          "band-21",
+          "band-22",
+          "band-23",
+          "band-24",
+          "band-25",
+          "band-26",
+          "band-27",
+          "band-28",
+          "band-29",
+          "band-30",
+          "band-31",
+          "band-32",
+          "band-33",
+          "band-34",
+          "band-35",
+          "band-36",
+          "band-37",
+          "band-38"
+        ]
+      },
+      "params": {
+        "scope": "in_parts",
+        "part_ids": [
+          0
+        ],
+        "min": 13,
+        "max": 13
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-cap-2",
+      "event_id": "bench-soft_conflict",
+      "source_text": "第2部は13組",
+      "type": "count",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "band_ids": [
+          "band-01",
+          "band-02",
+          "band-03",
+          "band-04",
+          "band-05",
+          "band-06",
+          "band-07",
+          "band-08",
+          "band-09",
+          "band-10",
+          "band-11",
+          "band-12",
+          "band-13",
+          "band-14",
+          "band-15",
+          "band-16",
+          "band-17",
+          "band-18",
+          "band-19",
+          "band-20",
+          "band-21",
+          "band-22",
+          "band-23",
+          "band-24",
+          "band-25",
+          "band-26",
+          "band-27",
+          "band-28",
+          "band-29",
+          "band-30",
+          "band-31",
+          "band-32",
+          "band-33",
+          "band-34",
+          "band-35",
+          "band-36",
+          "band-37",
+          "band-38"
+        ]
+      },
+      "params": {
+        "scope": "in_parts",
+        "part_ids": [
+          1
+        ],
+        "min": 13,
+        "max": 13
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-cap-3",
+      "event_id": "bench-soft_conflict",
+      "source_text": "第3部は12組",
+      "type": "count",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "band_ids": [
+          "band-01",
+          "band-02",
+          "band-03",
+          "band-04",
+          "band-05",
+          "band-06",
+          "band-07",
+          "band-08",
+          "band-09",
+          "band-10",
+          "band-11",
+          "band-12",
+          "band-13",
+          "band-14",
+          "band-15",
+          "band-16",
+          "band-17",
+          "band-18",
+          "band-19",
+          "band-20",
+          "band-21",
+          "band-22",
+          "band-23",
+          "band-24",
+          "band-25",
+          "band-26",
+          "band-27",
+          "band-28",
+          "band-29",
+          "band-30",
+          "band-31",
+          "band-32",
+          "band-33",
+          "band-34",
+          "band-35",
+          "band-36",
+          "band-37",
+          "band-38"
+        ]
+      },
+      "params": {
+        "scope": "in_parts",
+        "part_ids": [
+          2
+        ],
+        "min": 12,
+        "max": 12
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-003",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー003さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-003"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-004",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー004さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-004"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-005",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー005さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-005"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-006",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー006さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-006"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-008",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー008さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-008"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-009",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー009さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-009"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-010",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー010さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-010"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-011",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー011さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-011"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-012",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー012さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-012"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-013",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー013さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-013"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-019",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー019さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-019"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-020",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー020さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-020"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-021",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー021さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-021"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-022",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー022さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-022"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-023",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー023さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-023"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-024",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー024さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-024"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-025",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー025さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-025"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-026",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー026さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-026"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-027",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー027さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-027"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-028",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー028さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-028"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-029",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー029さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-029"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-031",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー031さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-031"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-033",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー033さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-033"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-034",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー034さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-034"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-035",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー035さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-035"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-036",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー036さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-036"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-038",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー038さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-038"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-039",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー039さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-039"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-040",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー040さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-040"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-041",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー041さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-041"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-042",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー042さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-042"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-043",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー043さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-043"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-044",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー044さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-044"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-046",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー046さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-046"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-047",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー047さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-047"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-048",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー048さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-048"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-049",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー049さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-049"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-051",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー051さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-051"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-054",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー054さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-054"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-055",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー055さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-055"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-056",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー056さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-056"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-057",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー057さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-057"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-058",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー058さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-058"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-063",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー063さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-063"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-065",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー065さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-065"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-066",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー066さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-066"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-073",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー073さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-073"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-074",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー074さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-074"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-078",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー078さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-078"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-opener",
+      "event_id": "bench-soft_conflict",
+      "source_text": "トップバッターはOver Drive／judy and mary",
+      "type": "at_position",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "band_id": "band-23"
+      },
+      "params": {
+        "position": 0
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gear",
+      "event_id": "bench-soft_conflict",
+      "source_text": "機材の受け渡しのため打上花火/DAOKO×米津玄師はTalkin' Loud/Incognito   (雲九cover ver.)より前",
+      "type": "before",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "before_band_id": "band-06",
+        "after_band_id": "band-37"
+      },
+      "params": {}
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-late",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ほぼ水の泡/椎名林檎とももはメンバーが遅れて到着するので第2部以降",
+      "type": "in_range",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "band_ids": [
+          "band-28"
+        ]
+      },
+      "params": {
+        "kind": "parts",
+        "part_ids": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-finale",
+      "event_id": "bench-soft_conflict",
+      "source_text": "Everything・月のワルツ/諫山実生・光について/GRAPEVINEは最後の3枠",
+      "type": "in_range",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "band_ids": [
+          "band-03",
+          "band-10",
+          "band-34"
+        ]
+      },
+      "params": {
+        "kind": "positions",
+        "position_from": 35,
+        "position_to": 37
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-rest-member-010",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー010さんは掛け持ちが多いので3組以上空けたい",
+      "type": "min_gap_member",
+      "hardness": "soft",
+      "priority": "high",
+      "enabled": true,
+      "targets": {
+        "member_id": "member-010"
+      },
+      "params": {
+        "min_diff": 4,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-rest-member-027",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー027さんは掛け持ちが多いので3組以上空けたい",
+      "type": "min_gap_member",
+      "hardness": "soft",
+      "priority": "mid",
+      "enabled": true,
+      "targets": {
+        "member_id": "member-027"
+      },
+      "params": {
+        "min_diff": 4,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-rest-member-029",
+      "event_id": "bench-soft_conflict",
+      "source_text": "ダミー029さんは掛け持ちが多いので3組以上空けたい",
+      "type": "min_gap_member",
+      "hardness": "soft",
+      "priority": "low",
+      "enabled": true,
+      "targets": {
+        "member_id": "member-029"
+      },
+      "params": {
+        "min_diff": 4,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-genre",
+      "event_id": "bench-soft_conflict",
+      "source_text": "雰囲気の近い時の歌/手嶌葵・どうしてもどうしても/backnumber・想い人/緑黄色社会は部内で離したい",
+      "type": "min_gap_bands",
+      "hardness": "soft",
+      "priority": "mid",
+      "enabled": true,
+      "targets": {
+        "band_ids": [
+          "band-01",
+          "band-17",
+          "band-19"
+        ]
+      },
+      "params": {
+        "min_diff": 4,
+        "same_part_only": true
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-friend",
+      "event_id": "bench-soft_conflict",
+      "source_text": "HOT LIMIT/T.M.Revolutionを見てから盛れ！ミ・アモーレ/ Juice=Juiceの準備に入りたい",
+      "type": "before",
+      "hardness": "soft",
+      "priority": "low",
+      "enabled": true,
+      "targets": {
+        "before_band_id": "band-31",
+        "after_band_id": "band-21"
+      },
+      "params": {}
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-old",
+      "event_id": "bench-soft_conflict",
+      "source_text": "盛れ！ミ・アモーレ/ Juice=Juiceをトップにしたい（取り下げ済み）",
+      "type": "at_position",
+      "hardness": "soft",
+      "priority": "low",
+      "enabled": false,
+      "targets": {
+        "band_id": "band-21"
+      },
+      "params": {
+        "position": 0
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-conflict-1",
+      "event_id": "bench-soft_conflict",
+      "source_text": "月のワルツ/諫山実生は打上花火/DAOKO×米津玄師より前がいい",
+      "type": "before",
+      "hardness": "soft",
+      "priority": "high",
+      "enabled": true,
+      "targets": {
+        "before_band_id": "band-10",
+        "after_band_id": "band-06"
+      },
+      "params": {}
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-conflict-2",
+      "event_id": "bench-soft_conflict",
+      "source_text": "打上花火/DAOKO×米津玄師は月のワルツ/諫山実生より前がいい",
+      "type": "before",
+      "hardness": "soft",
+      "priority": "mid",
+      "enabled": true,
+      "targets": {
+        "before_band_id": "band-06",
+        "after_band_id": "band-10"
+      },
+      "params": {}
+    }
+  ],
+  "currentPlacements": []
+}
