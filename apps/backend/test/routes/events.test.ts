@@ -26,6 +26,7 @@ import {
 import app, { type AppType } from '../../src/index'
 import { openApiDocument } from '../../src/openapi'
 import * as persistence from '../../src/repositories/events'
+import { eventRoutes } from '../../src/routes/events'
 import type {
   EventDetails,
   EventSummary,
@@ -80,6 +81,51 @@ async function create() {
 }
 
 describe('event HTTP API', () => {
+  it('serves schedule and constraint saves directly from eventRoutes', async () => {
+    const created = await create()
+    const snapshot = (await loadEvent(db, 'demo-owner', created.eventId))!
+    const schedule = await eventRoutes.request(
+      `/${created.eventId}/schedule`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          expectedUpdatedAt: created.updatedAt,
+          parts: snapshot.parts.map(({ partId, partName }) => ({
+            partId,
+            partName,
+          })),
+          placements: [],
+          unassignedBandIds: [],
+        }),
+      },
+      { DB: local.binding },
+    )
+    expect(schedule.status).toBe(200)
+    await expectJsonResponse(
+      schedule,
+      openApiDocument.paths['/api/events/{eventId}/schedule'].post.responses,
+    )
+    const saved = await schedule.json<{ updatedAt: string }>()
+    const constraints = await eventRoutes.request(
+      `/${created.eventId}/constraints`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          expectedUpdatedAt: saved.updatedAt,
+          constraints: [],
+        }),
+      },
+      { DB: local.binding },
+    )
+    expect(constraints.status).toBe(200)
+    await expectJsonResponse(
+      constraints,
+      openApiDocument.paths['/api/events/{eventId}/constraints'].post.responses,
+    )
+  })
+
   it('creates, lists, retrieves and partially updates the same basic event through D1', async () => {
     const created = await create()
     expect(created).toMatchObject({

@@ -1,23 +1,68 @@
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { validator } from 'hono/validator'
+import type { z } from 'zod'
 
 import { createDb } from '../db/index'
 import { eventsRepository } from '../repositories/events'
+import { schedulingRepository } from '../repositories/scheduling'
 import { EventError } from '../services/events/errors'
 import { eventService } from '../services/events/service'
 import {
   createEventSchema,
   updateEventSchema,
 } from '../services/events/validation'
+import { SchedulingError } from '../services/scheduling/errors'
+import { schedulingService } from '../services/scheduling/service'
+import {
+  saveConstraintsSchema,
+  saveScheduleSchema,
+} from '../services/scheduling/validation'
 
 type EventEnv = {
   Bindings: CloudflareBindings
-  Variables: { eventService: ReturnType<typeof eventService> }
+  Variables: {
+    eventService: ReturnType<typeof eventService>
+    scheduling: ReturnType<typeof schedulingService>
+  }
+}
+
+function jsonInput<T extends z.ZodType>(schema: T) {
+  return validator('json', (value: unknown) => {
+    const parsed = schema.safeParse(value)
+    if (!parsed.success)
+      throw new SchedulingError(
+        'invalid_input',
+        parsed.error.issues.map((issue) => ({
+          path: `/${issue.path.join('/')}`,
+          reason: issue.message,
+        })),
+      )
+    return parsed.data
+  })
 }
 
 export const eventRoutes = new Hono<EventEnv>()
   .onError((error, c) => {
+    if (error instanceof SchedulingError) {
+      const status =
+        error.code === 'event_not_found'
+          ? 404
+          : error.code === 'event_save_conflict'
+            ? 409
+            : 422
+      return c.json(
+        {
+          error: {
+            code: error.code,
+            message:
+              'イベントの処理に失敗しました。入力と最新の状態を確認してください。',
+            details: error.details,
+          },
+        },
+        status,
+      )
+    }
     if (error instanceof EventError) {
       const status = error.code === 'event_not_found' ? 404 : 409
       return c.json(
@@ -61,10 +106,10 @@ export const eventRoutes = new Hono<EventEnv>()
     // #57 replaces this server-side placeholder with the authenticated user ID.
     // Never resolve the owner from query parameters, request bodies or headers.
     const userId = 'demo-owner'
-    c.set(
-      'eventService',
-      eventService(eventsRepository(createDb(c.env.DB)), userId),
-    )
+    const db = createDb(c.env.DB)
+    const scheduling = schedulingRepository(db)
+    c.set('eventService', eventService(eventsRepository(db), userId))
+    c.set('scheduling', schedulingService(scheduling, userId))
     await next()
   })
   .get('/', async (c) =>
@@ -144,3 +189,21 @@ export const eventRoutes = new Hono<EventEnv>()
     await c.var.eventService.remove(c.req.param('eventId'))
     return c.body(null, 204)
   })
+  .post('/:eventId/schedule', jsonInput(saveScheduleSchema), async (c) =>
+    c.json(
+      await c.var.scheduling.saveSchedule(
+        c.req.param('eventId'),
+        c.req.valid('json'),
+      ),
+      200,
+    ),
+  )
+  .post('/:eventId/constraints', jsonInput(saveConstraintsSchema), async (c) =>
+    c.json(
+      await c.var.scheduling.saveConstraints(
+        c.req.param('eventId'),
+        c.req.valid('json'),
+      ),
+      200,
+    ),
+  )
