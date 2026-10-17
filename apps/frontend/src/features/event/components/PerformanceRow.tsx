@@ -6,18 +6,20 @@ import { NumberField } from '../../../shared/ui/NumberField'
 import type { PerformanceRow as Row, PerformanceView } from '../model/types'
 
 export const rowColumns =
-  'grid min-w-[520px] grid-cols-[30px_45px_62px_minmax(140px,1fr)_minmax(140px,1.1fr)] items-center gap-1 px-3'
+  'grid min-w-[520px] grid-cols-[36px_45px_62px_minmax(140px,1fr)_minmax(140px,1.1fr)] items-center gap-1 px-3'
 
 export function PerformanceRow({
   row,
   capacity,
   onFixed,
   onOrder,
+  onEdit,
 }: {
   row: Row & { performance: PerformanceView }
   capacity: number
   onFixed: (id: string, fixed: boolean) => void
   onOrder: (id: string, value: number | null) => void
+  onEdit: (id: string) => void
 }) {
   const performance = row.performance
   const {
@@ -30,7 +32,7 @@ export function PerformanceRow({
     isDragging,
   } = useSortable({
     id: performance.id,
-    disabled: { draggable: performance.fixed },
+    disabled: { draggable: performance.fixed, droppable: performance.fixed },
   })
   return (
     <div
@@ -44,15 +46,15 @@ export function PerformanceRow({
         {...attributes}
         {...listeners}
         disabled={performance.fixed}
-        aria-label={`${performance.name}をドラッグして移動`}
+        aria-label={`${performance.name}を並べ替え`}
         title={
           performance.fixed
             ? '固定を解除すると移動できます'
-            : 'ドラッグ、またはSpaceと矢印キーで並べ替え'
+            : 'ドラッグ／Spaceで開始・確定、↑↓で移動、Escで取消'
         }
-        className="flex size-6 touch-none items-center justify-center rounded text-muted/75 hover:bg-wash hover:text-brand disabled:cursor-default disabled:opacity-35"
+        className="flex size-8 cursor-grab touch-none items-center justify-center rounded text-muted hover:bg-wash hover:text-brand focus-visible:bg-wash active:cursor-grabbing disabled:cursor-default disabled:opacity-35"
       >
-        <Icon name="grip" className="size-[15px]" />
+        <Icon name="grip" className="size-[18px]" />
       </button>
       <label className="flex justify-center">
         <input
@@ -72,12 +74,15 @@ export function PerformanceRow({
         disabled={performance.fixed}
         onCommit={(value) => onOrder(performance.id, value)}
       />
-      <span
-        className="min-w-0 truncate pr-2 font-medium"
+      <button
+        type="button"
+        aria-label={`${performance.name}を編集`}
+        onClick={() => onEdit(performance.id)}
+        className="min-w-0 truncate rounded px-1 py-1 text-left font-medium text-brand hover:bg-wash hover:underline"
         title={performance.name}
       >
         {performance.name}
-      </span>
+      </button>
       <span
         className="min-w-0 truncate text-[13px] text-muted"
         title={performance.members.join('・')}

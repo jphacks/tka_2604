@@ -39,7 +39,9 @@
     "test:coverage": "vitest run --coverage",
     "test:frontend": "vitest run --project frontend",
     "test:backend": "vitest run --project backend",
-    "test:e2e": "npm run test:e2e --workspace=@jphack-2026/frontend"
+    "test:e2e": "npm run test:e2e --workspace=@jphack-2026/frontend",
+    "db:generate": "npm run db:generate --workspace=@jphack-2026/backend --",
+    "db:seed:local": "wrangler d1 execute DB --env develop --local --file apps/backend/db/seed.sql"
   },
   "lint-staged": {
     "*.{js,mjs,cjs,jsx,ts,tsx}": "eslint --max-warnings=0 --no-warn-ignored",
@@ -66,5 +68,10 @@
     "typescript-eslint": "^8.69.0",
     "vitest": "^5.0.4",
     "wrangler": "^4.150.0"
+  },
+  "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "0.28.2"
+    }
   }
 }

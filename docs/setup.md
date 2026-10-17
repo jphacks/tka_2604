@@ -53,6 +53,8 @@ npm run dev
 
 `npm run dev`は最初に画面をビルドし、ViteとWorkersを同時起動する。終了は`Ctrl+C`。ポートが使用中なら既存のプロセスを確認する。実際の接続先は起動ログを優先する。
 
+API仕様は[Swagger UI](http://localhost:8787/api/docs)で閲覧・試行できる。developドメインから他のメンバーと共有する方法は[APIドキュメント](../apps/backend/docs/api/README.md)を参照。
+
 Python側は別のターミナルで、同じリポジトリルートから起動する。現在はHTTPサーバーではなく、挨拶を出力する入口のみ。
 
 ```sh

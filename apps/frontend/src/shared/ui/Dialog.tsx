@@ -1,8 +1,19 @@
-import type { ReactNode } from 'react'
+import type { PointerEvent, ReactNode } from 'react'
 import { useEffect, useId, useRef } from 'react'
 
 import { Button } from './Button'
 import { Icon } from './Icon'
+
+function isBackdrop(event: PointerEvent<HTMLDialogElement>) {
+  if (event.target !== event.currentTarget) return false
+  const rect = event.currentTarget.getBoundingClientRect()
+  return (
+    event.clientX < rect.left ||
+    event.clientX > rect.right ||
+    event.clientY < rect.top ||
+    event.clientY > rect.bottom
+  )
+}
 
 export function Dialog({
   title,
@@ -15,6 +26,7 @@ export function Dialog({
 }) {
   const titleId = useId()
   const ref = useRef<HTMLDialogElement>(null)
+  const backdropPointer = useRef<number | null>(null)
   useEffect(() => {
     const opener = document.activeElement
     const dialog = ref.current
@@ -27,6 +39,19 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
+      onPointerDown={(event) => {
+        backdropPointer.current =
+          event.button === 0 && isBackdrop(event) ? event.pointerId : null
+      }}
+      onPointerUp={(event) => {
+        const dismiss =
+          backdropPointer.current === event.pointerId && isBackdrop(event)
+        backdropPointer.current = null
+        if (dismiss) onClose()
+      }}
+      onPointerCancel={() => {
+        backdropPointer.current = null
+      }}
       onCancel={(event) => {
         event.preventDefault()
         onClose()
