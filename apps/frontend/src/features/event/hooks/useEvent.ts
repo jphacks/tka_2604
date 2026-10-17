@@ -5,6 +5,7 @@ import {
   describeConstraint,
   evaluateConstraint,
 } from '../../../shared/model/constraints'
+import type { EventData } from '../../../shared/model/event'
 import { workspaceRepository } from '../../../shared/repositories/workspaceRepository'
 import {
   type ConstraintPatch,
@@ -82,6 +83,8 @@ export function useEvent(eventId: string) {
     showUnmet,
     setShowUnmet,
     retryLoad: () => setRetry((value) => value + 1),
+    applyPerformanceEdits: (event: EventData) =>
+      dispatch({ type: 'performances-updated', event }),
     dismissNotice: () => dispatch({ type: 'notice', message: '' }),
     setOrder: (id: string, value: number | null) =>
       dispatch({ type: 'order', id, value }),
