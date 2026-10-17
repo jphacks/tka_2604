@@ -10,3 +10,6 @@ apps/frontend/src/generated/
 
 test-results/
 playwright-report/
+
+# Drizzle Kit generated migration metadata
+apps/backend/db/migrations/meta/

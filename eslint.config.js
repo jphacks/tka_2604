@@ -102,7 +102,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['apps/backend/src/**/*.ts'],
+    files: ['apps/backend/{src,test}/**/*.ts'],
     rules: {
       'import-x/no-extraneous-dependencies': [
         'error',
@@ -123,7 +123,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['apps/backend/src/**/*.{test,spec}.ts'],
+    files: ['apps/backend/test/**/*.ts'],
     rules: {
       'import-x/no-extraneous-dependencies': [
         'error',
