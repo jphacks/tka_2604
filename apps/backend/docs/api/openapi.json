@@ -1677,7 +1677,7 @@
         "summary": "保存済みイベントから出演順を計算し表へ保存する",
         "tags": ["Events"],
         "security": [],
-        "description": "ボタンとchatで共有する計算Service。名簿・部・所属・現在配置・制約を同じD1 batchで取得する。constraintsを渡した場合は検証・原子的保存後に再取得した入力を送信する。省略時は保存済み制約を使う。currentPlacementsはヒント。optimal/feasible/partialの結果を再評価しupdatedAtによる競合確認後に保存する。未配置はBand_Orderに行がない状態。infeasible/unknownまたは外部エラーでは現在配置を変更しない。保存済みの条件変更は外部エラー時も維持する。通信待機は310秒、接続URLとトークンはWorkers環境変数のみ。認証は#57で追加。 無効制約はenabled:falseのまま渡し、対象ID・部・位置の参照検証と計算から除外する。古い参照が残っていても受理し、結果はdisabledを要求する。Schema・event_id・優先度やmin/max等の整合性検証は維持する。",
+        "description": "ボタンとchatで共有する計算Service。名簿・部・所属・現在配置・制約を同じD1 batchで取得する。constraintsを渡した場合は検証・原子的保存後に再取得した入力を送信する。省略時は保存済み制約を使う。currentPlacementsはヒント。optimal/feasible/partialの結果を再評価しupdatedAtによる競合確認後に保存する。未配置はBand_Orderに行がない状態。infeasible/unknownまたは外部エラーでは現在配置を変更しない。保存済みの条件変更は外部エラー時も維持する。通信待機は30秒（レスポンス本文の読込みを含む）、接続URLとトークンはWorkers環境変数のみ。認証は#57で追加。 無効制約はenabled:falseのまま渡し、対象ID・部・位置の参照検証と計算から除外する。古い参照が残っていても受理し、結果はdisabledを要求する。Schema・event_id・優先度やmin/max等の整合性検証は維持する。",
         "parameters": [
           {
             "name": "eventId",

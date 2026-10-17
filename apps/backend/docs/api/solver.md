@@ -82,7 +82,7 @@ Workersの`SOLVER_API_URL`はSolverのベースURL（`/solve`を付ける前）�
 npx wrangler secret put SOLVER_API_TOKEN --env develop
 ```
 
-通信待機上限は310秒。#26で確認したVercelの関数上限300秒と応答の余裕を分けた値で、Solverの探索上限は送らない。レスポンス本文の読込みも通信期限の対象とし、2MiBを超える応答は拒否する。探索の`unknown`と通信の504を混同しない。
+Solver呼出しの通信待機上限は30秒。レスポンス本文の読込みもこの期限に含め、超過時は通信を中断して504を返す。Solverの探索上限はリクエストに含めず、2MiBを超える応答は拒否する。探索の`unknown`と通信の504を混同しない。
 
 現時点の公開Python APIは疎通用の`/probe`のみで、実サービスの`/solve`接続は#27の実装後に確認する。今回の通常テストでは外部通信を差し替え、D1は実migrationを適用した隔離環境で検証する。公開・Secret登録・本番DB変更はこの作業では行わない。
 

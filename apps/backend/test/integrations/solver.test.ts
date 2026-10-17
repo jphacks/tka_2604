@@ -13,6 +13,29 @@ const input: SolverRequest = {
   currentPlacements: [],
 }
 afterEach(() => vi.useRealTimers())
+it('uses a 30-second deadline by default, including the final millisecond', async () => {
+  vi.useFakeTimers()
+  const send = vi.fn<typeof fetch>().mockImplementation(
+    (_url, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () =>
+          reject(new Error('aborted')),
+        )
+      }),
+  )
+  const pending = expect(
+    solverClient(
+      { url: 'https://solver.invalid', token: 'test-only' },
+      send,
+    )(input),
+  ).rejects.toMatchObject({ code: 'solver_timeout' })
+  await vi.advanceTimersByTimeAsync(29_999)
+  expect(send.mock.calls[0][1]?.signal?.aborted).toBe(false)
+  await vi.advanceTimersByTimeAsync(1)
+  expect(send.mock.calls[0][1]?.signal?.aborted).toBe(true)
+  await pending
+  expect(vi.getTimerCount()).toBe(0)
+})
 it('aborts timed out communication without changing it into unknown', async () => {
   vi.useFakeTimers()
   const send = vi.fn<typeof fetch>().mockImplementation(

@@ -1,8 +1,8 @@
 import { SolverError } from '../services/solver/errors'
 import type { SolverClient } from '../services/solver/types'
 
-// #26: Vercel allows 300s. This communication deadline includes response overhead.
-export const SOLVER_TIMEOUT_MS = 310_000
+// The Solver call has a 30-second deadline, including response body reads.
+export const SOLVER_TIMEOUT_MS = 30_000
 const MAX_RESPONSE_BYTES = 2 * 1024 * 1024
 
 export function solverClient(
