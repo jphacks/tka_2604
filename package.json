@@ -33,7 +33,7 @@
     "db:migrate:local": "wrangler d1 migrations apply DB --env develop --local",
     "db:migrate:develop": "wrangler d1 migrations apply DB --env develop --remote",
     "db:migrate:main": "wrangler d1 migrations apply DB --env main --remote",
-    "cf:typegen": "wrangler types apps/backend/worker-configuration.d.ts --env develop --env-interface CloudflareBindings --strict-vars=false",
+    "cf:typegen": "wrangler types apps/backend/worker-configuration.d.ts --env develop --env-interface CloudflareBindings",
     "prepare": "husky",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage",

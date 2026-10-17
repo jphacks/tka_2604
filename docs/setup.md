@@ -86,7 +86,7 @@ npm run test:e2e
 
 ## イベントAPIのローカル確認（#15）
 
-認証は後工程で追加する。現在のイベントAPIはサーバー設定`EVENTS_USER_ID`の所有者に限定する。`wrangler.jsonc`のdevelop・mainは空欄で、未設定なら503。クライアントから所有者を指定することはできない。
+認証は後工程で追加する。現在のイベントAPIはRoute内の仮ID定数`demo-owner`のイベントに限定する。環境変数の設定は不要で、クライアントから所有者を指定することはできない。
 
 ローカルDBへmigrationと既存のデモデータを投入する（リモートDBは変更しない）。
 
@@ -95,11 +95,7 @@ npm run db:migrate:local
 npm run db:seed:local
 ```
 
-Git対象外の`.dev.vars.develop`に、seedが作る既存UserのIDを設定して起動する。
-
-```dotenv
-EVENTS_USER_ID=demo-owner
-```
+seedは仮ID定数に対応する既存User `demo-owner`も作る。投入後、そのまま起動する。
 
 ```sh
 npm run dev
@@ -107,4 +103,4 @@ npm run dev
 
 `http://localhost:8787/api/docs`のEventsで、一覧・作成・詳細・設定更新・論理削除を試行できる。PATCHにはGET応答の`updatedAt`を`expectedUpdatedAt`として渡す。APIの入出力は[イベントAPI](../apps/backend/docs/api/events.md)を参照。
 
-認証接続時は#57で仮設定を認証済みユーザーへ置き換える。Userの自動作成・認証の実装・リモートへの設定やデプロイはこの手順に含めない。
+認証接続時は#57で仮ID定数を認証済みユーザーIDへ置き換える。Userの自動作成・認証の実装・リモートへの設定やデプロイはこの手順に含めない。

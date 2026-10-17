@@ -39,7 +39,7 @@ beforeEach(async () => {
   local = await testDatabase()
   db = createDb(local.binding)
   await db.insert(users).values([
-    { userId: 'owner', passwordHash: 'test-only' },
+    { userId: 'demo-owner', passwordHash: 'test-only' },
     { userId: 'other', passwordHash: 'test-only' },
   ])
 })
@@ -47,12 +47,7 @@ afterEach(async () => {
   await local?.dispose()
 })
 
-function request(
-  path = '/api/events',
-  method = 'GET',
-  body?: unknown,
-  owner = 'owner',
-) {
+function request(path = '/api/events', method = 'GET', body?: unknown) {
   return app.request(
     path,
     {
@@ -64,7 +59,7 @@ function request(
             body: JSON.stringify(body),
           }),
     },
-    { DB: local.binding, EVENTS_USER_ID: owner },
+    { DB: local.binding },
   )
 }
 
@@ -138,9 +133,9 @@ describe('event HTTP API', () => {
     })
     expect(body.updatedAt).not.toBe(created.updatedAt)
     expect(await (await request(path)).json()).toEqual(body)
-    expect((await loadEvent(db, 'owner', created.eventId))?.event.title).toBe(
-      'Renamed',
-    )
+    expect(
+      (await loadEvent(db, 'demo-owner', created.eventId))?.event.title,
+    ).toBe('Renamed')
     expect(body).not.toHaveProperty('createdUserId')
     expect(body).not.toHaveProperty('bands')
     expect(body).not.toHaveProperty('isDeleted')
@@ -176,7 +171,7 @@ describe('event HTTP API', () => {
       const response = await app.request(
         '/api/events',
         { method: 'POST', body, headers },
-        { DB: local.binding, EVENTS_USER_ID: 'owner' },
+        { DB: local.binding },
       )
       expect(response.status).toBe(status)
       await expectJsonResponse(
@@ -258,7 +253,7 @@ describe('event HTTP API', () => {
   it('logically deletes while preserving bands, members, parts, memberships, placements, wishes, constraints and chat', async () => {
     const created = await create()
     const eventId = created.eventId
-    const saved = (await loadEvent(db, 'owner', eventId))!
+    const saved = (await loadEvent(db, 'demo-owner', eventId))!
     await db.insert(bands).values({
       bandId: 'band',
       eventId,
@@ -312,17 +307,27 @@ describe('event HTTP API', () => {
     ]) {
       expect(await db.select().from(table)).toHaveLength(1)
     }
-    expect(await loadEvent(db, 'owner', eventId)).toBeNull()
+    expect(await loadEvent(db, 'demo-owner', eventId)).toBeNull()
   })
 
-  it('reports missing server owner configuration without reading or writing D1', async () => {
-    const response = await request('/api/events', 'POST', { title: 'Live' }, '')
-    expect(response.status).toBe(503)
+  it('uses the demo owner without environment settings and ignores client-supplied owner IDs', async () => {
+    const created = await create()
+    await createEvent(db, 'other', { title: 'Other owner' })
+    const response = await app.request(
+      '/api/events?userId=other',
+      { headers: { 'X-User-Id': 'other' } },
+      { DB: local.binding },
+    )
+    expect(response.status).toBe(200)
     await expectJsonResponse(
       response,
-      openApiDocument.paths['/api/events'].post.responses,
+      openApiDocument.paths['/api/events'].get.responses,
     )
-    expect(await db.select().from(events)).toEqual([])
+    const body = await response.json<{ events: EventSummary[] }>()
+    expect(body.events.map((event) => event.eventId)).toEqual([created.eventId])
+    expect(
+      await db.select().from(events).where(eq(events.eventId, created.eventId)),
+    ).toMatchObject([{ createdUserId: 'demo-owner' }])
   })
 
   it('returns documented 500 errors for DB failures without exposing internal details', async () => {
@@ -366,7 +371,7 @@ describe('event HTTP API', () => {
         },
       })
     }
-    expect(await repository.get('owner', created.eventId)).toEqual(created)
+    expect(await repository.get('demo-owner', created.eventId)).toEqual(created)
   })
 
   it('exposes event request and response types through Hono RPC', async () => {
@@ -374,7 +379,6 @@ describe('event HTTP API', () => {
       fetch: async (input: RequestInfo | URL, init?: RequestInit) =>
         app.request(input instanceof URL ? input.toString() : input, init, {
           DB: local.binding,
-          EVENTS_USER_ID: 'owner',
         }),
     })
     const response = await client.api.events.$post({ json: { title: 'RPC' } })

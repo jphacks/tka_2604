@@ -129,7 +129,7 @@ Eventはis_deletedを1にする論理削除。配下は残し、通常の読み�
 
 保存処理は信頼できるuser_idを受け取る内部関数で、ユーザーの認証自体は行わない。業務APIから呼ぶ際に認証済みユーザーを渡す。
 
-#15のイベント本体APIは`Route → Service → Repository`で接続する。`apps/backend/src/repositories/events.ts`は所有者・論理削除で絞った基本情報と独立した件数集計を返し、設定更新は`updatedAt`を条件にして原子的に行う。作成・論理削除は既存の`db/events.ts`を利用する。認証の追加前はサーバー設定の仮ユーザーIDを渡し、#57で認証済みIDへ置き換える。APIの詳細は[イベントAPI](../apps/backend/docs/api/events.md)を参照。
+#15のイベント本体APIは`Route → Service → Repository`で接続する。`apps/backend/src/repositories/events.ts`は所有者・論理削除で絞った基本情報と独立した件数集計を返し、設定更新は`updatedAt`を条件にして原子的に行う。作成・論理削除は既存の`db/events.ts`を利用する。認証の追加前はRoute内の仮ID定数`demo-owner`を渡し、#57で認証済みIDへ置き換える。APIの詳細は[イベントAPI](../apps/backend/docs/api/events.md)を参照。
 
 ## 後続Issueで扱うこと
 

@@ -60,18 +60,7 @@ export const eventRoutes = new Hono<EventEnv>()
   .use('*', async (c, next) => {
     // #57 replaces this server-side placeholder with the authenticated user ID.
     // Never resolve the owner from query parameters, request bodies or headers.
-    const userId = c.env.EVENTS_USER_ID?.trim()
-    if (!userId)
-      return c.json(
-        {
-          error: {
-            code: 'event_owner_not_configured',
-            message: 'イベント所有者のサーバー設定が未完了です。',
-            details: [],
-          },
-        },
-        503,
-      )
+    const userId = 'demo-owner'
     c.set(
       'eventService',
       eventService(eventsRepository(createDb(c.env.DB)), userId),

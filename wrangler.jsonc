@@ -18,7 +18,6 @@
   "env": {
     "develop": {
       "name": "dev",
-      "vars": { "EVENTS_USER_ID": "" },
       "d1_databases": [
         {
           "binding": "DB",
@@ -30,7 +29,6 @@
     },
     "main": {
       "name": "main",
-      "vars": { "EVENTS_USER_ID": "" },
       "d1_databases": [
         {
           "binding": "DB",
