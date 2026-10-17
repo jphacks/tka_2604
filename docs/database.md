@@ -147,4 +147,4 @@ chat_messagesはmessage_idをPK、(event_id, seq)・reply_to_message_idをそれ
 
 0002_wishes_chat_and_part_nameはDrizzle生成SQLで、commentをpart_nameへリネームし、列・履歴テーブルを追加する。0003_chat_integrityは希望状態・由来・返信の整合性を保証するカスタムトリガー。親テーブルの作り直しを避け、既存の所属・配置・名前・NULLを維持する。適用済みの0000・0001は変更していない。
 
-イベント本体の業務APIは#15で追加。表・制約・チャット履歴は後続の別APIで取得する。後続APIではpartName・希望状態・由来を用途に応じてDTOへ写し、パスワードハッシュやDB管理項目を不用意に公開しない。
+イベント本体と表・制約・チャット履歴の個別取得APIを実装済み。各DTOでpartName・希望状態・由来を返し、パスワードハッシュや所有者・論理削除等のDB管理項目を公開しない。契約は[イベントAPI](../apps/backend/docs/api/events.md)を参照。

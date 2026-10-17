@@ -1,26 +1,31 @@
-# イベントAPI（#15）
+# イベントAPI
 
 ## 概要
 
-ブラウザ → backendのイベント本体の一覧・作成・詳細取得・設定更新・論理削除を実装する。
+ブラウザ → backendのイベント本体の一覧・作成・詳細取得・設定更新・論理削除と、表・制約・チャット履歴の取得API。
 
-イベント本体と、表情報・制約情報・チャット情報は取得APIを分ける。本Issueの詳細取得はイベント本体だけを返す。表は`GET /api/events/{eventId}/schedule`、制約は`GET /api/events/{eventId}/constraints`、チャット履歴は合意済みの`GET /api/events/{eventId}/chat`を後続Issueで実装する。個別取得に加え、`GET /api/events/{eventId}/all`で全情報をまとめて返す案も[取得APIの叩き台](events-draft.md)に整理する。これら4つはSwaggerに未実装の仕様案として掲載する。
+イベント本体と表・制約・チャット履歴は個別のGETで取得する。イベント本体の詳細取得は基本情報だけを返す。表にはバンド・メンバー・所属・部・配置・未配置を含める。GETでは保存・LLM変換・Solverを実行しない。
 
 ## API仕様
 
-| HTTPメソッド | エンドポイント          | 役割                         | 成功時 |
-| ------------ | ----------------------- | ---------------------------- | ------ |
-| GET          | `/api/events`           | イベント一覧と表示用集計     | 200    |
-| POST         | `/api/events`           | イベント作成                 | 201    |
-| GET          | `/api/events/{eventId}` | イベント本体の基本情報取得   | 200    |
-| PATCH        | `/api/events/{eventId}` | イベント本体の設定を部分更新 | 200    |
-| DELETE       | `/api/events/{eventId}` | イベントの論理削除           | 204    |
+| HTTPメソッド | エンドポイント                      | 役割                         | 成功時 |
+| ------------ | ----------------------------------- | ---------------------------- | ------ |
+| GET          | `/api/events`                       | イベント一覧と表示用集計     | 200    |
+| POST         | `/api/events`                       | イベント作成                 | 201    |
+| GET          | `/api/events/{eventId}`             | イベント本体の基本情報取得   | 200    |
+| PATCH        | `/api/events/{eventId}`             | イベント本体の設定を部分更新 | 200    |
+| DELETE       | `/api/events/{eventId}`             | イベントの論理削除           | 204    |
+| GET          | `/api/events/{eventId}/schedule`    | 表・名簿・配置・未配置の取得 | 200    |
+| GET          | `/api/events/{eventId}/constraints` | 制約JSONと由来の取得         | 200    |
+| GET          | `/api/events/{eventId}/chat`        | チャット全履歴の取得         | 200    |
 
 - 呼出し元 → 呼出し先：ブラウザ → backend。本文の形式は`application/json`。削除成功時は本文なし。
 - 最終的には認証済みユーザーだけが利用する。認証・セッションは今回実装せず、#57で接続する。
 - 認証接続前はRoute内の仮ID定数`demo-owner`を所有者として使う。既存のデモユーザーはseedで事前に投入する。環境変数の設定は不要で、HTTPリクエストから所有者IDを受け取らない。Userの自動作成や所有者未設定のEventは追加しない。
 - 認証接続時はRouteのService生成箇所で仮IDを認証済みIDへ置き換える。Service・Repositoryは全操作に所有者IDを渡し、一覧・詳細・更新・削除をその所有者で絞る。
 - IDは既存データとの接続のためUUIDに限定しない。新規IDはサーバーでUUIDを発行する。
+
+- 表・制約・履歴の各取得はイベントの存在・所有者・削除状態を含め、1回のD1 batchで取得する。個別の表と制約を保存に使う場合は`updatedAt`が一致するか確認し、異なれば再取得する。履歴の追加だけでは業務データの更新日時は変わらない。
 
 ## リクエスト
 
@@ -31,6 +36,9 @@
 ```http
 GET /api/events
 GET /api/events/event-1
+GET /api/events/event-1/schedule
+GET /api/events/event-1/constraints
+GET /api/events/event-1/chat
 ```
 
 ### 作成
@@ -145,6 +153,104 @@ HTTP 200。対象がなければ`{"events":[]}`。
 
 HTTP 204。レスポンス本文・Content-Typeなし。
 
+### 表：GET /schedule
+
+HTTP 200。バンドとメンバー、掛け持ちを示す所属を含め、表を復元できるようにする。
+
+```json
+{
+  "eventId": "event-1",
+  "updatedAt": "2026-10-17T00:00:00.000Z",
+  "bands": [
+    {
+      "bandId": "band-1",
+      "bandName": "バンドA",
+      "requestText": null,
+      "requestStatus": null
+    },
+    {
+      "bandId": "band-2",
+      "bandName": "バンドB",
+      "requestText": null,
+      "requestStatus": null
+    }
+  ],
+  "members": [{ "memberId": "member-1", "memberName": "田中" }],
+  "memberships": [
+    { "bandId": "band-1", "memberId": "member-1" },
+    { "bandId": "band-2", "memberId": "member-1" }
+  ],
+  "parts": [{ "partId": "part-1", "partName": "第1部", "sortOrder": 0 }],
+  "placements": [{ "bandId": "band-1", "partId": "part-1", "order": 0 }],
+  "unassignedBandIds": ["band-2"]
+}
+```
+
+- 空の部も取得する。`sortOrder`・`order`は0始まり。部は`sortOrder`、配置は部の順・`order`で並べる。バンドと未配置は`bandId`、メンバーは`memberId`、所属は`bandId`・`memberId`の昇順。
+- 未配置は配置行がないバンド。DBにない枠数・空き枠を永続化された値として返さない。
+- 希望原文・変換状態は名簿側に付け、制約JSON・チャット履歴は別取得とする。
+- `updatedAt`は業務データの更新日時。表と制約を別取得して保存する際の競合確認に使う。
+
+### 制約：GET /constraints
+
+HTTP 200。有効・無効を含む全保存済み制約を`constraint_id`昇順で返す。制約なしは`constraints: []`。
+
+```json
+{
+  "eventId": "event-1",
+  "updatedAt": "2026-10-17T00:00:00.000Z",
+  "constraints": [
+    {
+      "constraint": {
+        "schema_version": "1.0.0",
+        "constraint_id": "constraint-1",
+        "event_id": "event-1",
+        "type": "at_position",
+        "hardness": "hard",
+        "priority": null,
+        "enabled": true,
+        "source_text": "Aを先頭に固定",
+        "targets": { "band_id": "band-1" },
+        "params": { "position": 0 }
+      },
+      "sourceBandId": null
+    }
+  ]
+}
+```
+
+`constraint`は共有Constraint JSONをパース・検証したオブジェクト。`sourceBandId`はフォーム希望の生成元を示すメタデータで、共有JSONへ混ぜない。手動・チャット由来などは`null`。実行時検証は共有Schemaから生成したstandaloneバリデーターを使う。JSONの形式・列とJSONのID一致・hard/priorityの対応を確認する。不正な保存データは500とし、黙って除外しない。OpenAPIのConstraint定義は同じ正本から参照を移して掲載し、テストで正本との差分と実応答を照合する。
+
+### チャット：GET /chat
+
+HTTP 200。1イベント1会話として`seq`昇順。履歴なしは`messages: []`。
+
+```json
+{
+  "eventId": "event-1",
+  "messages": [
+    {
+      "messageId": "message-1",
+      "seq": 0,
+      "role": "user",
+      "text": "Aを先頭に固定して",
+      "replyToMessageId": null,
+      "createdAt": "2026-10-17T00:00:00.000Z"
+    },
+    {
+      "messageId": "message-2",
+      "seq": 1,
+      "role": "assistant",
+      "text": "バンドAを先頭に固定する条件を確認してください。",
+      "replyToMessageId": "message-1",
+      "createdAt": "2026-10-17T00:00:01.000Z"
+    }
+  ]
+}
+```
+
+ページング・件数上限は設けず、保存済みの全履歴を返す。ユーザー発言の回答元は`null`、assistantは同イベントの先行userのID。本文以外の内部推論やAPIキーは含めない。発言だけの追加ではEvent.updatedAtは変わらないため、履歴の更新判定に業務データの更新日時だけを使わない。
+
 ### エラー
 
 | HTTP | error.code          | 意味                                           |
@@ -183,6 +289,7 @@ HTTP 204。レスポンス本文・Content-Typeなし。
 
 ## 懸念点・未決定事項
 
+- チャット送信・再試行・LLM連携は#47、表・制約のHTTP保存は#18の後続範囲。今回の追加は読み取りのみ。
 - 認証自体は未実装。#57でRoute内の仮IDを認証済みユーザーIDへ置き換える。`demo-owner`は事前にDBへ投入する。定数による所有者の指定は認証を代替しない。
 - 公開フォームの取得・回答受付は#58・#46で実装し、削除済みイベントを対象外にする判定を揃える。今回フォームAPIは追加しない。
 - `responseCount`の数値化は#33・#58の合意後。バンド数から推測しない。

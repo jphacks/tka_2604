@@ -27,7 +27,7 @@ npm run codegen
 npm run codegen:check
 ```
 
-生成先は`apps/frontend/src/generated/constraint.ts`と`apps/solver/src/generated/constraint.py`。手編集せず、スキーマと生成差分を一緒にGit管理する。TypeScriptの型は実行時検証にならず、生成したPydanticモデルにも業務上の検証が必要。
+生成先はfrontend・backendの`src/generated/constraint.ts`、`apps/solver/src/generated/constraint.py`、backendの`src/generated/constraint-validator.cjs`と型宣言。backendの検証コードはAjv standaloneで事前生成し、Workersでの`eval`・`Function`による動的コンパイルを避ける。手編集せず、スキーマと生成差分を一緒にGit管理する。TypeScriptの型は実行時検証にならず、生成したPydanticモデルにも業務上の検証が必要。
 
 実行時検証とCIが保証する範囲は[バリデーション・チェック・CI](validation-ci.md)を参照。
 

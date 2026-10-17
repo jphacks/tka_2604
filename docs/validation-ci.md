@@ -26,14 +26,14 @@ GUIの入力チェックだけに頼らず、backendで外部入力を検証す�
 
 ルートで`npm run check`を実行する。以下の順に実行し、失敗した段階で止まる。
 
-| コマンド                | 内容                                                        |
-| ----------------------- | ----------------------------------------------------------- |
-| `npm run format:check`  | Prettierによる書式確認                                      |
-| `npm run lint`          | Workersのbinding型生成とESLint。警告も失敗扱い              |
-| `npm run codegen:check` | 一時ディレクトリにTS/Pythonを再生成し、管理中の生成物と比較 |
-| `npm run typecheck`     | 各workspaceのTypeScript型検査                               |
-| `npm run test`          | frontend・backendのVitest                                   |
-| `npm run build`         | frontendビルドとWorkersのdry-run。公開はしない              |
+| コマンド                | 内容                                                             |
+| ----------------------- | ---------------------------------------------------------------- |
+| `npm run format:check`  | Prettierによる書式確認                                           |
+| `npm run lint`          | Workersのbinding型生成とESLint。警告も失敗扱い                   |
+| `npm run codegen:check` | 一時ディレクトリにTS/Python・backendの検証コードを再生成して比較 |
+| `npm run typecheck`     | 各workspaceのTypeScript型検査                                    |
+| `npm run test`          | frontend・backendのVitest                                        |
+| `npm run build`         | frontendビルドとWorkersのdry-run。公開はしない                   |
 
 ESLintは型を使った検査、React Hooks、アクセシビリティ、import順序・依存関係、frontend/backend間の実装importの禁止を含む。
 

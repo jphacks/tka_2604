@@ -6,9 +6,9 @@ APIを変更するときは実装・OpenAPI仕様・APIの動作テストを同�
 
 イベント本体の一覧・作成・詳細取得・設定更新・論理削除は[イベントAPI](events.md)を参照。認証接続前はRoute内の仮ID定数`demo-owner`を所有者として渡し、#57で認証済みIDへ置き換える。環境変数の設定は不要。
 
-表・制約・チャット履歴の個別取得（`/schedule`・`/constraints`・`/chat`）と全情報の一括取得（`/all`）は[取得APIの叩き台](events-draft.md)を参照。この4つはSwaggerの「イベント取得（未実装・仕様案）」にも掲載する。各操作に`x-implementation-status: planned`を付け、現在は404となることを明記する。予定の200応答・フィールド・未決定事項をレビューするための定義で、API実装・RPC型・実応答との契約テストは後続Issueで揃える。
+表・制約・チャット履歴は、それぞれ`GET /api/events/{eventId}/schedule`・`/constraints`・`/chat`で取得する。契約・具体例・並び順は[イベントAPI](events.md)にまとめる。チャットはページング・件数上限なしで保存済み全履歴を返す。
 
-`GET /api/health`は入力なしで200と`{"status":"ok"}`を返す。DBの稼働確認は含まない。イベント本体APIは#15で追加し、認証・制約・計算APIは後続Issueで扱う。
+`GET /api/health`は入力なしで200と`{"status":"ok"}`を返す。DBの稼働確認は含まない。イベント本体と3種類の情報取得を実装済み。認証・制約のHTTP保存・計算APIは後続Issueで扱う。
 
 BE ↔ Solverの契約案は[BE - Solver API設計](<../BE - Solver API設計.md>)を参照。リクエスト・レスポンス例と探索状態を記載している。未実装のため、現在配信するOpenAPIには含めない。
 
@@ -28,7 +28,7 @@ MarkdownのAPI定義書は[共通テンプレート](template.md)を使い、次
 
 具体例を中心に簡潔に書き、細かなフィールド表は必要な場合だけ追加する。資料の対象となる通信区間を明記し、別区間のAPIや保存フローを混在させない。
 
-制約JSONの正本は`apps/schema`を参照し、説明用の別スキーマを作らない。Markdownに検討内容を残し、`openapi.json`で共有する仕様案には未実装と明記する。実装済みの契約と混同しない。
+制約JSONの正本は`apps/schema`を参照し、説明用の別スキーマを作らない。実装済みの契約はMarkdownと`openapi.json`へ揃え、検討資料と混同しない。
 
 ## developで共有・試行
 
@@ -61,7 +61,7 @@ npm run test:backend
 npm run check
 ```
 
-healthはVitestでステータス200・Content-Type・応答本文を直接確認し、`test/openapi.test.ts`では手書きOpenAPIの応答スキーマにも照合する。共通補助処理は`test/helpers/openapi.ts`。AjvのJSON Schema 2020-12用クラスをテスト専用に使い、実行時のAPIバリデーションとは分ける。
+healthはVitestでステータス200・Content-Type・応答本文を直接確認し、`test/openapi.test.ts`では手書きOpenAPIの応答スキーマにも照合する。共通補助処理は`test/helpers/openapi.ts`。契約テストではAjvのJSON Schema 2020-12用クラスを使う。保存済みConstraintの実行時検証には、同じ正本から`npm run codegen`で生成したstandaloneバリデーターを使い、Workersで動的コード生成を行わない。
 
 ```ts
 const response = await app.request('/api/health')
@@ -73,6 +73,6 @@ await expectJsonResponse(
 
 必須項目の欠落・型・enum・仕様にないステータス・Content-Typeを拒否し、仕様側だけを変更しても不一致を検出する。仕様JSONの配信テストやRPCの型検査とは役割が異なる。
 
-現状の補助処理は、呼び出し側が選んだ操作の明示的なステータスと、インラインのJSON応答スキーマを対象にする。全APIの自動走査、入力・認証・権限、`default`応答、OpenAPI文書全体の検証は行わない。`components`への参照や`format`などを導入する場合は、対象APIのIssueで解決・検証方法とテストを追加する。他のAPIの追加時も、入力・成功・エラーの動作テストと契約テストを揃え、仕様のレビューを続ける。
+現状の補助処理は、呼び出し側が選んだ操作の明示的なステータスと、インラインのJSON応答スキーマと同一文書内の`components.schemas`参照を対象にする。全APIの自動走査、入力・認証・権限、`default`応答、OpenAPI文書全体の検証は行わない。`components`参照はイベント情報取得の契約テストで解決し、ネストした不正Constraintも拒否する。外部参照や`format`の追加時は解決・検証方法とテストを用意する。他のAPIの追加時も、入力・成功・エラーの動作テストと契約テストを揃え、仕様のレビューを続ける。
 
 Vitestでhealth・404・仕様JSONの配信・Swagger UIのHTML・共有ドメインでの接続を確認する。Hono RPCの`AppType`はルート登録の返り値から公開し、`hc<AppType>()`でのhealth呼び出しと応答型をテストする。`expectTypeOf`の確認は`npm run typecheck`で行う。frontendのRepositoryへの接続は今後行う。
