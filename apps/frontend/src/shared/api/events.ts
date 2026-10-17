@@ -57,8 +57,6 @@ export function createEventsApi(client: ApiClient) {
     getMessages,
     async saveSchedule(event: EventData) {
       const expectedUpdatedAt = revision(event)
-      if (event.sections.some((part) => part.slots.includes(null)))
-        throw new Error('空き枠を除いてから保存してください。')
       const response = await events[':eventId'].schedule.$post({
         param: { eventId: event.id },
         json: {
@@ -68,9 +66,9 @@ export function createEventsApi(client: ApiClient) {
             partName: part.name ?? null,
           })),
           placements: event.sections.flatMap((part) =>
-            part.slots.flatMap((bandId, order) =>
-              bandId === null ? [] : [{ bandId, partId: part.id, order }],
-            ),
+            part.slots
+              .filter((bandId) => bandId !== null)
+              .map((bandId, order) => ({ bandId, partId: part.id, order })),
           ),
           unassignedBandIds: event.unassigned,
         },
@@ -186,14 +184,20 @@ export function createEventsApi(client: ApiClient) {
         })),
         sections: schedule.parts
           .toSorted((a, b) => a.sortOrder - b.sortOrder)
-          .map((part) => ({
-            id: part.partId,
-            name: part.partName,
-            slots: schedule.placements
+          .map((part) => {
+            const bands = schedule.placements
               .filter((placement) => placement.partId === part.partId)
               .toSorted((a, b) => a.order - b.order)
-              .map((placement) => placement.bandId),
-          })),
+              .map((placement) => placement.bandId)
+            return {
+              id: part.partId,
+              name: part.partName,
+              slots: Array.from(
+                { length: Math.max(4, bands.length) },
+                (_, index) => bands[index] ?? null,
+              ),
+            }
+          }),
         unassigned: schedule.unassignedBandIds,
         constraints: constraints.constraints.map((item) => item.constraint),
         constraintSources: Object.fromEntries(

@@ -122,3 +122,32 @@ it('retains validation errors and prevents edits while a confirmed reload is pen
   expect(result.current.refreshing).toBe(false)
   confirm.mockRestore()
 })
+
+it('keeps frame capacity in the current view without marking a server change', async () => {
+  api.getEvent.mockResolvedValueOnce({
+    ...event,
+    scheduleMode: 'dense',
+    sections: [{ id: 'p1', slots: ['a', 'b', null, null] }],
+  })
+  const { result } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
+  act(() => result.current.resize(6, 'p1'))
+  expect(result.current.event?.sections[0].slots).toHaveLength(6)
+  expect(result.current.scheduleDirty).toBe(false)
+  act(() => result.current.setOrder('b', 1))
+  expect(result.current.event?.sections[0].slots).toEqual([
+    'b',
+    'a',
+    null,
+    null,
+    null,
+    null,
+  ])
+  expect(result.current.scheduleDirty).toBe(true)
+  api.saveSchedule.mockResolvedValueOnce({
+    updatedAt: '2026-10-17T00:00:00.001Z',
+  })
+  await act(() => result.current.saveSchedule())
+  expect(result.current.event?.sections[0].slots).toHaveLength(6)
+  expect(result.current.scheduleDirty).toBe(false)
+})

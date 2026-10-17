@@ -1,7 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
-import type { Section } from '../../../shared/model/event'
 import { Icon } from '../../../shared/ui/Icon'
 import { NumberField } from '../../../shared/ui/NumberField'
 import type { PerformanceRow as Row, PerformanceView } from '../model/types'
@@ -15,16 +14,12 @@ export function PerformanceRow({
   onFixed,
   onOrder,
   onEdit,
-  sections,
-  onSectionChange,
 }: {
   row: Row & { performance: PerformanceView }
   capacity: number
   onFixed: (id: string, fixed: boolean) => void
   onOrder: (id: string, value: number | null) => void
   onEdit?: (id: string) => void
-  sections?: Section[]
-  onSectionChange?: (id: string, sectionId: string) => void
 }) {
   const performance = row.performance
   const {
@@ -79,38 +74,16 @@ export function PerformanceRow({
         disabled={performance.fixed}
         onCommit={(value) => onOrder(performance.id, value)}
       />
-      <div className="min-w-0 py-1">
-        <button
-          type="button"
-          disabled={!onEdit}
-          aria-label={`${performance.name}を編集`}
-          onClick={() => onEdit?.(performance.id)}
-          className="min-w-0 truncate rounded px-1 py-1 text-left font-medium text-brand hover:bg-wash hover:underline"
-          title={performance.name}
-        >
-          {performance.name}
-        </button>
-        {sections && onSectionChange && (
-          <select
-            aria-label={`${performance.name}の部`}
-            disabled={performance.fixed}
-            className="block max-w-full rounded border border-line bg-white text-xs"
-            value={
-              'sectionId' in row.target ? row.target.sectionId : 'unassigned'
-            }
-            onChange={(event) =>
-              onSectionChange(performance.id, event.target.value)
-            }
-          >
-            <option value="unassigned">未配置</option>
-            {sections.map((section, index) => (
-              <option key={section.id} value={section.id}>
-                {section.name || `第${index + 1}部`}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
+      <button
+        type="button"
+        disabled={!onEdit}
+        aria-label={`${performance.name}を編集`}
+        onClick={() => onEdit?.(performance.id)}
+        className="min-w-0 truncate rounded px-1 py-1 text-left font-medium text-brand hover:bg-wash hover:underline"
+        title={performance.name}
+      >
+        {performance.name}
+      </button>
       <span
         className="min-w-0 truncate text-[13px] text-muted"
         title={performance.members.join('・')}
@@ -133,7 +106,9 @@ export function EmptyPerformanceRow({ row }: { row: Row }) {
     >
       <span />
       <span />
-      <span className="pl-2 text-muted/60 tabular-nums">{row.order}</span>
+      <span className="pl-2 text-muted/60 tabular-nums">
+        {row.order ?? '—'}
+      </span>
       <span className="col-span-2 text-xs text-muted/70">
         空き枠 · ここにドラッグして配置
       </span>

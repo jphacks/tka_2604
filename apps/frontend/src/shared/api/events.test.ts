@@ -186,8 +186,8 @@ describe('events RPC adapter', () => {
     // Chat history has its own sequence; it does not participate in updatedAt.
     const event = await api.getEvent('event-1')
     expect(event.sections).toEqual([
-      { id: 'p1', name: '前半', slots: ['b1'] },
-      { id: 'p2', name: '後半', slots: [] },
+      { id: 'p1', name: '前半', slots: ['b1', null, null, null] },
+      { id: 'p2', name: '後半', slots: [null, null, null, null] },
     ])
     expect(event.performances[0]).toMatchObject({
       id: 'b1',
@@ -239,7 +239,7 @@ it('saves dense parts and placements with the displayed revision, then constrain
     constraints: [],
     constraintSources: { removed: 'band-1' },
     sections: [
-      { id: 'part-1', name: '前半', slots: ['b2', 'b1'] },
+      { id: 'part-1', name: '前半', slots: ['b2', null, 'b1', null] },
       { id: 'part-2', name: null, slots: [] },
     ],
     unassigned: ['b3'],

@@ -34,7 +34,24 @@ export function ConstraintsPanel({
         </Button>
       }
     >
-      <div className="flex shrink-0 items-center justify-end border-b border-line px-3 py-2 text-xs">
+      <div className="flex shrink-0 items-center justify-end gap-2 border-b border-line px-3 py-2 text-xs">
+        {controller.persistent && (
+          <Button
+            aria-label="制約を保存"
+            className="mr-auto text-xs"
+            variant={controller.constraintsDirty ? 'primary' : 'secondary'}
+            disabled={
+              !controller.constraintsDirty ||
+              controller.saving ||
+              controller.refreshing ||
+              controller.sending
+            }
+            onClick={() => void controller.saveConstraints()}
+          >
+            {controller.saving ? '保存中…' : '保存'}
+            {controller.constraintsDirty && ' *'}
+          </Button>
+        )}
         <Button
           variant={controller.showUnmet ? 'primary' : 'ghost'}
           className="text-xs"

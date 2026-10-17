@@ -19,16 +19,26 @@ export function buildSchedule(event: EventData) {
     const rows = section.slots.map((id, slotIndex) => ({
       key: id ?? `empty:${section.id}:${slotIndex}`,
       performance: id ? performances.get(id)! : null,
-      order: offset + slotIndex + 1,
+      order:
+        event.scheduleMode === 'dense'
+          ? id === null
+            ? null
+            : start +
+              section.slots.slice(0, slotIndex).filter((id) => id !== null)
+                .length
+          : offset + slotIndex + 1,
       target: { sectionId: section.id, index: slotIndex },
     }))
-    offset += section.slots.length
+    offset +=
+      event.scheduleMode === 'dense'
+        ? section.slots.filter((id) => id !== null).length
+        : section.slots.length
     return {
       id: section.id,
       name: section.name || `第${index + 1}部`,
       capacity: section.slots.length,
       assigned: section.slots.filter(Boolean).length,
-      range: `${start}–${offset}`,
+      range: start > offset ? '—' : `${start}–${offset}`,
       rows,
     }
   })
@@ -44,7 +54,10 @@ export function buildSchedule(event: EventData) {
       (total, section) => total + section.slots.filter(Boolean).length,
       0,
     ),
-    capacity: offset,
+    capacity: event.sections.reduce(
+      (total, part) => total + part.slots.length,
+      0,
+    ),
   }
 }
 
@@ -245,7 +258,7 @@ export function resizeSchedule(
       (_, index) =>
         next.sections[index] ?? {
           id: persistent ? `part-${crypto.randomUUID()}` : `part-${index}`,
-          slots: persistent ? [] : Array<string | null>(4).fill(null),
+          slots: Array<string | null>(4).fill(null),
         },
     )
   }

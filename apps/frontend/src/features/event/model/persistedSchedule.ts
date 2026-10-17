@@ -8,8 +8,32 @@ export function movePersistedPerformance(
   id: string,
   target: MoveTarget,
 ): ModelResult {
+  const displayed = event
+  if ('sectionId' in target) {
+    const { sectionId } = target
+    const part = displayed.sections.find((part) => part.id === sectionId)
+    if (
+      !part ||
+      !Number.isInteger(target.index) ||
+      target.index < 0 ||
+      target.index > part.slots.length
+    )
+      return { event }
+    target = {
+      ...target,
+      index: part.slots.slice(0, target.index).filter((id) => id !== null)
+        .length,
+    }
+  }
+  event = {
+    ...event,
+    sections: event.sections.map((part) => ({
+      ...part,
+      slots: part.slots.filter((id) => id !== null),
+    })),
+  }
   const source = findTarget(event, id)
-  if (!source) return { event }
+  if (!source) return { event: displayed }
   if (isFixed(event, id))
     return { event, error: '固定を解除してから移動してください。' }
   const next = structuredClone(event)
@@ -42,6 +66,20 @@ export function movePersistedPerformance(
       event,
       error: '固定枠の位置が変わります。固定を解除してから移動してください。',
     }
+  if (displayed.scheduleMode === 'dense') {
+    next.sections = next.sections.map((part) => {
+      const capacity =
+        displayed.sections.find((original) => original.id === part.id)?.slots
+          .length ?? 4
+      return {
+        ...part,
+        slots: Array.from(
+          { length: Math.max(capacity, part.slots.length) },
+          (_, index) => part.slots[index] ?? null,
+        ),
+      }
+    })
+  }
   return { event: next }
 }
 
@@ -55,18 +93,17 @@ export function setPersistedOrder(
       unassignedIndex: event.unassigned.length,
     })
   const count = event.sections.reduce(
-    (total, part) => total + part.slots.length,
+    (total, part) => total + part.slots.filter((id) => id !== null).length,
     0,
   )
   const limit = count + (event.unassigned.includes(id) ? 1 : 0)
   if (!Number.isInteger(order) || order < 1 || order > limit)
     return { event, error: `出演順は1〜${limit}の整数を入力してください。` }
-  let index = order - 1
-  for (const part of event.sections) {
-    if (index < part.slots.length)
-      return movePersistedPerformance(event, id, { sectionId: part.id, index })
-    index -= part.slots.length
-  }
+  const targetId = event.sections.flatMap((part) =>
+    part.slots.filter((id) => id !== null),
+  )[order - 1]
+  const target = targetId ? findTarget(event, targetId) : undefined
+  if (target) return movePersistedPerformance(event, id, target)
   const last = event.sections.at(-1)
   return last
     ? movePersistedPerformance(event, id, {

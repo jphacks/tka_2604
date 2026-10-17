@@ -25,48 +25,6 @@ function EventWorkspace({ eventId }: { eventId: string }) {
         />
       ) : (
         <>
-          {controller.persistent && (
-            <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-line bg-white p-3 text-xs">
-              <span role="status">
-                出演順：{controller.scheduleDirty ? '未保存' : '保存済み'} /
-                制約：{controller.constraintsDirty ? '未保存' : '保存済み'}
-              </span>
-              <Button
-                disabled={
-                  !controller.scheduleDirty ||
-                  controller.saving ||
-                  controller.sending
-                }
-                onClick={() => void controller.saveSchedule()}
-              >
-                出演順を保存
-              </Button>
-              <Button
-                disabled={
-                  !controller.constraintsDirty ||
-                  controller.saving ||
-                  controller.sending
-                }
-                onClick={() => void controller.saveConstraints()}
-              >
-                制約を保存
-              </Button>
-              <Button
-                disabled={
-                  controller.saving ||
-                  controller.refreshing ||
-                  controller.sending
-                }
-                onClick={controller.retryLoad}
-              >
-                最新の状態を取得
-              </Button>
-              {controller.saving && <span role="status">保存中…</span>}
-              {controller.loadError && (
-                <span role="alert">{controller.loadError}</span>
-              )}
-            </div>
-          )}
           {controller.hardViolationCount > 0 && (
             <p
               role="status"
@@ -98,12 +56,12 @@ function EventWorkspace({ eventId }: { eventId: string }) {
           </div>
         </>
       )}
-      {(controller.notice || controller.error) && (
+      {(controller.notice || controller.error || controller.loadError) && (
         <div
-          role={controller.error ? 'alert' : 'status'}
-          className={`fixed right-3 bottom-3 left-3 z-40 flex items-center justify-between gap-3 rounded-lg border bg-white p-3 shadow-sm xl:right-auto xl:max-w-xl ${controller.error ? 'border-red-200 text-red-700' : 'border-brand/30 text-brand'}`}
+          role={controller.error || controller.loadError ? 'alert' : 'status'}
+          className={`fixed right-3 bottom-3 left-3 z-40 flex items-center justify-between gap-3 rounded-lg border bg-white p-3 shadow-sm xl:right-auto xl:max-w-xl ${controller.error || controller.loadError ? 'border-red-200 text-red-700' : 'border-brand/30 text-brand'}`}
         >
-          <p>{controller.error || controller.notice}</p>
+          <p>{controller.error || controller.loadError || controller.notice}</p>
           <Button
             variant="ghost"
             aria-label="通知を閉じる"

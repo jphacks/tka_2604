@@ -5,7 +5,7 @@ import {
   describeConstraint,
   evaluateConstraint,
 } from '../../../shared/model/constraints'
-import type { EventData } from '../../../shared/model/event'
+import { type EventData, scheduleContent } from '../../../shared/model/event'
 import { dataSource } from '../../../shared/repositories/dataSource'
 import { workspaceRepository } from '../../../shared/repositories/workspaceRepository'
 import {
@@ -31,8 +31,8 @@ export function useEvent(eventId: string) {
     persistent &&
     !!event &&
     !!baseline &&
-    JSON.stringify([event.sections, event.unassigned]) !==
-      JSON.stringify([baseline.sections, baseline.unassigned])
+    JSON.stringify(scheduleContent(event)) !==
+      JSON.stringify(scheduleContent(baseline))
   const constraintsDirty =
     persistent &&
     !!event &&
@@ -182,7 +182,10 @@ export function useEvent(eventId: string) {
     },
     applyPerformanceEdits: (event: EventData) =>
       dispatch({ type: 'performances-updated', event }),
-    dismissNotice: () => dispatch({ type: 'notice', message: '' }),
+    dismissNotice: () => {
+      setLoadError('')
+      dispatch({ type: 'notice', message: '' })
+    },
     setOrder: (id: string, value: number | null) =>
       edit({ type: 'order', id, value, persistent }),
     setFixed: (id: string, fixed: boolean) =>
@@ -193,20 +196,6 @@ export function useEvent(eventId: string) {
       if (!event || id === overId) return
       const target = findTarget(event, overId)
       if (target) edit({ type: 'move', id, target, persistent })
-    },
-    moveToSection: (id: string, sectionId: string) => {
-      const section = event?.sections.find(
-        (section) => section.id === sectionId,
-      )
-      if (section)
-        edit({
-          type: 'move',
-          id,
-          target: { sectionId, index: section.slots.length },
-          persistent,
-        })
-      else if (sectionId === 'unassigned')
-        edit({ type: 'order', id, value: null, persistent })
     },
     saveConstraint: (constraint: Constraint) =>
       edit({ type: 'constraint-save', constraint }),

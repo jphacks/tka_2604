@@ -66,3 +66,28 @@ describe('persisted schedule', () => {
     expect(setPersistedOrder(fixed, 'c', 3).error).toBeUndefined()
   })
 })
+
+it('keeps temporary capacities while moving bands between parts', () => {
+  const withFrames: EventData = {
+    ...event,
+    scheduleMode: 'dense',
+    sections: [
+      { id: 'p1', slots: ['a', 'b', null, null] },
+      { id: 'p2', slots: [null, null, null, null] },
+    ],
+  }
+  const moved = movePersistedPerformance(withFrames, 'b', {
+    sectionId: 'p2',
+    index: 2,
+  }).event
+  expect(moved.sections.map((part) => part.slots)).toEqual([
+    ['a', null, null, null],
+    ['b', null, null, null],
+  ])
+  expect(setPersistedOrder(moved, 'c', 3).event.sections[1].slots).toEqual([
+    'b',
+    'c',
+    null,
+    null,
+  ])
+})

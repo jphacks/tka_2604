@@ -1,4 +1,37 @@
+import type { Locator, Page } from '@playwright/test'
+
 import { expect, test } from './fixtures'
+
+async function expectSaved(
+  page: Page,
+  scheduleDirty = false,
+  constraintsDirty = false,
+) {
+  const schedule = page.getByRole('button', {
+    name: '出演順を保存',
+    exact: true,
+  })
+  const constraints = page.getByRole('button', {
+    name: '制約を保存',
+    exact: true,
+  })
+  if (scheduleDirty) await expect(schedule).toBeEnabled()
+  else await expect(schedule).toBeDisabled()
+  if (constraintsDirty) await expect(constraints).toBeEnabled()
+  else await expect(constraints).toBeDisabled()
+}
+async function dragTo(page: Page, handle: Locator, target: Locator) {
+  const from = await handle.boundingBox()
+  const to = await target.boundingBox()
+  if (!from || !to) throw new Error('Drag target is missing')
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
+    steps: 15,
+  })
+  await expect(handle).toHaveAttribute('aria-pressed', 'true')
+  await page.mouse.up()
+}
 
 test('real API: create, failed save, retry, reload, conflict and delete', async ({
   page,
@@ -82,7 +115,7 @@ test('real API: roster, part names, saved history and read-only roster controls'
     page.getByRole('heading', { name: 'デモライブ', exact: true }),
   ).toBeVisible()
   await expect(
-    page.getByRole('heading', { name: /前半 · 2\/2組/ }),
+    page.getByRole('heading', { name: /前半 · 2\/4組/ }),
   ).toBeVisible()
   await expect(
     page.getByRole('textbox', { name: 'バンドBの出演順', exact: true }),
@@ -131,31 +164,33 @@ test('real API: schedule and constraints survive reload, failures and concurrent
   try {
     await page.goto('/event/demo-event')
     await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
-    const part = page.getByRole('combobox', {
-      name: 'バンドBの部',
-      exact: true,
-    })
-    await part.selectOption('demo-part-2')
-    await expect(
-      page.getByText('出演順：未保存 / 制約：保存済み'),
-    ).toBeVisible()
+    const part = page.getByRole('region', { name: '第2部', exact: true })
+    await dragTo(
+      page,
+      page.getByRole('button', { name: 'バンドBを並べ替え', exact: true }),
+      part
+        .getByText('空き枠 · ここにドラッグして配置', { exact: true })
+        .first(),
+    )
+    await expectSaved(page, true)
     await page.route(`**${path}/schedule`, (route) =>
       route.request().method() === 'POST'
         ? route.fulfill({ status: 503, body: 'unavailable' })
         : route.continue(),
     )
+    // Keep a natural click duration after the drag sensor releases its click guard.
     await page
       .getByRole('button', { name: '出演順を保存', exact: true })
-      .click()
+      .click({ delay: 75 })
     await expect(page.getByRole('alert')).toContainText('503')
-    await expect(part).toHaveValue('demo-part-2')
+    await expect(
+      part.getByRole('textbox', { name: 'バンドBの出演順', exact: true }),
+    ).toHaveValue('2')
     await page.unroute(`**${path}/schedule`)
     await page
       .getByRole('button', { name: '出演順を保存', exact: true })
       .click()
-    await expect(
-      page.getByText('出演順：保存済み / 制約：保存済み'),
-    ).toBeVisible()
+    await expectSaved(page)
     const unassigned = page.getByRole('textbox', {
       name: '未配置バンドの出演順',
       exact: true,
@@ -185,15 +220,21 @@ test('real API: schedule and constraints survive reload, failures and concurrent
     await page
       .getByRole('button', { name: '出演順を保存', exact: true })
       .click()
-    await expect(
-      page.getByText('出演順：保存済み / 制約：保存済み'),
-    ).toBeVisible()
+    await expectSaved(page)
     const schedule = (await (await request.get(`${path}/schedule`)).json()) as {
       parts: unknown[]
       unassignedBandIds: string[]
     }
     expect(schedule.parts).toHaveLength(3)
     expect(schedule.unassignedBandIds).toEqual(['demo-band-c'])
+    const capacity = page.getByRole('textbox', {
+      name: '第2部の組数',
+      exact: true,
+    })
+    await capacity.fill('6')
+    await capacity.press('Enter')
+    await expectSaved(page)
+    await expect(capacity).toHaveValue('6')
     await page.getByRole('button', { name: '手動追加' }).click()
     const dialog = page.getByRole('dialog', { name: '制約を手動追加' })
     await dialog.getByRole('button', { name: /出演位置を指定する/ }).click()
@@ -203,9 +244,7 @@ test('real API: schedule and constraints survive reload, failures and concurrent
     await dialog.getByRole('spinbutton', { name: '出演位置（番）' }).fill('3')
     await dialog.getByRole('button', { name: 'この条件を追加' }).click()
     await page.getByRole('button', { name: '制約を保存', exact: true }).click()
-    await expect(
-      page.getByText('出演順：保存済み / 制約：保存済み'),
-    ).toBeVisible()
+    await expectSaved(page)
     const saved = (await (await request.get(`${path}/constraints`)).json()) as {
       updatedAt: string
       constraints: {
@@ -224,7 +263,10 @@ test('real API: schedule and constraints survive reload, failures and concurrent
     expect(created.sourceBandId).toBeNull()
     await page.reload()
     await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
-    await expect(part).toHaveValue('demo-part-2')
+    await expect(
+      part.getByRole('textbox', { name: 'バンドBの出演順', exact: true }),
+    ).toHaveValue('2')
+    await expect(capacity).toHaveValue('4')
     await expect(
       page.getByRole('heading', {
         name: '未配置バンドを3番にする',
@@ -256,9 +298,7 @@ test('real API: schedule and constraints survive reload, failures and concurrent
       .uncheck()
     await page.getByRole('button', { name: '制約を保存', exact: true }).click()
     await expect(page.getByRole('alert')).toBeVisible()
-    await expect(
-      page.getByText('出演順：保存済み / 制約：未保存'),
-    ).toBeVisible()
+    await expectSaved(page, false, true)
     await expect(
       page.getByRole('checkbox', {
         name: 'バンドAを1番にするを有効にする',
@@ -271,18 +311,14 @@ test('real API: schedule and constraints survive reload, failures and concurrent
     expect(persisted.constraints).toHaveLength(3)
     page.once('dialog', (prompt) => prompt.dismiss())
     await page.getByRole('button', { name: '最新の状態を取得' }).click()
-    await expect(
-      page.getByText('出演順：保存済み / 制約：未保存'),
-    ).toBeVisible()
+    await expectSaved(page, false, true)
     await page.screenshot({
       path: test.info().outputPath('api-save-conflict.png'),
       fullPage: true,
     })
     page.once('dialog', (prompt) => prompt.accept())
     await page.getByRole('button', { name: '最新の状態を取得' }).click()
-    await expect(
-      page.getByText('出演順：保存済み / 制約：保存済み'),
-    ).toBeVisible()
+    await expectSaved(page)
     await expect(
       page.getByRole('checkbox', {
         name: 'バンドAを1番にするを有効にする',
@@ -428,3 +464,49 @@ test('chat contract: retry uses the same ID after reopening, with no duplicate m
     await request.delete(`/api/events/${created.eventId}`)
   }
 })
+
+for (const width of [1280, 1600]) {
+  test(`API preserves the original mock layout at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 1000 })
+    await page.goto('/event/demo-event')
+    await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+    const schedule = page.getByRole('region', { name: '出演順', exact: true })
+    const constraints = page.getByRole('region', { name: '制約', exact: true })
+    const chat = page.getByRole('region', { name: 'AIチャット', exact: true })
+    await expect(schedule).toBeVisible()
+    await expect(
+      schedule.getByRole('textbox', { name: '第1部の組数', exact: true }),
+    ).toBeVisible()
+    await expect(
+      schedule.getByRole('textbox', { name: '第2部の組数', exact: true }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('combobox', { name: 'バンドBの部', exact: true }),
+    ).toHaveCount(0)
+    const nav = await page
+      .getByRole('navigation', { name: 'イベント内の移動' })
+      .boundingBox()
+    for (const panel of [schedule, constraints, chat]) {
+      const box = await panel.boundingBox()
+      // The navigation wrapper has a 1px bottom border.
+      expect(box?.y).toBe(nav!.y + nav!.height + 1)
+      expect(box!.y + box!.height).toBe(1000)
+    }
+    await expect(
+      schedule.getByRole('button', { name: '出演順を保存', exact: true }),
+    ).toBeVisible()
+    await expect(
+      constraints.getByRole('button', { name: '制約を保存', exact: true }),
+    ).toBeVisible()
+    const row = await page
+      .locator('[data-performance="demo-band-b"]')
+      .boundingBox()
+    expect(row?.height).toBe(42)
+    await page.screenshot({
+      path: test.info().outputPath(`api-original-layout-${width}.png`),
+      fullPage: true,
+    })
+  })
+}

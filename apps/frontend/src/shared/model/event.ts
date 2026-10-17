@@ -69,7 +69,7 @@ export function positions(event: EventData) {
   event.sections.forEach((section, part) => {
     section.slots.forEach((id) => {
       if (id !== null) result.set(id, { position, part })
-      position += 1
+      if (id !== null || event.scheduleMode !== 'dense') position += 1
     })
   })
   return result
@@ -97,4 +97,15 @@ export function positionLimit(event: EventData) {
   return event.scheduleMode === 'dense'
     ? event.performances.length
     : event.sections.reduce((sum, section) => sum + section.slots.length, 0)
+}
+
+/** Empty frames are view state; only band order belongs to the schedule API. */
+export function scheduleContent(event: EventData) {
+  return [
+    event.sections.map((section) => ({
+      ...section,
+      slots: section.slots.filter((id) => id !== null),
+    })),
+    event.unassigned,
+  ]
 }

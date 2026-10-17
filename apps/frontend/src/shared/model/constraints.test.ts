@@ -240,3 +240,26 @@ it('uses the registered band count for positions in a persisted dense schedule',
   expect(validateConstraint(constraint, event)).toBe('')
   expect(evaluateConstraint(constraint, event).status).toBe('unchecked')
 })
+
+it('does not count temporary empty frames in persisted constraint positions', () => {
+  const persisted: EventData = {
+    ...event,
+    scheduleMode: 'dense',
+    sections: [
+      { id: 'first', slots: ['a', null, null, null] },
+      { id: 'second', slots: ['b', null, null, null] },
+    ],
+  }
+  const fixed: Constraint = {
+    schema_version: '1.0.0',
+    constraint_id: 'fixed-b',
+    event_id: event.id,
+    type: 'at_position',
+    hardness: 'hard',
+    priority: null,
+    enabled: true,
+    targets: { band_id: 'b' },
+    params: { position: 1 },
+  }
+  expect(evaluateConstraint(fixed, persisted).status).toBe('met')
+})
