@@ -32,7 +32,10 @@ export function ParticipantsPage() {
             <Icon name="form" />
             回答フォーム
           </LinkButton>
-          <Button onClick={controller.openImport} disabled={!controller.canEdit || !controller.data}>
+          <Button
+            onClick={controller.openImport}
+            disabled={!controller.canEdit || !controller.data}
+          >
             <Icon name="list" />
             CSVを取り込む
           </Button>

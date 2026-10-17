@@ -192,6 +192,7 @@ export function resizeSchedule(
   event: EventData,
   count: number,
   sectionId?: string,
+  persistent = false,
 ): ModelResult {
   if (sectionId && !event.sections.some((section) => section.id === sectionId))
     return { event, error: '部が見つかりません。' }
@@ -243,8 +244,8 @@ export function resizeSchedule(
       { length: count },
       (_, index) =>
         next.sections[index] ?? {
-          id: `part-${index}`,
-          slots: Array<string | null>(4).fill(null),
+          id: persistent ? `part-${crypto.randomUUID()}` : `part-${index}`,
+          slots: persistent ? [] : Array<string | null>(4).fill(null),
         },
     )
   }

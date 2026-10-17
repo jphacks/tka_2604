@@ -7,6 +7,10 @@ import {
   positions,
 } from '../../../shared/model/event'
 import {
+  movePersistedPerformance,
+  setPersistedOrder,
+} from './persistedSchedule'
+import {
   movePerformance,
   resizeSchedule,
   setPerformanceOrder,
@@ -24,13 +28,19 @@ export type ConstraintPatch = Partial<
 export type EventAction =
   | { type: 'loaded'; event: EventData }
   | {
+      type: 'saved'
+      updatedAt: string
+      constraintSources?: EventData['constraintSources']
+    }
+  | { type: 'messages'; messages: ChatMessage[] }
+  | {
       type: 'performances-updated'
       event: Pick<EventData, 'members' | 'performances'>
     }
   | { type: 'notice'; message: string; error?: boolean }
-  | { type: 'move'; id: string; target: MoveTarget }
-  | { type: 'order'; id: string; value: number | null }
-  | { type: 'resize'; count: number; sectionId?: string }
+  | { type: 'move'; id: string; target: MoveTarget; persistent?: boolean }
+  | { type: 'order'; id: string; value: number | null; persistent?: boolean }
+  | { type: 'resize'; count: number; sectionId?: string; persistent?: boolean }
   | { type: 'fixed'; id: string; fixed: boolean }
   | { type: 'constraint-save'; constraint: Constraint }
   | { type: 'constraint-update'; id: string; patch: ConstraintPatch }
@@ -54,11 +64,25 @@ export function eventReducer(
   const event = state.event
   const success = (next: EventData, notice = '') => ({
     event: next,
-    notice,
+    notice: event.scheduleMode === 'dense' ? '' : notice,
     error: '',
   })
   const fail = (error: string) => ({ ...state, error, notice: '' })
   switch (action.type) {
+    case 'saved':
+      return {
+        event: {
+          ...event,
+          updatedAt: action.updatedAt,
+          constraintSources:
+            action.constraintSources ?? event.constraintSources,
+        },
+        notice: '保存しました。',
+        error: '',
+      }
+    case 'messages':
+      return { ...state, event: { ...event, messages: action.messages } }
+
     case 'performances-updated':
       return success(
         {
@@ -73,10 +97,23 @@ export function eventReducer(
     case 'resize': {
       const result =
         action.type === 'move'
-          ? movePerformance(event, action.id, action.target)
+          ? (action.persistent ? movePersistedPerformance : movePerformance)(
+              event,
+              action.id,
+              action.target,
+            )
           : action.type === 'order'
-            ? setPerformanceOrder(event, action.id, action.value)
-            : resizeSchedule(event, action.count, action.sectionId)
+            ? (action.persistent ? setPersistedOrder : setPerformanceOrder)(
+                event,
+                action.id,
+                action.value,
+              )
+            : resizeSchedule(
+                event,
+                action.count,
+                action.sectionId,
+                action.persistent,
+              )
       return result.error ? fail(result.error) : success(result.event)
     }
     case 'fixed': {
@@ -189,7 +226,13 @@ export function eventReducer(
     case 'message':
       return success({
         ...event,
-        messages: [...event.messages, action.message],
+        messages: event.messages.some(
+          (message) => message.id === action.message.id,
+        )
+          ? event.messages.map((message) =>
+              message.id === action.message.id ? action.message : message,
+            )
+          : [...event.messages, action.message],
       })
   }
 }

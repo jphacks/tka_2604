@@ -73,7 +73,7 @@ test('real API: create, failed save, retry, reload, conflict and delete', async 
   }
 })
 
-test('real API: roster, part names, constraints and read-only controls', async ({
+test('real API: roster, part names, saved history and read-only roster controls', async ({
   page,
 }) => {
   await page.goto('/event/demo-event')
@@ -85,8 +85,11 @@ test('real API: roster, part names, constraints and read-only controls', async (
     page.getByRole('heading', { name: /前半 · 2\/2組/ }),
   ).toBeVisible()
   await expect(
-    page.getByRole('textbox', { name: 'バンドAの出演順', exact: true }),
-  ).toBeDisabled()
+    page.getByRole('textbox', { name: 'バンドBの出演順', exact: true }),
+  ).toBeEnabled()
+  await expect(
+    page.getByText('保存確認用の発言', { exact: true }),
+  ).toBeVisible()
   await page
     .getByRole('link', { name: '出演枠・メンバー', exact: true })
     .click()
@@ -103,4 +106,325 @@ test('real API: roster, part names, constraints and read-only controls', async (
     path: test.info().outputPath('api-roster.png'),
     fullPage: true,
   })
+})
+
+test('real API: schedule and constraints survive reload, failures and concurrent changes', async ({
+  page,
+  request,
+}) => {
+  const path = '/api/events/demo-event'
+  const beforeSchedule = (await (
+    await request.get(`${path}/schedule`)
+  ).json()) as {
+    parts: { partId: string; partName: string | null }[]
+    placements: { bandId: string; partId: string; order: number }[]
+    unassignedBandIds: string[]
+  }
+  const beforeConstraints = (await (
+    await request.get(`${path}/constraints`)
+  ).json()) as {
+    constraints: {
+      constraint: Record<string, unknown>
+      sourceBandId: string | null
+    }[]
+  }
+  try {
+    await page.goto('/event/demo-event')
+    await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+    const part = page.getByRole('combobox', {
+      name: 'バンドBの部',
+      exact: true,
+    })
+    await part.selectOption('demo-part-2')
+    await expect(
+      page.getByText('出演順：未保存 / 制約：保存済み'),
+    ).toBeVisible()
+    await page.route(`**${path}/schedule`, (route) =>
+      route.request().method() === 'POST'
+        ? route.fulfill({ status: 503, body: 'unavailable' })
+        : route.continue(),
+    )
+    await page
+      .getByRole('button', { name: '出演順を保存', exact: true })
+      .click()
+    await expect(page.getByRole('alert')).toContainText('503')
+    await expect(part).toHaveValue('demo-part-2')
+    await page.unroute(`**${path}/schedule`)
+    await page
+      .getByRole('button', { name: '出演順を保存', exact: true })
+      .click()
+    await expect(
+      page.getByText('出演順：保存済み / 制約：保存済み'),
+    ).toBeVisible()
+    const unassigned = page.getByRole('textbox', {
+      name: '未配置バンドの出演順',
+      exact: true,
+    })
+    await unassigned.fill('3')
+    await unassigned.press('Enter')
+    const handle = page.getByRole('button', {
+      name: 'バンドBを並べ替え',
+      exact: true,
+    })
+    await handle.focus()
+    // The keyboard sensor attaches its listener after activation.
+    await page.keyboard.press('Space', { delay: 50 })
+    await expect(page.getByText('移動先：バンドB（2番）')).toHaveCount(1)
+    await page.keyboard.press('ArrowDown')
+    await expect(page.getByText('移動先：未配置バンド（3番）')).toHaveCount(1)
+    await page.keyboard.press('Space')
+    await expect(unassigned).toHaveValue('2')
+    await expect(
+      page.getByRole('textbox', { name: 'バンドBの出演順', exact: true }),
+    ).toHaveValue('3')
+    await unassigned.fill('')
+    await unassigned.press('Enter')
+    const parts = page.getByRole('textbox', { name: '部数', exact: true })
+    await parts.fill('3')
+    await parts.press('Enter')
+    await page
+      .getByRole('button', { name: '出演順を保存', exact: true })
+      .click()
+    await expect(
+      page.getByText('出演順：保存済み / 制約：保存済み'),
+    ).toBeVisible()
+    const schedule = (await (await request.get(`${path}/schedule`)).json()) as {
+      parts: unknown[]
+      unassignedBandIds: string[]
+    }
+    expect(schedule.parts).toHaveLength(3)
+    expect(schedule.unassignedBandIds).toEqual(['demo-band-c'])
+    await page.getByRole('button', { name: '手動追加' }).click()
+    const dialog = page.getByRole('dialog', { name: '制約を手動追加' })
+    await dialog.getByRole('button', { name: /出演位置を指定する/ }).click()
+    await dialog
+      .getByRole('combobox', { name: '位置を指定する出演枠' })
+      .selectOption('demo-band-c')
+    await dialog.getByRole('spinbutton', { name: '出演位置（番）' }).fill('3')
+    await dialog.getByRole('button', { name: 'この条件を追加' }).click()
+    await page.getByRole('button', { name: '制約を保存', exact: true }).click()
+    await expect(
+      page.getByText('出演順：保存済み / 制約：保存済み'),
+    ).toBeVisible()
+    const saved = (await (await request.get(`${path}/constraints`)).json()) as {
+      updatedAt: string
+      constraints: {
+        constraint: Record<string, unknown>
+        sourceBandId: string | null
+      }[]
+    }
+    expect(
+      saved.constraints.find(
+        (item) => item.constraint.constraint_id === 'demo-constraint',
+      )?.sourceBandId,
+    ).toBe('demo-band-a')
+    const created = saved.constraints.find(
+      (item) => item.constraint.constraint_id !== 'demo-constraint',
+    )!
+    expect(created.sourceBandId).toBeNull()
+    await page.reload()
+    await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+    await expect(part).toHaveValue('demo-part-2')
+    await expect(
+      page.getByRole('heading', {
+        name: '未配置バンドを3番にする',
+        exact: true,
+      }),
+    ).toBeVisible()
+    const external = {
+      ...created.constraint,
+      constraint_id: `external-${Date.now()}`,
+    }
+    expect(
+      (
+        await request.post(`${path}/constraints`, {
+          data: {
+            expectedUpdatedAt: saved.updatedAt,
+            constraints: [
+              ...saved.constraints.map((item) => item.constraint),
+              external,
+            ],
+          },
+        })
+      ).status(),
+    ).toBe(200)
+    await page
+      .getByRole('checkbox', {
+        name: 'バンドAを1番にするを有効にする',
+        exact: true,
+      })
+      .uncheck()
+    await page.getByRole('button', { name: '制約を保存', exact: true }).click()
+    await expect(page.getByRole('alert')).toBeVisible()
+    await expect(
+      page.getByText('出演順：保存済み / 制約：未保存'),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('checkbox', {
+        name: 'バンドAを1番にするを有効にする',
+        exact: true,
+      }),
+    ).not.toBeChecked()
+    const persisted = (await (
+      await request.get(`${path}/constraints`)
+    ).json()) as typeof saved
+    expect(persisted.constraints).toHaveLength(3)
+    page.once('dialog', (prompt) => prompt.dismiss())
+    await page.getByRole('button', { name: '最新の状態を取得' }).click()
+    await expect(
+      page.getByText('出演順：保存済み / 制約：未保存'),
+    ).toBeVisible()
+    await page.screenshot({
+      path: test.info().outputPath('api-save-conflict.png'),
+      fullPage: true,
+    })
+    page.once('dialog', (prompt) => prompt.accept())
+    await page.getByRole('button', { name: '最新の状態を取得' }).click()
+    await expect(
+      page.getByText('出演順：保存済み / 制約：保存済み'),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('checkbox', {
+        name: 'バンドAを1番にするを有効にする',
+        exact: true,
+      }),
+    ).toBeChecked()
+    await page.setViewportSize({ width: 390, height: 844 })
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(390)
+    await page.screenshot({
+      path: test.info().outputPath('api-mobile.png'),
+      fullPage: true,
+    })
+  } finally {
+    const current = (await (await request.get(path)).json()) as {
+      updatedAt: string
+    }
+    const restored = await request.post(`${path}/constraints`, {
+      data: {
+        expectedUpdatedAt: current.updatedAt,
+        constraints: beforeConstraints.constraints.map(
+          (item) => item.constraint,
+        ),
+      },
+    })
+    expect(restored.status()).toBe(200)
+    const revision = (await restored.json()) as { updatedAt: string }
+    expect(
+      (
+        await request.post(`${path}/schedule`, {
+          data: {
+            expectedUpdatedAt: revision.updatedAt,
+            parts: beforeSchedule.parts.map(({ partId, partName }) => ({
+              partId,
+              partName,
+            })),
+            placements: beforeSchedule.placements,
+            unassignedBandIds: beforeSchedule.unassignedBandIds,
+          },
+        })
+      ).status(),
+    ).toBe(200)
+  }
+})
+
+test('chat contract: retry uses the same ID after reopening, with no duplicate messages', async ({
+  page,
+  request,
+}) => {
+  const created = (await (
+    await request.post('/api/events', {
+      data: { title: '別イベントの履歴確認' },
+    })
+  ).json()) as { eventId: string }
+  const messages: {
+    messageId: string
+    role: string
+    text: string
+    replyToMessageId: string | null
+  }[] = []
+  const sentIds: string[] = []
+  // Browser contract test: simulate an LLM failure after the user row is saved.
+  // Actual D1 history reads below are preserved; no external LLM is called.
+  await page.route('**/api/events/demo-event/chat', async (route) => {
+    if (route.request().method() === 'GET') {
+      const response = await route.fetch()
+      const body = (await response.json()) as { messages: unknown[] }
+      await route.fulfill({
+        json: { ...body, messages: [...body.messages, ...messages] },
+      })
+      return
+    }
+    const input = route.request().postDataJSON() as {
+      message: string
+      messageId: string
+    }
+    sentIds.push(input.messageId)
+    if (sentIds.length === 1) {
+      messages.push({
+        messageId: input.messageId,
+        role: 'user',
+        text: input.message,
+        replyToMessageId: null,
+      })
+      await route.fulfill({
+        status: 502,
+        json: { error: { message: '生成に失敗しました。' } },
+      })
+    } else {
+      messages.push({
+        messageId: 'test-reply',
+        role: 'assistant',
+        text: '再試行した返信です。',
+        replyToMessageId: input.messageId,
+      })
+      await route.fulfill({ json: { reply: '再試行した返信です。' } })
+    }
+  })
+  try {
+    await page.goto('/event/demo-event')
+    await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+    await page
+      .getByRole('textbox', { name: 'AIへのメッセージ' })
+      .fill('再送確認の希望')
+    await page.getByRole('button', { name: 'メッセージを送信' }).click()
+    await expect(page.getByRole('alert')).toContainText('送信に失敗')
+    await page.reload()
+    await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+    await expect(page.getByText('再送確認の希望', { exact: true })).toHaveCount(
+      1,
+    )
+    await page.getByRole('button', { name: 'この発言を再試行' }).click()
+    await expect(
+      page.getByText('再試行した返信です。', { exact: true }),
+    ).toBeVisible()
+    expect(sentIds).toEqual([sentIds[0], sentIds[0]])
+    await page.getByRole('link', { name: 'マイイベント', exact: true }).click()
+    await page
+      .getByRole('link', { name: '別イベントの履歴確認', exact: true })
+      .click()
+    await expect(
+      page.getByRole('heading', { name: '別イベントの履歴確認', exact: true }),
+    ).toBeVisible()
+    await expect(page.getByText('再送確認の希望', { exact: true })).toHaveCount(
+      0,
+    )
+    await page.getByRole('link', { name: 'マイイベント', exact: true }).click()
+    await page.getByRole('link', { name: 'デモライブ', exact: true }).click()
+    await expect(page.getByText('再送確認の希望', { exact: true })).toHaveCount(
+      1,
+    )
+    await expect(
+      page.getByText('再試行した返信です。', { exact: true }),
+    ).toHaveCount(1)
+    // Retrying a completed persisted message uses the real BE cache, without a model call.
+    const cached = await request.post('/api/events/demo-event/chat', {
+      data: { messageId: 'demo-user-message', message: '保存確認用の発言' },
+    })
+    expect(cached.status()).toBe(200)
+    expect(await cached.json()).toEqual({ reply: '保存確認用の固定応答です。' })
+  } finally {
+    await request.delete(`/api/events/${created.eventId}`)
+  }
 })

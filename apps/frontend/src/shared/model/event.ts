@@ -25,12 +25,14 @@ export interface Section {
 }
 
 export interface ChatMessage {
+  replyToMessageId?: string | null
   id: string
   role: 'user' | 'assistant'
   text: string
 }
 
 export interface EventData {
+  scheduleMode?: 'dense'
   id: string
   name: string
   updatedAt?: string
@@ -88,4 +90,11 @@ export function isFixed(event: EventData, bandId: string) {
   return fixedConstraints(event, bandId).some(
     (constraint) => constraint.params.position === current,
   )
+}
+
+/** Persisted schedules use all registered bands as the possible position range. */
+export function positionLimit(event: EventData) {
+  return event.scheduleMode === 'dense'
+    ? event.performances.length
+    : event.sections.reduce((sum, section) => sum + section.slots.length, 0)
 }

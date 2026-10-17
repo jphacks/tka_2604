@@ -1,6 +1,5 @@
 import { useParams } from 'react-router'
 
-import { dataSource } from '../../../shared/repositories/dataSource'
 import { AppFrame } from '../../../shared/ui/AppFrame'
 import { Button } from '../../../shared/ui/Button'
 import { LinkButton } from '../../../shared/ui/LinkButton'
@@ -12,6 +11,10 @@ import { useEvent } from '../hooks/useEvent'
 
 export function EventPage() {
   const { eventId = '' } = useParams()
+  return <EventWorkspace key={eventId} eventId={eventId} />
+}
+
+function EventWorkspace({ eventId }: { eventId: string }) {
   const controller = useEvent(eventId)
   return (
     <AppFrame workspace eventId={eventId} eventName={controller.event?.name}>
@@ -22,6 +25,48 @@ export function EventPage() {
         />
       ) : (
         <>
+          {controller.persistent && (
+            <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-line bg-white p-3 text-xs">
+              <span role="status">
+                出演順：{controller.scheduleDirty ? '未保存' : '保存済み'} /
+                制約：{controller.constraintsDirty ? '未保存' : '保存済み'}
+              </span>
+              <Button
+                disabled={
+                  !controller.scheduleDirty ||
+                  controller.saving ||
+                  controller.sending
+                }
+                onClick={() => void controller.saveSchedule()}
+              >
+                出演順を保存
+              </Button>
+              <Button
+                disabled={
+                  !controller.constraintsDirty ||
+                  controller.saving ||
+                  controller.sending
+                }
+                onClick={() => void controller.saveConstraints()}
+              >
+                制約を保存
+              </Button>
+              <Button
+                disabled={
+                  controller.saving ||
+                  controller.refreshing ||
+                  controller.sending
+                }
+                onClick={controller.retryLoad}
+              >
+                最新の状態を取得
+              </Button>
+              {controller.saving && <span role="status">保存中…</span>}
+              {controller.loadError && (
+                <span role="alert">{controller.loadError}</span>
+              )}
+            </div>
+          )}
           {controller.hardViolationCount > 0 && (
             <p
               role="status"
@@ -40,17 +85,16 @@ export function EventPage() {
             </div>
           )}
           <div className="grid min-h-0 min-w-0 flex-1 xl:grid-cols-[minmax(0,1fr)_300px_320px]">
-            <fieldset disabled={dataSource === 'api'} className="contents">
+            <fieldset
+              disabled={
+                controller.saving || controller.refreshing || controller.sending
+              }
+              className="contents"
+            >
               <SchedulePanel controller={controller} />
               <ConstraintsPanel controller={controller} />
             </fieldset>
-            {dataSource === 'mock' ? (
-              <ChatPanel controller={controller} />
-            ) : (
-              <p className="p-4 text-sm text-muted">
-                チャット・名簿編集・フォームのAPI接続は準備中です。
-              </p>
-            )}
+            <ChatPanel controller={controller} />
           </div>
         </>
       )}

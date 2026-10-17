@@ -213,3 +213,30 @@ describe('schema constraints on the current schedule', () => {
     ).toBe(false)
   })
 })
+
+it('uses the registered band count for positions in a persisted dense schedule', () => {
+  const event: EventData = {
+    id: 'dense',
+    name: 'Live',
+    scheduleMode: 'dense',
+    performances: [{ id: 'b', name: 'B', memberIds: [] }],
+    members: [],
+    sections: [{ id: 'p', slots: [] }],
+    unassigned: ['b'],
+    messages: [],
+    constraints: [],
+  }
+  const constraint: Constraint = {
+    schema_version: '1.0.0',
+    constraint_id: 'c',
+    event_id: 'dense',
+    type: 'at_position',
+    hardness: 'hard',
+    priority: null,
+    enabled: true,
+    targets: { band_id: 'b' },
+    params: { position: 0 },
+  }
+  expect(validateConstraint(constraint, event)).toBe('')
+  expect(evaluateConstraint(constraint, event).status).toBe('unchecked')
+})

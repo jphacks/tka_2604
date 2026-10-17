@@ -76,7 +76,7 @@ PR #60のイベントAPIと同じ`{ error: { code, message, details } }`でエ�
 ## 懸念点・未決定事項
 
 - 内部のLLM出力は`type`・`message`・`actions`を持つが、この送信APIの応答と履歴には本文だけを使う。承認待ち案の管理、`type`・`actions`を返すHTTP契約、制約の適用・Solver実行は後続。未承認のactionsを履歴や完成済み制約として保存しない。
-- frontendは引き続き`reply`を表示できるが、画面の名簿はモックのためDBイベントとの同期は#19で接続する。画面での履歴復元・再送IDの保持も後続。IDを省略した送信では、本文が同じでも新しい発言になる。
+- frontendのAPIモードはDBの名簿と履歴を取得し、送信に`messageId`を指定する。返信後は履歴を再取得し、失敗後・再読込後の未回答発言も同じID・本文で再試行できる。未保存の配置・制約があるときは先に保存する。IDを省略した送信では、本文が同じでも新しい発言になる。
 - 内部の生成・検証は[AIチャット入出力](../AIチャット入出力.md)を参照。GETの履歴取得は[イベントAPI](events.md)を参照。
 - ローカルではD1のmigrationとイベントの準備に加えて、ルートの`.env`または`.dev.vars`に`GOOGLE_AI_API_TOKEN`を設定する。Cloudflare上はdevelop/mainごとに同名のSecretを登録する。`wrangler.jsonc`は必要なSecret名だけを宣言し、値を含めない。
 - 通常テストは隔離したD1とLLMモックを使う。frontendのブラウザテストでも外部LLMは呼ばない。

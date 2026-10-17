@@ -172,7 +172,18 @@ describe('events RPC adapter', () => {
         updatedAt: details.updatedAt,
         constraints: [{ constraint, sourceBandId: 'b1' }],
       }),
+      json({
+        messages: [
+          {
+            messageId: 'chat-1',
+            role: 'user',
+            text: '希望',
+            replyToMessageId: null,
+          },
+        ],
+      }),
     ])
+    // Chat history has its own sequence; it does not participate in updatedAt.
     const event = await api.getEvent('event-1')
     expect(event.sections).toEqual([
       { id: 'p1', name: '前半', slots: ['b1'] },
@@ -187,12 +198,16 @@ describe('events RPC adapter', () => {
     expect(event.constraints).toEqual([constraint])
     expect(event.constraintSources).toEqual({ c1: 'b1' })
     expect(event.members).toHaveLength(2)
+    expect(event.messages).toEqual([
+      { id: 'chat-1', role: 'user', text: '希望', replyToMessageId: null },
+    ])
   })
   it('rejects inconsistent revisions instead of mixing snapshots', async () => {
     const { api } = setup([
       json(details),
       json({ eventId: 'event-1', updatedAt: 'newer' }),
       json({ eventId: 'event-1', updatedAt: details.updatedAt }),
+      json({ messages: [] }),
     ])
     await expect(api.getEvent('event-1')).rejects.toThrow('再取得')
   })
@@ -206,4 +221,73 @@ describe('events RPC adapter', () => {
     const { api } = setup([new Response(null, { status: 204 })])
     await expect(api.deleteEvent('event-1')).resolves.toBeUndefined()
   })
+})
+
+it('saves dense parts and placements with the displayed revision, then constraints with the new revision', async () => {
+  const savedAt = '2026-10-17T00:00:00.001Z'
+  const { api, fetcher } = setup([
+    json({ updatedAt: savedAt }),
+    json({ updatedAt: '2026-10-17T00:00:00.002Z', constraints: [] }),
+  ])
+  const event = {
+    id: 'event-1',
+    name: 'Live',
+    updatedAt: details.updatedAt,
+    members: [],
+    performances: [],
+    messages: [],
+    constraints: [],
+    constraintSources: { removed: 'band-1' },
+    sections: [
+      { id: 'part-1', name: '前半', slots: ['b2', 'b1'] },
+      { id: 'part-2', name: null, slots: [] },
+    ],
+    unassigned: ['b3'],
+  }
+  const saved = await api.saveSchedule(event)
+  expect(JSON.parse(requestBody(fetcher.mock.calls[0][1])) as unknown).toEqual({
+    expectedUpdatedAt: details.updatedAt,
+    parts: [
+      { partId: 'part-1', partName: '前半' },
+      { partId: 'part-2', partName: null },
+    ],
+    placements: [
+      { bandId: 'b2', partId: 'part-1', order: 0 },
+      { bandId: 'b1', partId: 'part-1', order: 1 },
+    ],
+    unassignedBandIds: ['b3'],
+  })
+  await api.saveConstraints({ ...event, updatedAt: saved.updatedAt })
+  expect(JSON.parse(requestBody(fetcher.mock.calls[1][1])) as unknown).toEqual({
+    expectedUpdatedAt: savedAt,
+    constraints: [],
+  })
+  expect(fetcher.mock.calls[0][0]).toBe(
+    'http://localhost/api/events/event-1/schedule',
+  )
+})
+
+it('does not retry a conflicting save with a freshly fetched revision', async () => {
+  const { api, fetcher } = setup([
+    json(
+      {
+        error: { code: 'event_save_conflict', message: '再取得してください。' },
+      },
+      409,
+    ),
+  ])
+  const event = {
+    id: 'event-1',
+    name: 'Live',
+    updatedAt: details.updatedAt,
+    sections: [],
+    constraints: [],
+    members: [],
+    performances: [],
+    messages: [],
+    unassigned: [],
+  }
+  await expect(api.saveConstraints(event)).rejects.toThrow('再取得')
+  expect(event.updatedAt).toBe(details.updatedAt)
+  expect(fetcher).toHaveBeenCalledTimes(1)
 })

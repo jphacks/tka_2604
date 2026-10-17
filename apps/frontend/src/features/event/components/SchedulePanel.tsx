@@ -86,21 +86,27 @@ function ScheduleTable({
             }}
           />
         </label>
-        {schedule.sections.map((section, index) => (
-          <label key={section.id} className="flex items-center gap-2">
-            第{index + 1}部
-            <NumberField
-              label={`第${index + 1}部の組数`}
-              value={section.capacity}
-              max={20}
-              onCommit={(value) => {
-                if (value !== null) resize(value, section.id)
-              }}
-            />
-            組
-          </label>
-        ))}
+        {!controller.persistent &&
+          schedule.sections.map((section, index) => (
+            <label key={section.id} className="flex items-center gap-2">
+              第{index + 1}部
+              <NumberField
+                label={`第${index + 1}部の組数`}
+                value={section.capacity}
+                max={20}
+                onCommit={(value) => {
+                  if (value !== null) resize(value, section.id)
+                }}
+              />
+              組
+            </label>
+          ))}
       </div>
+      {controller.persistent && (
+        <p className="px-3 py-2 text-xs text-muted">
+          出演順は空き枠を作らず並べます。部の選択で空の部にも配置できます。変更後は「出演順を保存」を押してください。
+        </p>
+      )}
       <ScheduleDragSurface controller={controller}>
         <div className="max-h-[65dvh] min-h-64 scrollbar-thin overflow-auto xl:max-h-none xl:min-h-0 xl:flex-1">
           <div
@@ -118,17 +124,31 @@ function ScheduleTable({
                 <h3 className="font-semibold text-brand-dark">
                   {section.name} · {section.assigned}/{section.capacity}組
                 </h3>
-                <span>{section.range}番</span>
+                <span>
+                  {section.capacity ? `${section.range}番` : '出演枠なし'}
+                </span>
               </div>
               {section.rows.map((row) =>
                 row.performance ? (
                   <PerformanceRow
                     key={row.key}
                     row={{ ...row, performance: row.performance }}
-                    capacity={schedule.capacity}
+                    capacity={
+                      controller.persistent
+                        ? schedule.assignedCount + (row.order === null ? 1 : 0)
+                        : schedule.capacity
+                    }
                     onFixed={setFixed}
                     onOrder={setOrder}
-                    onEdit={onEdit}
+                    onEdit={controller.persistent ? undefined : onEdit}
+                    sections={
+                      controller.persistent ? event.sections : undefined
+                    }
+                    onSectionChange={
+                      controller.persistent
+                        ? controller.moveToSection
+                        : undefined
+                    }
                   />
                 ) : (
                   <EmptyPerformanceRow key={row.key} row={row} />
@@ -148,10 +168,18 @@ function ScheduleTable({
                 <PerformanceRow
                   key={row.key}
                   row={row}
-                  capacity={schedule.capacity}
+                  capacity={
+                    controller.persistent
+                      ? schedule.assignedCount + (row.order === null ? 1 : 0)
+                      : schedule.capacity
+                  }
                   onFixed={setFixed}
                   onOrder={setOrder}
-                  onEdit={onEdit}
+                  onEdit={controller.persistent ? undefined : onEdit}
+                  sections={controller.persistent ? event.sections : undefined}
+                  onSectionChange={
+                    controller.persistent ? controller.moveToSection : undefined
+                  }
                 />
               ))}
               {!schedule.unassigned.length && (

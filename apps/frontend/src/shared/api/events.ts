@@ -1,6 +1,6 @@
 import type { InferResponseType } from 'hono/client'
 
-import type { EventData } from '../model/event'
+import type { ChatMessage, EventData } from '../model/event'
 import type { EventDetails, EventDraft, EventSummary } from '../model/workspace'
 import { type ApiClient, createApiClient, ensureOk } from './client'
 
@@ -30,8 +30,69 @@ export function createEventsApi(client: ApiClient) {
     await ensureOk(response)
     return toDetails(await response.json())
   }
+  async function getMessages(
+    id: string,
+    signal?: AbortSignal,
+  ): Promise<ChatMessage[]> {
+    const response = await events[':eventId'].chat.$get(
+      { param: { eventId: id } },
+      { init: { signal } },
+    )
+    await ensureOk(response)
+    const body = await response.json()
+    return body.messages.map((message) => ({
+      id: message.messageId,
+      role: message.role,
+      text: message.text,
+      replyToMessageId: message.replyToMessageId,
+    }))
+  }
+  function revision(event: EventData) {
+    if (!event.updatedAt)
+      throw new Error('イベントを再取得してから保存してください。')
+    return event.updatedAt
+  }
   return {
     getDetails,
+    getMessages,
+    async saveSchedule(event: EventData) {
+      const expectedUpdatedAt = revision(event)
+      if (event.sections.some((part) => part.slots.includes(null)))
+        throw new Error('空き枠を除いてから保存してください。')
+      const response = await events[':eventId'].schedule.$post({
+        param: { eventId: event.id },
+        json: {
+          expectedUpdatedAt,
+          parts: event.sections.map((part) => ({
+            partId: part.id,
+            partName: part.name ?? null,
+          })),
+          placements: event.sections.flatMap((part) =>
+            part.slots.flatMap((bandId, order) =>
+              bandId === null ? [] : [{ bandId, partId: part.id, order }],
+            ),
+          ),
+          unassignedBandIds: event.unassigned,
+        },
+      })
+      await ensureOk(response)
+      if (response.status !== 200)
+        throw new Error('出演順を保存できませんでした。')
+      return response.json()
+    },
+    async saveConstraints(event: EventData) {
+      const response = await events[':eventId'].constraints.$post({
+        param: { eventId: event.id },
+        json: {
+          expectedUpdatedAt: revision(event),
+          constraints: event.constraints,
+        },
+      })
+      await ensureOk(response)
+      if (response.status !== 200)
+        throw new Error('制約を保存できませんでした。')
+      return response.json()
+    },
     async listEvents(signal?: AbortSignal): Promise<EventSummary[]> {
       const response = await events.$get({}, { init: { signal } })
       await ensureOk(response)
@@ -86,11 +147,12 @@ export function createEventsApi(client: ApiClient) {
     },
     async getEvent(id: string, signal?: AbortSignal): Promise<EventData> {
       const param = { eventId: id }
-      const [details, scheduleResponse, constraintsResponse] =
+      const [details, scheduleResponse, constraintsResponse, messages] =
         await Promise.all([
           getDetails(id, signal),
           events[':eventId'].schedule.$get({ param }, { init: { signal } }),
           events[':eventId'].constraints.$get({ param }, { init: { signal } }),
+          getMessages(id, signal),
         ])
       await ensureOk(scheduleResponse)
       await ensureOk(constraintsResponse)
@@ -106,6 +168,7 @@ export function createEventsApi(client: ApiClient) {
       }
       return {
         id,
+        scheduleMode: 'dense',
         name: details.name,
         updatedAt: details.updatedAt,
         members: schedule.members.map((member) => ({
@@ -139,7 +202,7 @@ export function createEventsApi(client: ApiClient) {
             item.sourceBandId,
           ]),
         ),
-        messages: [],
+        messages,
       }
     },
   }

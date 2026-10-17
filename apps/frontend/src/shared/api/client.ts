@@ -28,6 +28,10 @@ export async function ensureOk(
       'message' in error &&
       typeof error.message === 'string'
     ) {
+      if ('code' in error && error.code === 'event_save_conflict')
+        throw new Error(
+          'イベントが更新されました。未保存の編集は保持しています。「最新の状態を取得」から再取得してください。',
+        )
       throw new Error(error.message)
     }
   }

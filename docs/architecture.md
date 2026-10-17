@@ -2,29 +2,29 @@
 
 ## 技術選定
 
-| 用途                   | 技術                                                               | 状態・理由                                                     |
-| ---------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------- |
-| フロントエンド         | React / TypeScript / Vite / Tailwind CSS / React Router / dnd-kit  | 導入済み。画面を素早く実装する                                 |
-| API・配信              | Hono / Cloudflare Workers                                          | 導入済み。TypeScriptでAPIと画面配信をまとめる                  |
-| API入力検証・仕様      | Zod / OpenAPI                                                      | イベント本体APIにZod導入済み。OpenAPIは別JSONで管理            |
-| FE・BEの型共有         | Hono RPC                                                           | 既存イベントAPIへfrontendのRepositoryから接続済み（APIモード） |
-| APIドキュメント閲覧    | Swagger UI                                                         | 導入済み。developドメインで仕様を共有・APIを試行する           |
-| 制約の共有             | JSON Schema / json-schema-to-typescript / datamodel-code-generator | 導入済み。TypeScriptとPythonのモデルを同じ定義から生成する     |
-| Python環境・入力モデル | uv / Pydantic                                                      | 導入済み。依存管理と構造化データの検証                         |
-| 最適化API              | FastAPI / OR-Tools CP-SAT / Vercel                                 | 疎通確認済み（#26）。順序・間隔の制約をPythonで扱う            |
-| 保存                   | Cloudflare D1 / Drizzle                                            | 導入済み。イベント本体APIから保存・再取得を接続済み            |
-| テスト                 | Vitest / Testing Library / Playwright                              | 導入済み。frontend・backendの振る舞いを確認する                |
-| LLM                    | OpenAI Responses API / GPT-6 Luna（effort: low）                   | 採用方針を合意済み。接続は#31                                  |
-| ソルバー公開先         | 未確定                                                             | 対応Issueで決める                                              |
+| 用途                   | 技術                                                               | 状態・理由                                                    |
+| ---------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------- |
+| フロントエンド         | React / TypeScript / Vite / Tailwind CSS / React Router / dnd-kit  | 導入済み。画面を素早く実装する                                |
+| API・配信              | Hono / Cloudflare Workers                                          | 導入済み。TypeScriptでAPIと画面配信をまとめる                 |
+| API入力検証・仕様      | Zod / OpenAPI                                                      | イベント・チャット入力にZod導入済み。OpenAPIは別JSONで管理    |
+| FE・BEの型共有         | Hono RPC                                                           | health・イベントAPIの型共有、チャットのfrontend接続を実装済み |
+| APIドキュメント閲覧    | Swagger UI                                                         | 導入済み。developドメインで仕様を共有・APIを試行する          |
+| 制約の共有             | JSON Schema / json-schema-to-typescript / datamodel-code-generator | 導入済み。TypeScriptとPythonのモデルを同じ定義から生成する    |
+| Python環境・入力モデル | uv / Pydantic                                                      | 導入済み。依存管理と構造化データの検証                        |
+| 最適化API              | FastAPI / OR-Tools CP-SAT / Vercel                                 | 疎通確認済み（#26）。順序・間隔の制約をPythonで扱う           |
+| 保存                   | Cloudflare D1 / Drizzle                                            | 導入済み。イベント本体APIから保存・再取得を接続済み           |
+| テスト                 | Vitest / Testing Library / Playwright                              | 導入済み。frontend・backendの振る舞いを確認する               |
+| LLM                    | Google AI Studio / Gemini 3.5 Flash-Lite                           | チャット送信APIからのLLM呼び出し・会話本文保存を実装済み      |
+| ソルバー公開先         | 未確定                                                             | 対応Issueで決める                                             |
 
 ## 配置
 
-| 場所            | 責務・状態                                                                           |
-| --------------- | ------------------------------------------------------------------------------------ |
-| `apps/frontend` | 画面・モック/APIの切替・制約の手動編集と達成判定                                     |
-| `apps/backend`  | Hono APIとWorkersによる配信。health・イベント本体API・OpenAPI JSON・Swagger UIを提供 |
-| `apps/schema`   | 共有する制約のJSON Schema。実装済み                                                  |
-| `apps/solver`   | Pythonの計算処理。現在は生成モデルと疎通確認用のFastAPIのみ                          |
+| 場所            | 責務・状態                                                                                     |
+| --------------- | ---------------------------------------------------------------------------------------------- |
+| `apps/frontend` | 画面・メモリ上のデモデータ・制約の手動編集と達成判定                                           |
+| `apps/backend`  | Hono APIとWorkersによる配信。health・イベントAPI・チャット送信・OpenAPI JSON・Swagger UIを提供 |
+| `apps/schema`   | 共有する制約のJSON Schema。実装済み                                                            |
+| `apps/solver`   | Pythonの計算処理。現在は生成モデルと疎通確認用のFastAPIのみ                                    |
 
 ## 処理の流れ
 
@@ -41,7 +41,7 @@
 
 ## APIの実装時
 
-health・イベント本体APIにOpenAPI定義・RPC型共有を導入済み。DrizzleとDBの保存処理をイベント本体APIへ接続済み。frontendはAPIモードで既存のイベントAPIへ接続済み。認証・他の業務APIは今後追加する。
+health・イベント本体と情報取得・チャット送信APIにOpenAPI定義・RPC型共有を導入済み。DrizzleとDBの保存・取得処理をイベントAPIへ接続済み。チャット送信はfrontendから接続済み。イベント取得・設定更新・出演順／制約の保存・チャット送信と履歴復元をfrontendへ接続済み。認証・承認後の制約適用は今後追加する。
 
 - APIは通常のHonoの`app.get()`・`app.post()`で実装し、入力のあるAPIではZodで検証する。OpenAPI仕様は`apps/backend/docs/api/openapi.json`に別途手書きし、API変更時は実装・仕様・対象APIの動作テストを揃える。
 - ルート登録の返り値から`AppType`を公開し、frontendのRepositoryで`hc<AppType>()`を使う。チャットはbindingに依存しないルート単位の`ChatAppType`を使う。backendからは型のみをimportし、サーバーの実装をfrontendへ持ち込まない。
@@ -53,7 +53,7 @@ health・イベント本体APIにOpenAPI定義・RPC型共有を導入済み。D
 
 外部通信・LLMはテストで差し替えられるようにする。LLMはGoogle AI StudioのGemini 3.5 Flash-Lite（`gemini-3.5-flash-lite`）を使用する。Google GenAI SDKによる外部通信は`integrations/llm`、入力の組み立て・履歴の選択・変更案の検証は`services/chat`へ置く。イベント関連のDTO・取得Repository・`EventError`・共有Schema＋Zodの制約検証は、マージ済みPR #60の共通実装を使う。処理・保存の境界は[AIチャット設計](../apps/backend/docs/AIチャット設計.md)を参照する。認証・公開フォームの詳細、ソルバーの公開先は未確定。将来のためだけの層や汎用化は増やさない。
 
-health・イベント本体APIでOpenAPIの配信・閲覧・RPC型共有を確認する。イベント本体APIはZodで入力を検証し、テスト用D1への保存・再取得をAPIテストとDB結合テストで確認する。認証接続前はRoute内の仮ID定数`demo-owner`をServiceへ渡し、#57で認証済みユーザーIDへ置き換える。frontendは#19で既存APIへ接続する。配置・制約保存はPR #69のマージ後、名簿編集は#16の実装後に追加する。[イベントAPI](../apps/backend/docs/api/events.md)を参照。
+health・イベント本体APIでOpenAPIの配信・閲覧・RPC型共有を確認する。イベント本体APIはZodで入力を検証し、テスト用D1への保存・再取得をAPIテストとDB結合テストで確認する。認証接続前はRoute内の仮ID定数`demo-owner`をServiceへ渡し、#57で認証済みユーザーIDへ置き換える。frontendは#19で既存APIへ接続する。[イベントAPI](../apps/backend/docs/api/events.md)を参照。
 
 参考：[Hono RPCの解説](https://zenn.dev/yusukebe/articles/a00721f8b3b92e#rpcを作る)、[Swagger UI](https://hono.dev/examples/swagger-ui)。
 
@@ -78,17 +78,20 @@ health・イベント本体APIでOpenAPIの配信・閲覧・RPC型共有を確�
 
 メンバーは名前とIDを分け、出演枠は `memberIds` で所属を持つ。部の表示用IDはドラッグ操作に使い、制約の `part_ids` は部の並びに対応する0始まりの番号とする。このフロント内のモデルはDB・APIの確定済み契約ではない。
 
-モックモードは `画面 → hooks → Repository → メモリ上のストア → 画面`。APIモードはRepositoryから既存イベントAPI・DBへ接続する。自動生成・実認証・LLMは未接続。[デモの操作と制約](frontend.md)を参照。
+APIモードは `画面 → hooks → Repository → backend → D1 → 画面`。イベント・配置・制約・会話本文を保存・復元する。モックモードの業務データはメモリ上のストアを使う。自動生成・実認証・名簿編集・フォームのAPI接続は後続。[デモの操作と制約](frontend.md)を参照。
 
 ## frontendのAPI接続（#19）
 
 既定のAPIモードでは、Repositoryは `shared/api/client.ts` の `hc<AppType>()` を経由し、同一originの `/api` を呼ぶ。`AppType` はbackendから型のみimportする。入力・応答型はHonoから推論し、BE実装はブラウザのbundleへ含めない。型検査前に既存の `npm run cf:typegen` が必要。frontendの型検査にも生成済みWorkers型を参照する。
 
-- 接続済み：イベント一覧・作成・基本情報取得／設定更新・論理削除、出演枠／メンバー／所属／部／配置／制約の取得。
+- 接続済み：イベント一覧・作成・基本情報取得／設定更新・論理削除、出演枠／メンバー／所属／部／配置／制約の取得、出演順・制約の保存、チャット送信・履歴復元。
 - 設定更新は画面取得時の `updatedAt` を `expectedUpdatedAt` に渡し、409で入力を保持する。保存直前に最新日時を取得して競合を回避しない。
 - 出演順画面の複数GETは `updatedAt` が一致した場合だけ表示する。不一致・通信失敗は再取得できるエラーにする。
 - 部はAPIの `sortOrder`、配置は `order` に従う。APIにない枠数・空き枠を補完しない。部名・希望原文／状態・制約由来を取得時に保持する。
+- 出演順と制約はそれぞれ明示保存し、未保存状態を表示する。保存は取得時の更新日時を使い、成功応答の日時を次の保存へ引き継ぐ。2本の保存を一括成功扱いにしない。通信失敗・競合では編集内容を保持し、再取得による破棄は確認する。
+- APIモードの出演順は部ごとの連続配置。空き枠・枠数は作らず、番号入力・ドラッグ・部の選択で挿入／未配置への移動を行う。制約で指定できる位置の上限は未配置を含む登録バンド数。モックモードの枠数編集は維持する。
+- チャットの保存済み発言IDと回答元IDを保持し、再読込・イベント切替後も対象イベントの履歴を復元する。送信失敗は同じ発言IDで再試行でき、返信後は保存済み履歴を再取得する。送信中は重複送信を抑止し、APIモードの未保存配置・制約は先に保存する。チャットでの制約適用・計算は後続。
 - 未取得の回答件数は `null` のまま「—」で表示する。フォーム設定・回答取得と名簿取得を分ける。
-- APIモードが既定。`VITE_DATA_SOURCE=mock` の明示指定時だけモックを使う。APIモードでは認証だけ従来のデモセッションを使い、画面に明示する。業務API失敗時にモックへ戻さない。名簿編集・配置／制約保存・フォーム・chat・Solverは未接続で、未対応操作を成功扱いにしない。
+- APIモードが既定。`VITE_DATA_SOURCE=mock` の明示指定時だけモックを使う。APIモードでは認証だけ従来のデモセッションを使い、画面に明示する。業務API失敗時にモックへ戻さない。名簿編集・CSV取込・フォーム・Solverの画面接続は準備中。名簿の追加／編集／削除／CSV取込はAPIモードで無効にする。
 
 接続先と起動手順は[環境構築](setup.md#frontendをapiモードで起動する19)を参照。

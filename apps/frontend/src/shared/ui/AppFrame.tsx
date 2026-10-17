@@ -54,7 +54,7 @@ export function AppFrame({
       </header>
       <p className="shrink-0 border-b border-line bg-wash px-4 py-2 text-xs text-muted">
         {dataSource === 'api'
-          ? 'API接続 · イベント情報はDBへ保存されます。出演順・制約は閲覧のみ。ログインはデモです。'
+          ? 'API接続 · 出演順・制約は保存ボタンでDBへ保存します。ログインはデモです。'
           : 'デモ · モックデータを使用しています。変更はサーバーへ保存されません。'}
       </p>
       {eventId && (

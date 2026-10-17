@@ -11,14 +11,14 @@ describe('chat HTTP adapter', () => {
       .mockResolvedValue(Response.json({ reply: 'backendの返信' }))
     vi.stubGlobal('fetch', fetch)
     const controller = new AbortController()
-    expect(await sendChatMessage('event-a', '本文', controller.signal)).toBe(
-      'backendの返信',
-    )
+    expect(
+      await sendChatMessage('event-a', '本文', controller.signal, 'stable-id'),
+    ).toBe('backendの返信')
     expect(fetch).toHaveBeenCalledWith(
       '/api/events/event-a/chat',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ message: '本文' }),
+        body: JSON.stringify({ message: '本文', messageId: 'stable-id' }),
         signal: controller.signal,
       }),
     )

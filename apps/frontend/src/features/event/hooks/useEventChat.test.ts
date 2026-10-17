@@ -1,0 +1,96 @@
+import { act, renderHook } from '@testing-library/react'
+import { beforeEach, expect, it, vi } from 'vitest'
+
+import type { EventData } from '../../../shared/model/event'
+
+const api = vi.hoisted(() => ({ sendMessage: vi.fn(), getMessages: vi.fn() }))
+vi.mock('../../../shared/repositories/dataSource', () => ({
+  dataSource: 'api',
+}))
+vi.mock('../../../shared/api/events', () => ({
+  eventsApi: { getMessages: api.getMessages },
+}))
+vi.mock('../repositories/eventRepository', () => ({ eventRepository: api }))
+import { useEventChat } from './useEventChat'
+
+const event: EventData = {
+  id: 'a',
+  name: 'A',
+  members: [],
+  performances: [],
+  sections: [],
+  unassigned: [],
+  messages: [],
+  constraints: [],
+}
+beforeEach(() => vi.resetAllMocks())
+
+it('reuses the user ID after a lost response and restores authoritative history', async () => {
+  const dispatch = vi.fn()
+  const { result } = renderHook(() => useEventChat('a', dispatch, event, false))
+  api.sendMessage
+    .mockRejectedValueOnce(new Error('通信失敗'))
+    .mockResolvedValueOnce('回答')
+  act(() => result.current.setChatDraft('希望'))
+  await act(() => result.current.sendMessage())
+  expect(result.current.chatDraft).toBe('希望')
+  const id = api.sendMessage.mock.calls[0][3] as string
+  const messages = [
+    { id, role: 'user', text: '希望', replyToMessageId: null },
+    { id: 'answer', role: 'assistant', text: '回答', replyToMessageId: id },
+  ]
+  api.getMessages.mockResolvedValue(messages)
+  await act(() => result.current.sendMessage())
+  expect(api.sendMessage.mock.calls[1][3]).toBe(id)
+  expect(dispatch).toHaveBeenLastCalledWith({ type: 'messages', messages })
+})
+
+it('retries an unanswered persisted message using its original ID after reopening', async () => {
+  const user = {
+    id: 'existing',
+    role: 'user' as const,
+    text: '元の発言',
+    replyToMessageId: null,
+  }
+  api.sendMessage.mockResolvedValue('回答')
+  api.getMessages.mockResolvedValue([user])
+  const { result } = renderHook(() =>
+    useEventChat('a', vi.fn(), { ...event, messages: [user] }, false),
+  )
+  expect(result.current.unanswered).toEqual([user])
+  await act(() => result.current.retryMessage(user))
+  expect(api.sendMessage.mock.calls[0][3]).toBe('existing')
+})
+
+it('blocks chat while business edits are unsaved and ignores replies after leaving', async () => {
+  const dispatch = vi.fn()
+  const { result, rerender, unmount } = renderHook(
+    ({ blocked }) => useEventChat('a', dispatch, event, blocked),
+    { initialProps: { blocked: true } },
+  )
+  act(() => result.current.setChatDraft('希望'))
+  await act(() => result.current.sendMessage())
+  expect(api.sendMessage).not.toHaveBeenCalled()
+  rerender({ blocked: false })
+  let resolve!: (reply: string) => void
+  api.sendMessage.mockReturnValue(
+    new Promise<string>((done) => {
+      resolve = done
+    }),
+  )
+  let sending!: Promise<void>
+  act(() => {
+    sending = result.current.sendMessage()
+    void result.current.sendMessage()
+  })
+  expect(api.sendMessage).toHaveBeenCalledTimes(1)
+  const signal = api.sendMessage.mock.calls[0][2] as AbortSignal
+  unmount()
+  await act(async () => {
+    resolve('遅い返信')
+    await sending
+  })
+  expect(signal.aborted).toBe(true)
+  expect(api.getMessages).not.toHaveBeenCalled()
+  expect(dispatch).toHaveBeenCalledTimes(1)
+})

@@ -14,14 +14,14 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: 'npm --prefix ../.. run dev:backend',
-      url: 'http://localhost:8787/api/health',
-      reuseExistingServer: !process.env.CI,
+      command: 'npm --prefix ../.. run dev:backend -- --port 8789',
+      url: 'http://127.0.0.1:8789/api/health',
+      reuseExistingServer: false,
       timeout: 30000,
     },
     {
       command: 'npm run dev -- --host 127.0.0.1 --port 5175 --strictPort',
-      env: { VITE_DATA_SOURCE: '' },
+      env: { VITE_DATA_SOURCE: '', API_PROXY_TARGET: 'http://127.0.0.1:8789' },
       url: 'http://127.0.0.1:5175',
       reuseExistingServer: false,
       timeout: 30000,
