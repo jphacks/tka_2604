@@ -1,3 +1,5 @@
+import { useId } from 'react'
+
 import { useNumberField } from '../hooks/useNumberField'
 import { Input } from './Input'
 
@@ -21,6 +23,7 @@ export function NumberField({
   className?: string
 }) {
   const field = useNumberField(value, onCommit, min, max, allowEmpty)
+  const errorId = useId()
   return (
     <span className="relative inline-flex">
       <Input
@@ -28,6 +31,7 @@ export function NumberField({
         inputMode="numeric"
         aria-label={label}
         aria-invalid={field.invalid}
+        aria-describedby={field.invalid ? errorId : undefined}
         value={field.value}
         onChange={(event) => field.change(event.target.value)}
         onBlur={field.commit}
@@ -45,8 +49,9 @@ export function NumberField({
       />
       {field.invalid && (
         <span
+          id={errorId}
           role="alert"
-          className="absolute top-full left-0 z-20 mt-1 w-48 rounded border border-red-200 bg-white p-2 text-xs text-red-600 shadow-sm"
+          className="absolute top-full left-0 z-20 mt-1 w-max max-w-48 rounded border border-red-200 bg-white px-2 py-1 text-xs text-red-600 shadow-sm"
         >
           {field.errorMessage}
         </span>

@@ -1,14 +1,11 @@
 import { DndContext, DragOverlay } from '@dnd-kit/core'
-import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
+import { SortableContext, useSortable } from '@dnd-kit/sortable'
 import type { ReactNode } from 'react'
 
 import { Icon } from '../../../shared/ui/Icon'
 import type { EventController } from '../hooks/useEvent'
 import { useScheduleDnd } from '../hooks/useScheduleDnd'
+import { createScheduleSortingStrategy } from '../model/scheduleSortingStrategy'
 
 export function UnassignedDropZone({ children }: { children: ReactNode }) {
   const { setNodeRef, isOver } = useSortable({
@@ -74,7 +71,7 @@ export function ScheduleDragSurface({
     >
       <SortableContext
         items={[...rows.map((row) => row.key), 'unassigned']}
-        strategy={verticalListSortingStrategy}
+        strategy={createScheduleSortingStrategy(controller.event, rows)}
       >
         {children}
       </SortableContext>
