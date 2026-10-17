@@ -35,13 +35,15 @@ uv python install 3.13
 uv sync --locked --directory apps/solver
 ```
 
-現在のローカル起動にAPIキー・Cloudflareログインは不要。ローカルD1はWorkersが手元に作成し、Cloudflare上の検証・本番DBは操作しない。DBの雛形と適用手順は[DB手順](../apps/backend/db/README.md)を参照。LLM導入時に必要な環境変数を追記する。秘密情報はGitに含めない。
+現在のローカル起動にAPIキー・Cloudflareログインは不要。画面は既定でローカルD1のデータを使うため、初回は下記のmigrationとseedを適用する。ローカルD1はWorkersが手元に作成し、Cloudflare上の検証・本番DBは操作しない。DBの雛形と適用手順は[DB手順](../apps/backend/db/README.md)を参照。LLM導入時に必要な環境変数を追記する。秘密情報はGitに含めない。
 
 ## 起動・確認
 
 実行場所：リポジトリルート。
 
 ```sh
+npm run db:migrate:local
+npm run db:seed:local
 npm run dev
 ```
 
@@ -75,7 +77,7 @@ npm run check
 
 ## フロントエンドのデモとブラウザテスト
 
-`npm run dev` で起動した画面から「デモアカウントで試す」を選ぶ。追加の認証情報は不要。操作とデータのリセットについては[フロントエンドのデモ](frontend.md)を参照。
+モックのデモは `VITE_DATA_SOURCE=mock npm run dev` で起動した画面から「デモアカウントで試す」を選ぶ。通常の `npm run dev` はDBのデータを使う。追加の認証情報は不要。操作とデータのリセットについては[フロントエンドのデモ](frontend.md)を参照。
 
 ```sh
 npx playwright install chromium # ブラウザテストを初めて実行する環境のみ
@@ -107,19 +109,19 @@ npm run dev
 
 ## frontendをAPIモードで起動する（#19）
 
-既定は従来のモック。実装済みイベントAPIとローカルD1へ接続するには、migration・seedを先に実行する。
+既定で実装済みイベントAPIとローカルD1へ接続する。初回はmigration・seedを先に実行する。
 
 ```sh
 npm run db:migrate:local
 npm run db:seed:local
-VITE_DATA_SOURCE=api npm run dev
+npm run dev
 ```
 
 `http://localhost:5173` で「デモアカウントで試す」を選ぶ。ヘッダー下に「API接続」が表示される。Viteの `/api` proxyを経由し、Workers配信の画面でも同一originへ接続する。Vite環境変数はビルド時に固定されるため、既存サーバーは停止してから切り替える。
 
 イベントの一覧・作成・設定変更・論理削除はDBへ反映され、再読込してデモに入り直しても復元される。出演順・部名・名簿・希望原文・制約はAPIから閲覧できる。配置・制約の保存はPR #69マージ後、名簿編集は#16実装後に接続する。フォーム・チャット・Solverは対象外で、APIモードでは準備中として扱う。ログインは実認証ではなく、BEの所有者は従来どおり `demo-owner`。
 
-モックへ戻す場合は `VITE_DATA_SOURCE=mock npm run dev`。APIエラーで自動的にモックへ切り替わることはない。
+モックを使う場合は `VITE_DATA_SOURCE=mock npm run dev`。APIエラーで自動的にモックへ切り替わることはない。
 
 APIモードのブラウザテスト（ローカルD1の準備後）：
 

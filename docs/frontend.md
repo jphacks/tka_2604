@@ -1,10 +1,10 @@
 # フロントエンドのデモ
 
-この資料の操作は既定のモックモードのもの。`VITE_DATA_SOURCE=api` で実装済みのイベントAPIへ切り替えられる。APIモードの対応範囲・起動方法は[環境構築](setup.md#frontendをapiモードで起動する19)を参照。
+この資料の操作は `VITE_DATA_SOURCE=mock` で明示的に起動するモックモードのもの。既定はDBのデータを使うAPIモード。APIモードの対応範囲・起動方法は[環境構築](setup.md#frontendをapiモードで起動する19)を参照。
 
 ## 起動と一通りの操作
 
-リポジトリルートで `npm run dev` を実行し、`http://localhost:5173` を開く。
+リポジトリルートで `VITE_DATA_SOURCE=mock npm run dev` を実行し、`http://localhost:5173` を開く。
 
 1. 「デモアカウントで試す」からイベント一覧へ入る。実際の認証情報は入力しない。
 2. 「春ライブ 2026」を開くか、新しいイベントを作る。

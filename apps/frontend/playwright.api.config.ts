@@ -21,7 +21,7 @@ export default defineConfig({
     },
     {
       command: 'npm run dev -- --host 127.0.0.1 --port 5175 --strictPort',
-      env: { VITE_DATA_SOURCE: 'api' },
+      env: { VITE_DATA_SOURCE: '' },
       url: 'http://127.0.0.1:5175',
       reuseExistingServer: false,
       timeout: 30000,

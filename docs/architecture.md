@@ -82,13 +82,13 @@ health・イベント本体APIでOpenAPIの配信・閲覧・RPC型共有を確�
 
 ## frontendのAPI接続（#19）
 
-`VITE_DATA_SOURCE=api` のとき、Repositoryは `shared/api/client.ts` の `hc<AppType>()` を経由し、同一originの `/api` を呼ぶ。`AppType` はbackendから型のみimportする。入力・応答型はHonoから推論し、BE実装はブラウザのbundleへ含めない。型検査前に既存の `npm run cf:typegen` が必要。frontendの型検査にも生成済みWorkers型を参照する。
+既定のAPIモードでは、Repositoryは `shared/api/client.ts` の `hc<AppType>()` を経由し、同一originの `/api` を呼ぶ。`AppType` はbackendから型のみimportする。入力・応答型はHonoから推論し、BE実装はブラウザのbundleへ含めない。型検査前に既存の `npm run cf:typegen` が必要。frontendの型検査にも生成済みWorkers型を参照する。
 
 - 接続済み：イベント一覧・作成・基本情報取得／設定更新・論理削除、出演枠／メンバー／所属／部／配置／制約の取得。
 - 設定更新は画面取得時の `updatedAt` を `expectedUpdatedAt` に渡し、409で入力を保持する。保存直前に最新日時を取得して競合を回避しない。
 - 出演順画面の複数GETは `updatedAt` が一致した場合だけ表示する。不一致・通信失敗は再取得できるエラーにする。
 - 部はAPIの `sortOrder`、配置は `order` に従う。APIにない枠数・空き枠を補完しない。部名・希望原文／状態・制約由来を取得時に保持する。
 - 未取得の回答件数は `null` のまま「—」で表示する。フォーム設定・回答取得と名簿取得を分ける。
-- モックが既定。APIモードでは認証だけ従来のデモセッションを使い、画面に明示する。業務API失敗時にモックへ戻さない。名簿編集・配置／制約保存・フォーム・chat・Solverは未接続で、未対応操作を成功扱いにしない。
+- APIモードが既定。`VITE_DATA_SOURCE=mock` の明示指定時だけモックを使う。APIモードでは認証だけ従来のデモセッションを使い、画面に明示する。業務API失敗時にモックへ戻さない。名簿編集・配置／制約保存・フォーム・chat・Solverは未接続で、未対応操作を成功扱いにしない。
 
 接続先と起動手順は[環境構築](setup.md#frontendをapiモードで起動する19)を参照。

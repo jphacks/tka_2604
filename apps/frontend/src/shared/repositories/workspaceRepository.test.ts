@@ -18,8 +18,21 @@ afterEach(() => {
 })
 
 describe('repository data source', () => {
-  it('uses the existing mock repository by default', async () => {
-    vi.stubEnv('VITE_DATA_SOURCE', '')
+  it.each([undefined, ''])(
+    'uses API data by default when the mode is %s',
+    async (mode) => {
+      vi.stubEnv('VITE_DATA_SOURCE', mode)
+      const { workspaceRepository } = await import('./workspaceRepository')
+      const { mockWorkspaceRepository } =
+        await import('../../mock/workspaceRepository')
+      expect(workspaceRepository).not.toBe(mockWorkspaceRepository)
+      await expect(
+        workspaceRepository.getRegistration('event-1'),
+      ).rejects.toThrow('準備中')
+    },
+  )
+  it('uses the existing mock repository only when requested', async () => {
+    vi.stubEnv('VITE_DATA_SOURCE', 'mock')
     const { workspaceRepository } = await import('./workspaceRepository')
     const { mockWorkspaceRepository } =
       await import('../../mock/workspaceRepository')
