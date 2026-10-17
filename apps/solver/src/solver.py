@@ -112,6 +112,31 @@ def _build_model(request: SolveRequest, allow_partial: bool) -> ModelVariables:
             model.add(global_position[band_index] == params.position).only_enforce_if(
                 present[band_index]
             )
+        elif constraint.type == "in_range":
+            target_indexes = [band_indexes[band_id.root] for band_id in target.band_ids]
+            if params.kind == "positions":
+                for band_index in target_indexes:
+                    model.add(
+                        global_position[band_index] >= params.position_from
+                    ).only_enforce_if(present[band_index])
+                    model.add(
+                        global_position[band_index] <= params.position_to
+                    ).only_enforce_if(present[band_index])
+            else:
+                allowed_part_orders = {part_id.root for part_id in params.part_ids}
+                allowed_part_indexes = [
+                    part_index
+                    for part_index, part in enumerate(parts)
+                    if part.sortOrder in allowed_part_orders
+                ]
+                for band_index in target_indexes:
+                    model.add(
+                        sum(
+                            assignment[band_index, part_index]
+                            for part_index in allowed_part_indexes
+                        )
+                        == present[band_index]
+                    )
         elif constraint.type == "before":
             before_index = band_indexes[target.before_band_id]
             after_index = band_indexes[target.after_band_id]
@@ -173,11 +198,43 @@ def _constraint_results(
         placement.bandId: part_offsets[placement.partId] + placement.order
         for placement in placements
     }
+    part_by_band = {placement.bandId: placement.partId for placement in placements}
+    part_orders = {part.partId: part.sortOrder for part in parts}
     results = []
     for wrapped in request.constraints:
         constraint = wrapped.root
         if not constraint.enabled:
             result = "disabled"
+        elif constraint.type == "count":
+            # Count semantics are intentionally not applied yet.
+            result = "unchecked"
+        elif constraint.type == "in_range":
+            target_bands = [band_id.root for band_id in constraint.targets.band_ids]
+            if any(band_id not in positions for band_id in target_bands):
+                result = "unchecked"
+            elif constraint.params.kind == "positions":
+                result = (
+                    "met"
+                    if all(
+                        constraint.params.position_from
+                        <= positions[band_id]
+                        <= constraint.params.position_to
+                        for band_id in target_bands
+                    )
+                    else "unmet"
+                )
+            else:
+                allowed_part_orders = {
+                    part_id.root for part_id in constraint.params.part_ids
+                }
+                result = (
+                    "met"
+                    if all(
+                        part_orders[part_by_band[band_id]] in allowed_part_orders
+                        for band_id in target_bands
+                    )
+                    else "unmet"
+                )
         elif constraint.type == "at_position":
             band_id = constraint.targets.band_id
             if band_id not in positions:
@@ -209,9 +266,6 @@ def _constraint_results(
             if any(band_id not in positions for band_id in target_bands):
                 result = "unchecked"
             else:
-                part_by_band = {
-                    placement.bandId: placement.partId for placement in placements
-                }
                 satisfied = all(
                     abs(positions[left_id] - positions[right_id])
                     >= constraint.params.min_diff
@@ -261,15 +315,22 @@ def _solve_model(variables: ModelVariables) -> tuple[cp_model.CpSolver, int]:
 
 
 def solve_request(request: SolveRequest) -> SolveResponse:
-    """Solve the hard at_position and before constraints."""
+    """Solve the supported hard constraints in the request."""
     unsupported = [
         item.root
         for item in request.constraints
         if item.root.enabled
+        and item.root.type != "count"
         and (
             item.root.hardness != "hard"
             or item.root.type
-            not in ("at_position", "before", "min_gap_member", "min_gap_bands")
+            not in (
+                "at_position",
+                "before",
+                "in_range",
+                "min_gap_member",
+                "min_gap_bands",
+            )
         )
     ]
     if unsupported:

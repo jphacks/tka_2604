@@ -115,7 +115,11 @@ def build_response(
                 raise ValueError("有効制約をdisabledにできません")
             if constraint.hardness == "hard" and item.status == "unmet":
                 raise ValueError("hard制約の違反を含む配置は返せません")
-            if status != "partial" and item.status == "unchecked":
+            if (
+                status != "partial"
+                and item.status == "unchecked"
+                and constraint.type != "count"
+            ):
                 raise ValueError("完全配置の制約はuncheckedにできません")
 
     input_constraint_ids = {item.root.constraint_id for item in request.constraints}
