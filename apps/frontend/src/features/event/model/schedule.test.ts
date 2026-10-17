@@ -42,14 +42,34 @@ test('moving a fixed performance or dropping on one is rejected', () => {
   assert.ok(setPerformanceOrder(fresh(), 'p2', 1).error)
 })
 
-test('cross-part drop swaps slots without losing performers', () => {
+test('cross-part drop shifts only movable slots without losing performers', () => {
   const result = movePerformance(fresh(), 'p2', {
     sectionId: 'part-1',
     index: 2,
   })
-  assert.equal(result.event.sections[0].slots[1], 'p7')
-  assert.equal(result.event.sections[1].slots[2], 'p2')
+  assert.deepEqual(result.event.sections[0].slots, ['p1', 'p3', 'p4', 'p6'])
+  assert.deepEqual(result.event.sections[1].slots, ['p5', 'p7', 'p2', 'p8'])
   assertRoster(result.event)
+})
+
+test('reordering crosses several fixed slots in both directions and preserves empty slots', () => {
+  let state = eventReducer(initialState, { type: 'loaded', event: fresh() })
+  state = eventReducer(state, { type: 'fixed', id: 'p3', fixed: true })
+  const original = state.event!
+  const forward = setPerformanceOrder(original, 'p2', 6)
+  assert.equal(forward.error, undefined)
+  assert.deepEqual(forward.event.sections[0].slots, ['p1', 'p4', 'p3', 'p6'])
+  assert.deepEqual(forward.event.sections[1].slots, ['p5', 'p2', 'p7', 'p8'])
+  const reverse = setPerformanceOrder(forward.event, 'p2', 2)
+  assert.deepEqual(reverse.event.sections, original.sections)
+  const empty = setPerformanceOrder(original, 'p4', null).event
+  const withGap = setPerformanceOrder(empty, 'p2', 6)
+  assert.deepEqual(withGap.event.sections[0].slots, ['p1', null, 'p3', 'p6'])
+  assert.deepEqual(withGap.event.sections[1].slots, ['p5', 'p2', 'p7', 'p8'])
+  assert.deepEqual(original.sections[0].slots, ['p1', 'p2', 'p3', 'p4'])
+  assertRoster(forward.event)
+  assertRoster(reverse.event)
+  assertRoster(withGap.event)
 })
 
 test('unassigned drop replaces an occupied slot and returns displaced performer', () => {

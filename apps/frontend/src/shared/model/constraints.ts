@@ -41,7 +41,7 @@ export function validateConstraint(
     (constraint.hardness === 'soft' &&
       !['high', 'mid', 'low'].includes(constraint.priority ?? ''))
   )
-    return 'ハード条件の優先度は不要です。ソフト条件には優先度を選んでください。'
+    return '必須条件の優先度は不要です。任意条件には優先度を選んでください。'
   if (
     constraint.type === 'min_gap_member' &&
     !event.members.some((member) => member.id === constraint.targets.member_id)
@@ -208,7 +208,7 @@ export function evaluateConstraint(
     detail: met
       ? '達成'
       : constraint.hardness === 'hard'
-        ? 'ハード条件に違反'
+        ? '必須条件に違反'
         : '未達成',
   }
 }

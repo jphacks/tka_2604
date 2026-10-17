@@ -1,9 +1,10 @@
+import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { createEvent, loadEvent } from '../../src/db/events'
 import { createDb } from '../../src/db/index'
 import { type EventChanges, saveEvent } from '../../src/db/save-event'
-import { users } from '../../src/db/schema'
+import { bands, constraints, users } from '../../src/db/schema'
 import { testDatabase } from '../helpers/database'
 
 let local: Awaited<ReturnType<typeof testDatabase>>
@@ -33,8 +34,8 @@ beforeEach(async () => {
       { bandId: 'b2', memberId: 'm1' },
     ],
     parts: [
-      { partId: saved.parts[0].partId, comment: '前半' },
-      { partId: 'p2', comment: null },
+      { partId: saved.parts[0].partId, partName: '前半' },
+      { partId: 'p2', partName: null },
     ],
     placements: [
       { bandId: 'b1', partId: saved.parts[0].partId, order: 0 },
@@ -191,7 +192,7 @@ it('prevents deleting a part referenced by a remaining constraint', async () => 
 })
 
 it('deletes an empty unreferenced part in the event-wide save and compacts its order', async () => {
-  input.parts.push({ partId: 'p3', comment: null })
+  input.parts.push({ partId: 'p3', partName: null })
   saved = await save()
   input.parts = input.parts.filter((part) => part.partId !== 'p2')
   const result = await save()
@@ -204,11 +205,40 @@ it('deletes an empty unreferenced part in the event-wide save and compacts its o
   expect(result.event.updatedAt).not.toBe(saved.event.updatedAt)
 })
 
-it('rejects deleting a part from a stale screen after another screen saves its comment', async () => {
+it('rejects deleting a part from a stale screen after another screen saves its partName', async () => {
   saved = await save()
-  input.parts[1].comment = 'Saved in another screen'
+  input.parts[1].partName = 'Saved in another screen'
   const latest = await save()
   input.parts.pop()
   await expect(save()).rejects.toThrow('event_save_conflict')
   expect(await loadEvent(db, 'owner', saved.event.eventId)).toEqual(latest)
+})
+
+it('keeps server-managed wishes and provenance through event-wide replacement', async () => {
+  saved = await save()
+  await db
+    .update(bands)
+    .set({ requestText: '第2部を希望', requestStatus: 'converted' })
+    .where(eq(bands.bandId, 'b1'))
+  await db
+    .update(constraints)
+    .set({ sourceBandId: 'b1' })
+    .where(eq(constraints.constraintId, 'c1'))
+  const forgedBand = {
+    ...input.bands[0],
+    requestText: 'Must not replace',
+    requestStatus: 'failed' as const,
+  }
+  input.bands[0] = forgedBand
+  const forgedConstraint = { ...input.constraints[0], sourceBandId: 'b2' }
+  input.constraints[0] = forgedConstraint
+  const result = await save()
+  expect(result.bands.find((band) => band.bandId === 'b1')).toMatchObject({
+    requestText: '第2部を希望',
+    requestStatus: 'converted',
+  })
+  expect(result.constraints[0].sourceBandId).toBe('b1')
+  expect(result.parts[0].partName).toBe('前半')
+  expect(result.parts[1].partName).toBeNull()
+  expect(await loadEvent(db, 'owner', saved.event.eventId)).toEqual(result)
 })

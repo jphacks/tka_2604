@@ -1,8 +1,9 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 
 import { Button } from '../../../shared/ui/Button'
 import { NumberField } from '../../../shared/ui/NumberField'
 import { Panel } from '../../../shared/ui/Panel'
+import { PerformanceEditor } from '../../participants/components/PerformanceEditor'
 import type { EventController } from '../hooks/useEvent'
 import {
   EmptyPerformanceRow,
@@ -12,6 +13,33 @@ import {
 import { ScheduleDragSurface, UnassignedDropZone } from './ScheduleDragSurface'
 
 export function SchedulePanel({ controller }: { controller: EventController }) {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  return (
+    <>
+      <ScheduleTable controller={controller} onEdit={setEditingId} />
+      {editingId && controller.event && (
+        <PerformanceEditor
+          key={editingId}
+          eventId={controller.event.id}
+          performanceId={editingId}
+          onSaved={(updated) => {
+            controller.applyPerformanceEdits(updated)
+            setEditingId(null)
+          }}
+          onClose={() => setEditingId(null)}
+        />
+      )}
+    </>
+  )
+}
+
+function ScheduleTable({
+  controller,
+  onEdit,
+}: {
+  controller: EventController
+  onEdit: (id: string) => void
+}) {
   const unassignedRef = useRef<HTMLElement>(null)
   const { event, schedule, setOrder, setFixed, resize } = controller
   if (!event || !schedule) return null
@@ -40,7 +68,13 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
         </span>
       }
     >
-      <div className="flex flex-wrap items-center gap-3 border-b border-line bg-canvas/50 p-3 text-xs">
+      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-line bg-canvas/50 px-3 py-2 text-xs">
+        <Button disabled title="ソルバー接続は準備中です" className="text-xs">
+          自動生成（準備中）
+        </Button>
+        <Button onClick={controller.exportCsv} className="text-xs">
+          CSVを出力
+        </Button>
         <label className="flex items-center gap-2">
           部数
           <NumberField
@@ -68,7 +102,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
         ))}
       </div>
       <ScheduleDragSurface controller={controller}>
-        <div className="max-h-[65dvh] min-h-64 scrollbar-thin overflow-auto">
+        <div className="max-h-[65dvh] min-h-64 scrollbar-thin overflow-auto xl:max-h-none xl:min-h-0 xl:flex-1">
           <div
             className={`${rowColumns} sticky top-0 z-10 min-h-9 border-b border-line bg-white text-xs text-muted`}
           >
@@ -94,6 +128,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
                     capacity={schedule.capacity}
                     onFixed={setFixed}
                     onOrder={setOrder}
+                    onEdit={onEdit}
                   />
                 ) : (
                   <EmptyPerformanceRow key={row.key} row={row} />
@@ -116,6 +151,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
                   capacity={schedule.capacity}
                   onFixed={setFixed}
                   onOrder={setOrder}
+                  onEdit={onEdit}
                 />
               ))}
               {!schedule.unassigned.length && (
@@ -127,9 +163,6 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
           </UnassignedDropZone>
         </div>
       </ScheduleDragSurface>
-      <p className="border-t border-line px-4 py-3 text-xs leading-6 text-muted">
-        ドラッグ／Spaceと矢印キー／順番号で配置。空欄で未配置に戻します。固定は現在の位置をハード条件として保持します。
-      </p>
     </Panel>
   )
 }

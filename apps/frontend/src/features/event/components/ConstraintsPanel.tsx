@@ -34,8 +34,7 @@ export function ConstraintsPanel({
         </Button>
       }
     >
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line p-3 text-xs">
-        <span className="text-muted">現在の並びで達成状況を確認</span>
+      <div className="flex shrink-0 items-center justify-end border-b border-line px-3 py-2 text-xs">
         <Button
           variant={controller.showUnmet ? 'primary' : 'ghost'}
           className="text-xs"
@@ -45,7 +44,7 @@ export function ConstraintsPanel({
           未達成のみ（{controller.unmetCount}）
         </Button>
       </div>
-      <div className="max-h-[75dvh] space-y-3 overflow-y-auto p-3">
+      <div className="max-h-[75dvh] min-h-0 space-y-2 overflow-y-auto p-2 xl:max-h-none xl:flex-1">
         {controller.constraintViews.map(
           ({ constraint, text, status, detail }) => (
             <article

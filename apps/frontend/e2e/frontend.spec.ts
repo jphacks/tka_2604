@@ -165,11 +165,11 @@ test('schedule edits persist during navigation and pointer dragging works', asyn
   await login(page)
   await page.getByRole('link', { name: '春ライブ 2026', exact: true }).click()
   const handle = page.getByRole('button', {
-    name: 'Pretenderをドラッグして移動',
+    name: 'Pretenderを並べ替え',
     exact: true,
   })
   const target = page.getByRole('button', {
-    name: 'VPSをドラッグして移動',
+    name: 'VPSを並べ替え',
     exact: true,
   })
   const from = await handle.boundingBox()
@@ -187,8 +187,19 @@ test('schedule edits persist during navigation and pointer dragging works', asyn
   await expect(
     page.getByRole('textbox', { name: '気分上々↑↑の出演順', exact: true }),
   ).toHaveValue('1')
-  await page.getByRole('button', { name: '手動追加' }).click()
+  const addButton = page.getByRole('button', { name: '手動追加' })
+  const addPosition = await addButton.boundingBox()
+  if (!addPosition) throw new Error('Add constraint button was not visible')
+  // Move to the next action rather than clicking during dnd-kit's post-drop
+  // click suppression. Keep this a separate pointer gesture, without a sleep.
+  await page.mouse.move(
+    addPosition.x + addPosition.width / 2,
+    addPosition.y + addPosition.height / 2,
+    { steps: 12 },
+  )
+  await addButton.click()
   const dialog = page.getByRole('dialog', { name: '制約を手動追加' })
+  await expect(dialog).toBeVisible()
   await dialog.getByRole('button', { name: /出演の前後関係を決める/ }).click()
   await dialog
     .getByRole('combobox', { name: '先に出演する組' })

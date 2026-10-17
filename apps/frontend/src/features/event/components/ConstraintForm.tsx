@@ -98,7 +98,7 @@ export function ConstraintForm({
       {choosing ? (
         <>
           <p className="mb-4 text-sm leading-7 text-muted">
-            どんな条件にしたいですか？ 種類を選ぶと、必要な情報を入力できます。
+            条件の種類を選び、対象や数値を入力します。
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             {choices.map((choice) => (
@@ -164,7 +164,7 @@ export function ConstraintForm({
               onPriority={(priority) => change({ priority })}
             />
             <p className="text-xs leading-6 text-muted">
-              「必ず守る」はハード条件です。両立しなくても自動で緩めません。「できれば守る」は優先度を付けられます。
+              必須は必ず守る条件、任意はできるだけ守る条件です。
             </p>
           </fieldset>
           <details>
@@ -195,8 +195,8 @@ export function ConstraintForm({
             </p>
             <p className="mt-2 text-xs text-muted">
               {draft.hardness === 'hard'
-                ? '必ず守る · ハード条件'
-                : `できれば守る · 優先度：${{ high: '高', mid: '中', low: '低' }[draft.priority]}`}
+                ? '必須'
+                : `任意 · 優先度：${{ high: '高', mid: '中', low: '低' }[draft.priority]}`}
             </p>
           </div>
           {error && (

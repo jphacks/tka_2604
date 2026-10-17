@@ -11,10 +11,11 @@
 | APIドキュメント閲覧    | Swagger UI                                                         | 導入済み。developドメインで仕様を共有・APIを試行する        |
 | 制約の共有             | JSON Schema / json-schema-to-typescript / datamodel-code-generator | 導入済み。TypeScriptとPythonのモデルを同じ定義から生成する  |
 | Python環境・入力モデル | uv / Pydantic                                                      | 導入済み。依存管理と構造化データの検証                      |
-| 最適化API              | FastAPI / OR-Tools CP-SAT                                          | 採用予定。順序・間隔の制約をPythonで扱う                    |
+| 最適化API              | FastAPI / OR-Tools CP-SAT / Vercel                                 | 疎通確認済み（#26）。順序・間隔の制約をPythonで扱う         |
 | 保存                   | Cloudflare D1 / Drizzle                                            | 導入済み。業務テーブルとローカル保存処理。API接続は今後追加 |
 | テスト                 | Vitest / Testing Library / Playwright                              | 導入済み。frontend・backendの振る舞いを確認する             |
-| LLM・ソルバー公開先    | 未確定                                                             | 対応Issueで決める                                           |
+| LLM                    | OpenAI Responses API / GPT-6 Luna（effort: low）                   | 採用方針を合意済み。接続は#31                               |
+| ソルバー公開先         | 未確定                                                             | 対応Issueで決める                                           |
 
 ## 配置
 
@@ -23,7 +24,7 @@
 | `apps/frontend` | 画面・メモリ上のデモデータ・制約の手動編集と達成判定                    |
 | `apps/backend`  | Hono APIとWorkersによる配信。health API・OpenAPI JSON・Swagger UIを提供 |
 | `apps/schema`   | 共有する制約のJSON Schema。実装済み                                     |
-| `apps/solver`   | Pythonの計算処理。現在は生成モデルと起動入口のみ                        |
+| `apps/solver`   | Pythonの計算処理。現在は生成モデルと疎通確認用のFastAPIのみ             |
 
 ## 処理の流れ
 
@@ -31,22 +32,26 @@
 
 - LLM：対応する制約への変換と説明。任意の数式・コードを実行させない。
 - backend：入力検証、データ管理、外部呼び出し。秘密情報をブラウザに渡さない。
-- solver：固定ロジックで制約をモデル化し、出演順と探索状態を返す。OR-Tools CP-SAT / FastAPIを採用予定。
+- solver：固定ロジックで制約をモデル化し、出演順と探索状態を返す。OR-Tools CP-SAT / FastAPIをVercelで動かす。手順・検証結果は[solverのREADME](../apps/solver/README.md)。
 - DB：Cloudflare D1は検証用と本番用を分離。Drizzle導入済み。[DB方針](database.md)を参照。
+
+## backendの構造
+
+フォルダー構成と各層の責務は[backendの開発ルール](../apps/backend/AGENTS.md#backendの構造)を参照。
 
 ## APIの実装時
 
 health APIにOpenAPI定義・RPC型共有を導入済み。DrizzleとDBの保存処理は導入済み。業務API・frontend接続は今後追加する。
 
-- APIは通常のHonoの`app.get()`・`app.post()`で実装し、入力のあるAPIではZodで検証する。OpenAPI仕様は`docs/api/openapi.json`に別途手書きし、API変更時は実装・仕様・対象APIの動作テストを揃える。
+- APIは通常のHonoの`app.get()`・`app.post()`で実装し、入力のあるAPIではZodで検証する。OpenAPI仕様は`apps/backend/docs/api/openapi.json`に別途手書きし、API変更時は実装・仕様・対象APIの動作テストを揃える。
 - ルート登録の返り値から`AppType`を公開し、frontendのRepositoryで`hc<AppType>()`を使う。backendからは型のみをimportし、サーバーの実装をfrontendへ持ち込まない。
 - DrizzleでD1のテーブルを定義し、SQL生成・差分確認・ローカル適用を行う。DBの行型とAPIの入出力は用途に応じて分ける。[DB方針](database.md)を参照。
-- OpenAPI 3.1.0を`/api/openapi.json`、Swagger UIを`/api/docs`で提供する。developドメインでUI・JSON・APIを配信し、共有URLから閲覧・試行できる。手書きの仕様JSONをそのまま配信し、APIの動作・応答仕様との整合性はVitestとレビューで確認する。healthにAjvによる契約テストを導入済み。[更新・閲覧手順](api/README.md)を参照。
+- OpenAPI 3.1.0を`/api/openapi.json`、Swagger UIを`/api/docs`で提供する。developドメインでUI・JSON・APIを配信し、共有URLから閲覧・試行できる。手書きの仕様JSONをそのまま配信し、APIの動作・応答仕様との整合性はVitestとレビューで確認する。healthにAjvによる契約テストを導入済み。[更新・閲覧手順](../apps/backend/docs/api/README.md)を参照。
 - 制約JSONの正本は引き続き`apps/schema`。ZodやOpenAPIに同じ制約を手書きで重複定義せず、実行時検証・OpenAPIとの接続方法は制約APIの実装時に決める。
 
 対応Issueで入力・出力・エラー・必要な権限を具体例とともに決める。生成型だけを信頼せず、IDの存在とイベントへの所属も検証する。探索結果は成功、解なし、探索未完了、内部エラーを区別する。
 
-外部通信・LLMはテストで差し替えられるようにする。認証・公開フォームの詳細、LLMモデル、ソルバーの公開先は未確定。将来のためだけの層や汎用化は増やさない。
+外部通信・LLMはテストで差し替えられるようにする。LLMはGPT-6 Luna・lowを採用する方針。処理・保存の境界は[AIチャット設計](../apps/backend/docs/AIチャット設計.md)を参照する。認証・公開フォームの詳細、ソルバーの公開先は未確定。将来のためだけの層や汎用化は増やさない。
 
 既存のhealth APIでOpenAPIの配信・閲覧・RPC型共有を確認済み。DBの保存・再取得はローカルD1で確認済み。次にイベントの作成・一覧でZod検証と業務API・frontendを接続する。機能ごとのテストを実装と一緒に追加する。
 

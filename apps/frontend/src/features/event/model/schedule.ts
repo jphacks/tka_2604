@@ -133,22 +133,27 @@ export function movePerformance(
       error: '移動先の出演枠は固定されています。別の位置を選んでください。',
     }
   }
-  if ('sectionId' in source && source.sectionId === target.sectionId) {
-    // Reorder only movable slots, so fixed performances keep their exact positions.
-    const movableIndices = destination.slots.flatMap((slotId, index) =>
-      slotId !== null && isFixed(event, slotId) ? [] : [index],
+  if ('sectionId' in source) {
+    // Insert across parts as well, skipping every fixed slot without moving it.
+    const movable = next.sections.flatMap((section) =>
+      section.slots.flatMap((slotId, index) =>
+        slotId !== null && isFixed(event, slotId) ? [] : [{ section, index }],
+      ),
     )
-    const values = movableIndices.map((index) => destination.slots[index])
-    values.splice(movableIndices.indexOf(source.index), 1)
-    values.splice(movableIndices.indexOf(target.index), 0, id)
-    movableIndices.forEach((index, i) => {
-      destination.slots[index] = values[i]
+    const from = movable.findIndex(
+      ({ section, index }) =>
+        section.id === source.sectionId && index === source.index,
+    )
+    const to = movable.findIndex(
+      ({ section, index }) =>
+        section.id === target.sectionId && index === target.index,
+    )
+    const values = movable.map(({ section, index }) => section.slots[index])
+    values.splice(from, 1)
+    values.splice(to, 0, id)
+    movable.forEach(({ section, index }, i) => {
+      section.slots[index] = values[i]
     })
-  } else if ('sectionId' in source) {
-    next.sections.find((section) => section.id === source.sectionId)!.slots[
-      source.index
-    ] = displaced
-    destination.slots[target.index] = id
   } else {
     next.unassigned.splice(
       source.unassignedIndex,
