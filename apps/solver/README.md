@@ -29,8 +29,11 @@ apps/solver/
 | -------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
 | `GET /health`  | なし                                       | `{"status":"ok"}` を返す                                                                                     |
 | `POST /probe`  | `Authorization: Bearer <SOLVER_API_TOKEN>` | 3バンドを「AはCより前」で並べる固定モデルを CP-SAT で解き、状態・順番・計算時間・OR-Tools のバージョンを返す |
+| `POST /solve`  | `Authorization: Bearer <SOLVER_API_TOKEN>` | 契約JSONを検証し、出演順・未配置バンド・制約達成状況を返す                                                   |
 
-`/probe` はトークンが違えば 401、サーバーに `SOLVER_API_TOKEN` が未設定なら 503 を返します（未設定のまま公開されないようにするため）。
+`/probe` と `/solve` は `Authorization: Bearer <SOLVER_API_TOKEN>` を要求します。トークンが違えば 401、サーバーに `SOLVER_API_TOKEN` が未設定なら 503 を返します（未設定のまま公開されないようにするため）。
+
+`POST /solve` は #20 の契約に従うJSONを受け取り、入力を検証して配置を計算します。通常の配置結果（`optimal` / `feasible`）、部分配置（`partial`）、配置を返せない状態（`infeasible` / `unknown`）を区別します。入力エラーは422、内部エラーは500で、どちらも `{"error": ...}` 形式です。
 
 ## セットアップ・起動
 
@@ -44,6 +47,10 @@ SOLVER_API_TOKEN=local uv --directory apps/solver run uvicorn main:app --app-dir
 ```sh
 curl http://localhost:8000/health
 curl -X POST http://localhost:8000/probe -H 'Authorization: Bearer local'
+curl -X POST http://localhost:8000/solve \
+  -H 'Authorization: Bearer local' \
+  -H 'Content-Type: application/json' \
+  --data @apps/solver/bench/cases/demo.request.json
 ```
 
 ## テスト

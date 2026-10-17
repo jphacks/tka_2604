@@ -4,13 +4,47 @@ import time
 from typing import Annotated
 
 import ortools
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from ortools.sat.python import cp_model
 
-# 実行先の疎通確認用。本番の計算APIの入出力は#20・#27で決める。
+from solver import solve_request
+from solver_input import SolveRequest
+from solver_output import ErrorDetail, ErrorResponse, SolveResponse
+
+# FastAPI entry point for health, deployment probe, and scheduling requests.
 app = FastAPI(title="Setlist Solver")
 
 PROBE_BANDS = ["A", "B", "C"]
+
+
+def _validation_error(errors: list[dict[str, object]]) -> ErrorResponse:
+    details = []
+    for error in errors:
+        location = [str(item) for item in error.get("loc", [])]
+        if location and location[0] == "body":
+            location = location[1:]
+        details.append(
+            ErrorDetail(
+                path=".".join(location),
+                reason=str(error.get("msg", "入力が不正です")),
+            )
+        )
+    return ErrorResponse(
+        error={
+            "code": "invalid_input",
+            "message": "リクエストの入力が不正です",
+            "details": details,
+        }
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def handle_request_validation_error(
+    _request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    return JSONResponse(status_code=422, content=_validation_error(exc.errors()).model_dump())
 
 
 @app.get("/health")
@@ -55,3 +89,25 @@ def probe(
         "solve_seconds": round(elapsed, 4),
         "ortools_version": ortools.__version__,
     }
+
+
+@app.post("/solve", response_model=SolveResponse)
+def solve(
+    request: SolveRequest,
+    authorization: Annotated[str | None, Header()] = None,
+) -> SolveResponse | JSONResponse:
+    """Validate a scheduling request, run CP-SAT, and return its result."""
+    require_token(authorization)
+    try:
+        return solve_request(request)
+    except Exception:
+        return JSONResponse(
+            status_code=500,
+            content=ErrorResponse(
+                error={
+                    "code": "solver_internal_error",
+                    "message": "ソルバー内部でエラーが発生しました",
+                    "details": [],
+                }
+            ).model_dump(),
+        )
