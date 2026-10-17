@@ -128,7 +128,7 @@ export function eventReducer(
             },
           ],
         },
-        '現在の位置をハード条件として固定しました。',
+        '現在の位置を必須条件として固定しました。',
       )
     }
     case 'constraint-save': {

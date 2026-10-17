@@ -32,7 +32,7 @@ test('all six condition choices produce editable conditions with live evaluation
   await dialog
     .getByRole('checkbox', { name: '同じ部の出演だけに適用する' })
     .check()
-  await dialog.getByRole('button', { name: 'できれば守る' }).click()
+  await dialog.getByRole('button', { name: '任意', exact: true }).click()
   await dialog.getByRole('button', { name: 'この条件を追加' }).click()
   await expect(
     page.getByRole('heading', {
@@ -105,7 +105,7 @@ test('all six condition choices produce editable conditions with live evaluation
         exact: true,
       }),
     }),
-  ).toContainText('ハード条件に違反')
+  ).toContainText('必須条件に違反')
 
   dialog = await choose(page, /部ごとの出演数を決める/)
   await dialog.getByRole('checkbox', { name: 'Pretender', exact: true }).check()
@@ -205,13 +205,23 @@ test('position checkbox, constraint controls, and deletion guard agree', async (
     .getByRole('navigation', { name: 'イベント内の移動' })
     .getByRole('link', { name: '出演順', exact: true })
     .click()
-  await condition.getByRole('button', { name: 'できれば守る' }).click()
+  await condition.getByRole('button', { name: '任意', exact: true }).click()
+  await expect(
+    condition.getByRole('combobox', { name: /の優先度$/ }),
+  ).toBeVisible()
   await expect(
     page.getByRole('checkbox', { name: 'Pretenderを固定', exact: true }),
   ).not.toBeChecked()
   await expect(
     page.getByRole('textbox', { name: 'Pretenderの出演順', exact: true }),
   ).toBeEnabled()
+  await condition.getByRole('button', { name: '必須', exact: true }).click()
+  await expect(
+    condition.getByRole('combobox', { name: /の優先度$/ }),
+  ).toHaveCount(0)
+  await expect(
+    page.getByRole('checkbox', { name: 'Pretenderを固定', exact: true }),
+  ).toBeChecked()
 })
 
 test('chat is a demo, generation is disabled and CSV downloads the current order', async ({
