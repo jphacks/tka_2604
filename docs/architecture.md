@@ -11,7 +11,7 @@
 | APIドキュメント閲覧    | Swagger UI                                                         | 導入済み。developドメインで仕様を共有・APIを試行する        |
 | 制約の共有             | JSON Schema / json-schema-to-typescript / datamodel-code-generator | 導入済み。TypeScriptとPythonのモデルを同じ定義から生成する  |
 | Python環境・入力モデル | uv / Pydantic                                                      | 導入済み。依存管理と構造化データの検証                      |
-| 最適化API              | FastAPI / OR-Tools CP-SAT                                          | 採用予定。順序・間隔の制約をPythonで扱う                    |
+| 最適化API              | FastAPI / OR-Tools CP-SAT / Vercel                                 | 疎通確認済み（#26）。順序・間隔の制約をPythonで扱う         |
 | 保存                   | Cloudflare D1 / Drizzle                                            | 導入済み。業務テーブルとローカル保存処理。API接続は今後追加 |
 | テスト                 | Vitest / Testing Library / Playwright                              | 導入済み。frontend・backendの振る舞いを確認する             |
 | LLM                    | OpenAI Responses API / GPT-6 Luna（effort: low）                   | 採用方針を合意済み。接続は#31                               |
@@ -24,7 +24,7 @@
 | `apps/frontend` | 画面・メモリ上のデモデータ・制約の手動編集と達成判定                    |
 | `apps/backend`  | Hono APIとWorkersによる配信。health API・OpenAPI JSON・Swagger UIを提供 |
 | `apps/schema`   | 共有する制約のJSON Schema。実装済み                                     |
-| `apps/solver`   | Pythonの計算処理。現在は生成モデルと起動入口のみ                        |
+| `apps/solver`   | Pythonの計算処理。現在は生成モデルと疎通確認用のFastAPIのみ             |
 
 ## 処理の流れ
 
@@ -32,7 +32,7 @@
 
 - LLM：対応する制約への変換と説明。任意の数式・コードを実行させない。
 - backend：入力検証、データ管理、外部呼び出し。秘密情報をブラウザに渡さない。
-- solver：固定ロジックで制約をモデル化し、出演順と探索状態を返す。OR-Tools CP-SAT / FastAPIを採用予定。
+- solver：固定ロジックで制約をモデル化し、出演順と探索状態を返す。OR-Tools CP-SAT / FastAPIをVercelで動かす。手順・検証結果は[solverのREADME](../apps/solver/README.md)。
 - DB：Cloudflare D1は検証用と本番用を分離。Drizzle導入済み。[DB方針](database.md)を参照。
 
 ## backendの構造

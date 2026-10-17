@@ -55,10 +55,10 @@ npm run dev
 
 API仕様は[Swagger UI](http://localhost:8787/api/docs)で閲覧・試行できる。developドメインから他のメンバーと共有する方法は[APIドキュメント](../apps/backend/docs/api/README.md)を参照。
 
-Python側は別のターミナルで、同じリポジトリルートから起動する。現在はHTTPサーバーではなく、挨拶を出力する入口のみ。
+Python側は別のターミナルで、同じリポジトリルートから起動する。現在は疎通確認用の`/health`と`/probe`のみ。手順は[solverのREADME](../apps/solver/README.md)を参照。
 
 ```sh
-uv --directory apps/solver run python src/main.py
+SOLVER_API_TOKEN=local uv --directory apps/solver run uvicorn main:app --app-dir src --port 8000
 ```
 
 ## 開発開始前のチェック

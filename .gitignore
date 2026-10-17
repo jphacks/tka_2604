@@ -140,6 +140,9 @@ worker-configuration.d.ts
 
 # Python solver environments and caches
 .venv/
+
+# Vercel project link (solver)
+.vercel/
 __pycache__/
 *.py[cod]
 .pytest_cache/
