@@ -10,12 +10,12 @@
   },
   "dependencies": {
     "@hono/swagger-ui": "^0.6.1",
+    "ajv": "^8.20.0",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.13",
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "ajv": "^8.20.0",
     "drizzle-kit": "^0.31.11"
   }
 }

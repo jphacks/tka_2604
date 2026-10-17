@@ -7,9 +7,9 @@
     "apps/*"
   ],
   "scripts": {
-    "codegen": "npm run codegen:ts && npm run codegen:py",
+    "codegen": "npm run codegen:ts && npm run codegen:backend && npm run codegen:py",
     "codegen:check": "node scripts/codegen-check.mjs",
-    "codegen:ts": "json2ts -i apps/schema/constraint.schema.json -o apps/frontend/src/generated/constraint.ts --cwd apps/schema",
+    "codegen:ts": "json2ts -i apps/schema/constraint.schema.json -o apps/frontend/src/generated/constraint.ts --cwd apps/schema && json2ts -i apps/schema/constraint.schema.json -o apps/backend/src/generated/constraint.ts --cwd apps/schema",
     "codegen:py": "uv --directory apps/solver run datamodel-codegen",
     "dev": "npm run build --workspace=@jphack-2026/frontend && concurrently --kill-others --names frontend,backend \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "npm run dev --workspace=@jphack-2026/frontend",
@@ -41,7 +41,8 @@
     "test:backend": "vitest run --project backend",
     "test:e2e": "npm run test:e2e --workspace=@jphack-2026/frontend",
     "db:generate": "npm run db:generate --workspace=@jphack-2026/backend --",
-    "db:seed:local": "wrangler d1 execute DB --env develop --local --file apps/backend/db/seed.sql"
+    "db:seed:local": "wrangler d1 execute DB --env develop --local --file apps/backend/db/seed.sql",
+    "codegen:backend": "node scripts/codegen-backend-constraint.mjs"
   },
   "lint-staged": {
     "*.{js,mjs,cjs,jsx,ts,tsx}": "eslint --max-warnings=0 --no-warn-ignored",

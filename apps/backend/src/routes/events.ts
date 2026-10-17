@@ -99,6 +99,18 @@ export const eventRoutes = new Hono<EventEnv>()
   .get('/:eventId', async (c) =>
     c.json(await c.var.eventService.get(c.req.param('eventId')), 200),
   )
+  .get('/:eventId/schedule', async (c) =>
+    c.json(await c.var.eventService.getSchedule(c.req.param('eventId')), 200),
+  )
+  .get('/:eventId/constraints', async (c) =>
+    c.json(
+      await c.var.eventService.getConstraints(c.req.param('eventId')),
+      200,
+    ),
+  )
+  .get('/:eventId/chat', async (c) =>
+    c.json(await c.var.eventService.getChat(c.req.param('eventId')), 200),
+  )
   .patch(
     '/:eventId',
     validator('json', (body: unknown, c) => {

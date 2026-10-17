@@ -149,3 +149,34 @@ describe('event repository', () => {
     )
   })
 })
+
+it('retrieves only one owned event and returns null for inaccessible information', async () => {
+  const { seedEventInformation } = await import('../helpers/event-information')
+  const expected = await seedEventInformation(db, 'owner')
+  await seedEventInformation(db, 'owner', 'another')
+  await seedEventInformation(db, 'other', 'other')
+  expect(await repository.getSchedule('owner', expected.event.eventId)).toEqual(
+    expected.schedule,
+  )
+  expect(await repository.getChat('owner', expected.event.eventId)).toEqual(
+    expected.chat,
+  )
+  expect(
+    await repository.getConstraints('owner', expected.event.eventId),
+  ).toEqual({
+    eventId: expected.event.eventId,
+    updatedAt: expected.event.updatedAt,
+    constraints: expected.constraints.constraints.map((row) => ({
+      constraintId: row.constraint.constraint_id,
+      constraintJson: JSON.stringify(row.constraint),
+      sourceBandId: row.sourceBandId,
+    })),
+  })
+  for (const method of ['getSchedule', 'getConstraints', 'getChat'] as const) {
+    expect(await repository[method]('other', expected.event.eventId)).toBeNull()
+    expect(await repository[method]('owner', 'missing')).toBeNull()
+  }
+  await repository.remove('owner', expected.event.eventId)
+  for (const method of ['getSchedule', 'getConstraints', 'getChat'] as const)
+    expect(await repository[method]('owner', expected.event.eventId)).toBeNull()
+})

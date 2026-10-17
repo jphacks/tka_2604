@@ -3,7 +3,7 @@
   "info": {
     "title": "JPHACKS 出演順作成 API",
     "version": "0.0.0",
-    "description": "実装済みAPIと、イベントの分割取得・一括取得の仕様案を掲載する。「未実装・仕様案」の操作は検討用であり、現在は実行できない。"
+    "description": "イベント本体・表情報・制約情報・チャット履歴のAPI。認証は#57で追加し、現段階はサーバー側のデモユーザーで所有者を絞り込む。"
   },
   "servers": [
     {
@@ -1173,11 +1173,10 @@
     },
     "/api/events/{eventId}/schedule": {
       "get": {
-        "operationId": "getEventScheduleDraft",
-        "summary": "【未実装・仕様案】表情報を取得する",
-        "description": "【未実装・仕様案】レビューのために掲載しており、現在Try it outで実行すると404と{\"error\":\"Not Found\"}を返す。以下の200・エラー定義は実装後の案。認証は#57で追加し、現段階の所有者は既存APIと同じdemo-ownerを想定する。存在しない・削除済み・他所有者のイベントは取得しない。 バンド・メンバー・所属・部・配置・未配置をまとめて返す。制約とチャット、イベント本体は含めない。空の部も返し、sortOrder・orderは0始まり。枠数・空き枠は保存データから返さない。返却フィールド・名簿の並び順の詳細は#18・#19との接続時に確認する。",
-        "tags": ["イベント取得（未実装・仕様案）"],
-        "x-implementation-status": "planned",
+        "operationId": "getEventSchedule",
+        "summary": "表情報を取得する",
+        "description": "認証は#57で追加する。現在はdemo-ownerの所有する未削除イベントに限定し、クライアントから所有者IDを受け取らない。取得でデータ保存・LLM・Solverの呼出しを行わない。 バンド・メンバー・所属・部・配置・未配置を返す。バンドと未配置はbandId昇順、メンバーはmemberId昇順、所属はbandId・memberId昇順、部はsortOrder昇順、配置は部の順・order昇順。sortOrder・orderは0始まり。枠数・空き枠は保存しない。",
+        "tags": ["Events"],
         "security": [],
         "parameters": [
           {
@@ -1193,11 +1192,11 @@
         ],
         "responses": {
           "200": {
-            "description": "実装後の成功応答案（現在は未実装）",
+            "description": "表情報。空の部も含み、未配置はunassignedBandIdsに返す",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DraftEventSchedule"
+                  "$ref": "#/components/schemas/EventSchedule"
                 },
                 "example": {
                   "eventId": "event-1",
@@ -1252,7 +1251,7 @@
             }
           },
           "404": {
-            "description": "実装後の案：存在しない・削除済み・他所有者のイベント。現在の未実装ルートは別形式の404（本文は操作説明を参照）。",
+            "description": "イベントが見つかりません。",
             "content": {
               "application/json": {
                 "schema": {
@@ -1358,11 +1357,10 @@
     },
     "/api/events/{eventId}/constraints": {
       "get": {
-        "operationId": "getEventConstraintsDraft",
-        "summary": "【未実装・仕様案】制約情報を取得する",
-        "description": "【未実装・仕様案】レビューのために掲載しており、現在Try it outで実行すると404と{\"error\":\"Not Found\"}を返す。以下の200・エラー定義は実装後の案。認証は#57で追加し、現段階の所有者は既存APIと同じdemo-ownerを想定する。存在しない・削除済み・他所有者のイベントは取得しない。 有効・無効を含む保存済みConstraint JSONとsourceBandIdを返す案。DBのJSON文字列はパースし、共有Schemaで検証して返す。取得だけではLLM変換やSolverを実行しない。詳細型のOpenAPI参照と並び順は#18の実装時に確定する。",
-        "tags": ["イベント取得（未実装・仕様案）"],
-        "x-implementation-status": "planned",
+        "operationId": "getEventConstraints",
+        "summary": "制約情報を取得する",
+        "description": "認証は#57で追加する。現在はdemo-ownerの所有する未削除イベントに限定し、クライアントから所有者IDを受け取らない。取得でデータ保存・LLM・Solverの呼出しを行わない。 共有Schemaで検証したConstraintオブジェクトとsourceBandIdをconstraint_id昇順で返す。無効な制約も含む。DB内のJSONやhardness/priorityの対応が不正なら500とし、一部だけの成功応答は返さない。",
+        "tags": ["Events"],
         "security": [],
         "parameters": [
           {
@@ -1378,11 +1376,11 @@
         ],
         "responses": {
           "200": {
-            "description": "実装後の成功応答案（現在は未実装）",
+            "description": "有効・無効を含む保存済み制約と生成元",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DraftEventConstraints"
+                  "$ref": "#/components/schemas/EventConstraints"
                 },
                 "example": {
                   "eventId": "event-1",
@@ -1413,7 +1411,7 @@
             }
           },
           "404": {
-            "description": "実装後の案：存在しない・削除済み・他所有者のイベント。現在の未実装ルートは別形式の404（本文は操作説明を参照）。",
+            "description": "イベントが見つかりません。",
             "content": {
               "application/json": {
                 "schema": {
@@ -1519,11 +1517,10 @@
     },
     "/api/events/{eventId}/chat": {
       "get": {
-        "operationId": "getEventChatDraft",
-        "summary": "【未実装・仕様案】チャット履歴を取得する",
-        "description": "【未実装・仕様案】レビューのために掲載しており、現在Try it outで実行すると404と{\"error\":\"Not Found\"}を返す。以下の200・エラー定義は実装後の案。認証は#57で追加し、現段階の所有者は既存APIと同じdemo-ownerを想定する。存在しない・削除済み・他所有者のイベントは取得しない。 1イベント1会話の保存済みuser/assistant発言をseq昇順で返す案。取得だけではLLMやSolverを呼ばない。#47でページング方式・件数上限・カーソルと応答メタデータを確定する。ここではクエリの既定値を定めない。",
-        "tags": ["イベント取得（未実装・仕様案）"],
-        "x-implementation-status": "planned",
+        "operationId": "getEventChat",
+        "summary": "チャット履歴を取得する",
+        "description": "認証は#57で追加する。現在はdemo-ownerの所有する未削除イベントに限定し、クライアントから所有者IDを受け取らない。取得でデータ保存・LLM・Solverの呼出しを行わない。 1イベント1会話のuser/assistant発言をseq昇順で全件返す。ページング・件数上限は設けない。発言追加だけではEvent.updatedAtは変わらない。",
+        "tags": ["Events"],
         "security": [],
         "parameters": [
           {
@@ -1539,11 +1536,11 @@
         ],
         "responses": {
           "200": {
-            "description": "実装後の成功応答案（現在は未実装）",
+            "description": "保存済みの全発言。履歴なしはmessagesが空配列",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DraftEventChat"
+                  "$ref": "#/components/schemas/EventChat"
                 },
                 "example": {
                   "eventId": "event-1",
@@ -1570,250 +1567,7 @@
             }
           },
           "404": {
-            "description": "実装後の案：存在しない・削除済み・他所有者のイベント。現在の未実装ルートは別形式の404（本文は操作説明を参照）。",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": ["error"],
-                  "additionalProperties": false,
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "required": ["code", "message", "details"],
-                      "additionalProperties": false,
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "enum": ["event_not_found"]
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "details": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "required": ["path", "reason"],
-                            "additionalProperties": false,
-                            "properties": {
-                              "path": {
-                                "type": "string"
-                              },
-                              "reason": {
-                                "type": "string"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "example": {
-                  "error": {
-                    "code": "event_not_found",
-                    "message": "イベントが見つかりません。",
-                    "details": []
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "イベントの処理に失敗しました。",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": ["error"],
-                  "additionalProperties": false,
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "required": ["code", "message", "details"],
-                      "additionalProperties": false,
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "enum": ["internal_error"]
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "details": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "required": ["path", "reason"],
-                            "additionalProperties": false,
-                            "properties": {
-                              "path": {
-                                "type": "string"
-                              },
-                              "reason": {
-                                "type": "string"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "example": {
-                  "error": {
-                    "code": "internal_error",
-                    "message": "イベントの処理に失敗しました。",
-                    "details": []
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/events/{eventId}/all": {
-      "get": {
-        "operationId": "getEventAllDraft",
-        "summary": "【未実装・仕様案】イベントの全情報を一括取得する",
-        "description": "【未実装・仕様案】レビューのために掲載しており、現在Try it outで実行すると404と{\"error\":\"Not Found\"}を返す。以下の200・エラー定義は実装後の案。認証は#57で追加し、現段階の所有者は既存APIと同じdemo-ownerを想定する。存在しない・削除済み・他所有者のイベントは取得しない。 イベント本体・表・制約・チャット全履歴をevent/schedule/constraints/chatへまとめて返す案。個別取得APIは維持する。所有者・パスワード・内部管理情報は返さない。全体が揃った場合だけ200とし、各業務データを同じ時点で取得する方法、全履歴のサイズ上限と超過時の応答は実装前に確定する。チャットの先頭ページだけを全履歴として返さない。",
-        "tags": ["イベント取得（未実装・仕様案）"],
-        "x-implementation-status": "planned",
-        "security": [],
-        "parameters": [
-          {
-            "name": "eventId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "example": "event-1"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "実装後の成功応答案（現在は未実装）",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DraftEventAll"
-                },
-                "example": {
-                  "event": {
-                    "eventId": "event-1",
-                    "title": "秋ライブ",
-                    "status": "planning",
-                    "date": "2026-11-01",
-                    "venue": null,
-                    "description": null,
-                    "createdAt": "2026-10-17T00:00:00.000Z",
-                    "updatedAt": "2026-10-17T00:00:00.000Z"
-                  },
-                  "schedule": {
-                    "eventId": "event-1",
-                    "updatedAt": "2026-10-17T00:00:00.000Z",
-                    "bands": [
-                      {
-                        "bandId": "band-1",
-                        "bandName": "バンドA",
-                        "requestText": null,
-                        "requestStatus": null
-                      },
-                      {
-                        "bandId": "band-2",
-                        "bandName": "バンドB",
-                        "requestText": null,
-                        "requestStatus": null
-                      }
-                    ],
-                    "members": [
-                      {
-                        "memberId": "member-1",
-                        "memberName": "田中"
-                      }
-                    ],
-                    "memberships": [
-                      {
-                        "bandId": "band-1",
-                        "memberId": "member-1"
-                      },
-                      {
-                        "bandId": "band-2",
-                        "memberId": "member-1"
-                      }
-                    ],
-                    "parts": [
-                      {
-                        "partId": "part-1",
-                        "partName": "第1部",
-                        "sortOrder": 0
-                      }
-                    ],
-                    "placements": [
-                      {
-                        "bandId": "band-1",
-                        "partId": "part-1",
-                        "order": 0
-                      }
-                    ],
-                    "unassignedBandIds": ["band-2"]
-                  },
-                  "constraints": {
-                    "eventId": "event-1",
-                    "updatedAt": "2026-10-17T00:00:00.000Z",
-                    "constraints": [
-                      {
-                        "constraint": {
-                          "schema_version": "1.0.0",
-                          "constraint_id": "constraint-1",
-                          "event_id": "event-1",
-                          "type": "at_position",
-                          "hardness": "hard",
-                          "priority": null,
-                          "enabled": true,
-                          "source_text": "Aを先頭に固定",
-                          "targets": {
-                            "band_id": "band-1"
-                          },
-                          "params": {
-                            "position": 0
-                          }
-                        },
-                        "sourceBandId": null
-                      }
-                    ]
-                  },
-                  "chat": {
-                    "eventId": "event-1",
-                    "messages": [
-                      {
-                        "messageId": "message-1",
-                        "seq": 0,
-                        "role": "user",
-                        "text": "Aを先頭に固定して",
-                        "replyToMessageId": null,
-                        "createdAt": "2026-10-17T00:00:00.000Z"
-                      },
-                      {
-                        "messageId": "message-2",
-                        "seq": 1,
-                        "role": "assistant",
-                        "text": "バンドAを先頭に固定する条件を確認してください。",
-                        "replyToMessageId": "message-1",
-                        "createdAt": "2026-10-17T00:00:01.000Z"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "実装後の案：存在しない・削除済み・他所有者のイベント。現在の未実装ルートは別形式の404（本文は操作説明を参照）。",
+            "description": "イベントが見つかりません。",
             "content": {
               "application/json": {
                 "schema": {
@@ -1918,15 +1672,9 @@
       }
     }
   },
-  "tags": [
-    {
-      "name": "イベント取得（未実装・仕様案）",
-      "description": "schedule・constraints・chat・allのGET契約案。HTTP APIの実装は後続Issue。レスポンス形・未決定事項はevents-draft.mdで精査する。"
-    }
-  ],
   "components": {
     "schemas": {
-      "DraftEventSchedule": {
+      "EventSchedule": {
         "type": "object",
         "properties": {
           "eventId": {
@@ -2061,7 +1809,7 @@
           "unassignedBandIds"
         ]
       },
-      "DraftEventConstraints": {
+      "EventConstraints": {
         "type": "object",
         "properties": {
           "eventId": {
@@ -2078,24 +1826,7 @@
               "type": "object",
               "properties": {
                 "constraint": {
-                  "type": "object",
-                  "description": "共有Constraint JSON。正本はapps/schema/constraint.schema.json。6種類の詳細スキーマはここに複製しない。この仕様案のobjectは完全な制約検証を表さず、参照の解決方法・契約テストは#18の実装時に接続する。",
-                  "example": {
-                    "schema_version": "1.0.0",
-                    "constraint_id": "constraint-1",
-                    "event_id": "event-1",
-                    "type": "at_position",
-                    "hardness": "hard",
-                    "priority": null,
-                    "enabled": true,
-                    "source_text": "Aを先頭に固定",
-                    "targets": {
-                      "band_id": "band-1"
-                    },
-                    "params": {
-                      "position": 0
-                    }
-                  }
+                  "$ref": "#/components/schemas/Constraint"
                 },
                 "sourceBandId": {
                   "type": ["string", "null"],
@@ -2108,7 +1839,7 @@
         },
         "required": ["eventId", "updatedAt", "constraints"]
       },
-      "DraftEventChat": {
+      "EventChat": {
         "type": "object",
         "properties": {
           "eventId": {
@@ -2156,69 +1887,615 @@
         },
         "required": ["eventId", "messages"]
       },
-      "DraftEventAll": {
+      "Constraint": {
+        "title": "Constraint",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ConstraintMinGapMember"
+          },
+          {
+            "$ref": "#/components/schemas/ConstraintMinGapBands"
+          },
+          {
+            "$ref": "#/components/schemas/ConstraintBefore"
+          },
+          {
+            "$ref": "#/components/schemas/ConstraintAtPosition"
+          },
+          {
+            "$ref": "#/components/schemas/ConstraintInRange"
+          },
+          {
+            "$ref": "#/components/schemas/ConstraintCount"
+          }
+        ]
+      },
+      "ConstraintCommon": {
+        "$defs": {
+          "SchemaVersion": {
+            "title": "SchemaVersion",
+            "type": "string",
+            "enum": ["1.0.0"]
+          },
+          "Hardness": {
+            "title": "Hardness",
+            "type": "string",
+            "enum": ["hard", "soft"]
+          },
+          "Priority": {
+            "title": "Priority",
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": ["high", "mid", "low"]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "ConstraintMinGapMember": {
+        "title": "MinGapMemberConstraint",
         "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "constraint_id",
+          "event_id",
+          "type",
+          "hardness",
+          "priority",
+          "enabled",
+          "targets",
+          "params"
+        ],
         "properties": {
-          "event": {
+          "schema_version": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/SchemaVersion"
+          },
+          "constraint_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "event_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": ["min_gap_member"]
+          },
+          "hardness": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Hardness"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Priority"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "source_text": {
+            "type": "string"
+          },
+          "targets": {
+            "$ref": "#/components/schemas/ConstraintMinGapMember/$defs/MinGapMemberTargets"
+          },
+          "params": {
+            "$ref": "#/components/schemas/ConstraintMinGapMember/$defs/MinGapMemberParams"
+          }
+        },
+        "$defs": {
+          "MinGapMemberTargets": {
+            "title": "MinGapMemberTargets",
             "type": "object",
+            "additionalProperties": false,
+            "required": ["member_id"],
             "properties": {
-              "eventId": {
+              "member_id": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "MinGapMemberParams": {
+            "title": "MinGapMemberParams",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["min_diff", "same_part_only"],
+            "properties": {
+              "min_diff": {
+                "type": "integer",
+                "minimum": 2
+              },
+              "same_part_only": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "ConstraintMinGapBands": {
+        "title": "MinGapBandsConstraint",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "constraint_id",
+          "event_id",
+          "type",
+          "hardness",
+          "priority",
+          "enabled",
+          "targets",
+          "params"
+        ],
+        "properties": {
+          "schema_version": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/SchemaVersion"
+          },
+          "constraint_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "event_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": ["min_gap_bands"]
+          },
+          "hardness": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Hardness"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Priority"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "source_text": {
+            "type": "string"
+          },
+          "targets": {
+            "$ref": "#/components/schemas/ConstraintMinGapBands/$defs/MinGapBandsTargets"
+          },
+          "params": {
+            "$ref": "#/components/schemas/ConstraintMinGapBands/$defs/MinGapBandsParams"
+          }
+        },
+        "$defs": {
+          "MinGapBandsTargets": {
+            "title": "MinGapBandsTargets",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["band_ids"],
+            "properties": {
+              "band_ids": {
+                "type": "array",
+                "minItems": 2,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "MinGapBandsParams": {
+            "title": "MinGapBandsParams",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["min_diff", "same_part_only"],
+            "properties": {
+              "min_diff": {
+                "type": "integer",
+                "minimum": 2
+              },
+              "same_part_only": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "ConstraintBefore": {
+        "title": "BeforeConstraint",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "constraint_id",
+          "event_id",
+          "type",
+          "hardness",
+          "priority",
+          "enabled",
+          "targets",
+          "params"
+        ],
+        "properties": {
+          "schema_version": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/SchemaVersion"
+          },
+          "constraint_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "event_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": ["before"]
+          },
+          "hardness": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Hardness"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Priority"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "source_text": {
+            "type": "string"
+          },
+          "targets": {
+            "$ref": "#/components/schemas/ConstraintBefore/$defs/BeforeTargets"
+          },
+          "params": {
+            "$ref": "#/components/schemas/ConstraintBefore/$defs/BeforeParams"
+          }
+        },
+        "$defs": {
+          "BeforeTargets": {
+            "title": "BeforeTargets",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["before_band_id", "after_band_id"],
+            "properties": {
+              "before_band_id": {
                 "type": "string",
                 "minLength": 1
               },
-              "title": {
+              "after_band_id": {
                 "type": "string",
-                "minLength": 1,
-                "pattern": "\\S",
-                "description": "前後の空白を除去したイベント名"
-              },
-              "status": {
-                "type": "string",
-                "enum": ["planning", "adjusting", "confirmed"]
-              },
-              "date": {
-                "type": ["string", "null"],
-                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
-                "description": "実在する開催日（YYYY-MM-DD）。未設定はnull"
-              },
-              "venue": {
-                "type": ["string", "null"]
-              },
-              "description": {
-                "type": ["string", "null"]
-              },
-              "createdAt": {
-                "type": "string",
-                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
-              },
-              "updatedAt": {
-                "type": "string",
-                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                "minLength": 1
               }
-            },
-            "required": [
-              "eventId",
-              "title",
-              "status",
-              "date",
-              "venue",
-              "description",
-              "createdAt",
-              "updatedAt"
-            ],
-            "additionalProperties": false
+            }
           },
-          "schedule": {
-            "$ref": "#/components/schemas/DraftEventSchedule"
+          "BeforeParams": {
+            "title": "BeforeParams",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {}
+          }
+        }
+      },
+      "ConstraintAtPosition": {
+        "title": "AtPositionConstraint",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "constraint_id",
+          "event_id",
+          "type",
+          "hardness",
+          "priority",
+          "enabled",
+          "targets",
+          "params"
+        ],
+        "properties": {
+          "schema_version": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/SchemaVersion"
           },
-          "constraints": {
-            "$ref": "#/components/schemas/DraftEventConstraints"
+          "constraint_id": {
+            "type": "string",
+            "minLength": 1
           },
-          "chat": {
-            "$ref": "#/components/schemas/DraftEventChat"
+          "event_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": ["at_position"]
+          },
+          "hardness": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Hardness"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Priority"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "source_text": {
+            "type": "string"
+          },
+          "targets": {
+            "$ref": "#/components/schemas/ConstraintAtPosition/$defs/AtPositionTargets"
+          },
+          "params": {
+            "$ref": "#/components/schemas/ConstraintAtPosition/$defs/AtPositionParams"
           }
         },
-        "required": ["event", "schedule", "constraints", "chat"]
+        "$defs": {
+          "AtPositionTargets": {
+            "title": "AtPositionTargets",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["band_id"],
+            "properties": {
+              "band_id": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "AtPositionParams": {
+            "title": "AtPositionParams",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["position"],
+            "properties": {
+              "position": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      },
+      "ConstraintInRange": {
+        "title": "InRangeConstraint",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "constraint_id",
+          "event_id",
+          "type",
+          "hardness",
+          "priority",
+          "enabled",
+          "targets",
+          "params"
+        ],
+        "properties": {
+          "schema_version": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/SchemaVersion"
+          },
+          "constraint_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "event_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": ["in_range"]
+          },
+          "hardness": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Hardness"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Priority"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "source_text": {
+            "type": "string"
+          },
+          "targets": {
+            "$ref": "#/components/schemas/ConstraintInRange/$defs/InRangeTargets"
+          },
+          "params": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConstraintInRange/$defs/InRangePositionParams"
+              },
+              {
+                "$ref": "#/components/schemas/ConstraintInRange/$defs/InRangePartParams"
+              }
+            ]
+          }
+        },
+        "$defs": {
+          "InRangeTargets": {
+            "title": "InRangeTargets",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["band_ids"],
+            "properties": {
+              "band_ids": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "InRangePositionParams": {
+            "title": "InRangePositionParams",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "position_from", "position_to"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["positions"]
+              },
+              "position_from": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "position_to": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "InRangePartParams": {
+            "title": "InRangePartParams",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "part_ids"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["parts"]
+              },
+              "part_ids": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        }
+      },
+      "ConstraintCount": {
+        "title": "CountConstraint",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "constraint_id",
+          "event_id",
+          "type",
+          "hardness",
+          "priority",
+          "enabled",
+          "targets",
+          "params"
+        ],
+        "properties": {
+          "schema_version": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/SchemaVersion"
+          },
+          "constraint_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "event_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": ["count"]
+          },
+          "hardness": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Hardness"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/ConstraintCommon/$defs/Priority"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "source_text": {
+            "type": "string"
+          },
+          "targets": {
+            "$ref": "#/components/schemas/ConstraintCount/$defs/CountTargets"
+          },
+          "params": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConstraintCount/$defs/CountPerPartParams"
+              },
+              {
+                "$ref": "#/components/schemas/ConstraintCount/$defs/CountInPartsParams"
+              }
+            ]
+          }
+        },
+        "$defs": {
+          "CountTargets": {
+            "title": "CountTargets",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["band_ids"],
+            "properties": {
+              "band_ids": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "CountPerPartParams": {
+            "title": "CountPerPartParams",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["scope", "min", "max"],
+            "properties": {
+              "scope": {
+                "type": "string",
+                "enum": ["per_part"]
+              },
+              "min": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "CountInPartsParams": {
+            "title": "CountInPartsParams",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["scope", "part_ids", "min", "max"],
+            "properties": {
+              "scope": {
+                "type": "string",
+                "enum": ["in_parts"]
+              },
+              "part_ids": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "min": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
       }
     }
   }

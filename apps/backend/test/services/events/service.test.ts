@@ -7,6 +7,13 @@ function fixture() {
   const repository = {
     list: vi.fn<EventRepository['list']>().mockResolvedValue([]),
     get: vi.fn<EventRepository['get']>().mockResolvedValue(null),
+    getSchedule: vi
+      .fn<EventRepository['getSchedule']>()
+      .mockResolvedValue(null),
+    getConstraints: vi
+      .fn<EventRepository['getConstraints']>()
+      .mockResolvedValue(null),
+    getChat: vi.fn<EventRepository['getChat']>().mockResolvedValue(null),
     create: vi.fn<EventRepository['create']>(),
     update: vi.fn<EventRepository['update']>(),
     remove: vi.fn<EventRepository['remove']>().mockResolvedValue(undefined),
@@ -42,4 +49,17 @@ describe('event service', () => {
     repository.remove.mockRejectedValue(new Error('DB failed'))
     await expect(service.remove('event')).rejects.toThrow('DB failed')
   })
+
+  it.each(['getSchedule', 'getConstraints', 'getChat'] as const)(
+    'scopes %s to the trusted owner and distinguishes a missing event from an empty collection',
+    async (method) => {
+      const { repository, service } = fixture()
+      await expect(service[method]('missing')).rejects.toThrow(
+        'event_not_found',
+      )
+      expect(repository[method]).toHaveBeenCalledWith('owner', 'missing')
+      repository[method].mockRejectedValueOnce(new Error('DB failed'))
+      await expect(service[method]('event')).rejects.toThrow('DB failed')
+    },
+  )
 })
