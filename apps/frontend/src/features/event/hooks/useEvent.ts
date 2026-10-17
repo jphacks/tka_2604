@@ -6,6 +6,7 @@ import {
   evaluateConstraint,
 } from '../../../shared/model/constraints'
 import type { EventData } from '../../../shared/model/event'
+import { dataSource } from '../../../shared/repositories/dataSource'
 import { workspaceRepository } from '../../../shared/repositories/workspaceRepository'
 import {
   type ConstraintPatch,
@@ -54,6 +55,17 @@ export function useEvent(eventId: string) {
         ...evaluateConstraint(constraint, event),
       }))
     : []
+  const edit: typeof dispatch = (action) => {
+    if (dataSource === 'api') {
+      dispatch({
+        type: 'notice',
+        message: '出演順・制約の保存API接続は準備中です。',
+        error: true,
+      })
+      return
+    }
+    dispatch(action)
+  }
   return {
     ...state,
     ...chat,
@@ -87,22 +99,21 @@ export function useEvent(eventId: string) {
       dispatch({ type: 'performances-updated', event }),
     dismissNotice: () => dispatch({ type: 'notice', message: '' }),
     setOrder: (id: string, value: number | null) =>
-      dispatch({ type: 'order', id, value }),
+      edit({ type: 'order', id, value }),
     setFixed: (id: string, fixed: boolean) =>
-      dispatch({ type: 'fixed', id, fixed }),
+      edit({ type: 'fixed', id, fixed }),
     resize: (count: number, sectionId?: string) =>
-      dispatch({ type: 'resize', count, sectionId }),
+      edit({ type: 'resize', count, sectionId }),
     move: (id: string, overId: string) => {
       if (!event || id === overId) return
       const target = findTarget(event, overId)
-      if (target) dispatch({ type: 'move', id, target })
+      if (target) edit({ type: 'move', id, target })
     },
     saveConstraint: (constraint: Constraint) =>
-      dispatch({ type: 'constraint-save', constraint }),
+      edit({ type: 'constraint-save', constraint }),
     updateConstraint: (id: string, patch: ConstraintPatch) =>
-      dispatch({ type: 'constraint-update', id, patch }),
-    deleteConstraint: (id: string) =>
-      dispatch({ type: 'constraint-delete', id }),
+      edit({ type: 'constraint-update', id, patch }),
+    deleteConstraint: (id: string) => edit({ type: 'constraint-delete', id }),
   }
 }
 export type EventController = ReturnType<typeof useEvent>

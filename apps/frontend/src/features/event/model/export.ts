@@ -38,7 +38,7 @@ export function exportEventCsv(event: EventData) {
   const link = document.createElement('a')
   link.href = url
   link.download = `${event.name}-出演順.csv`
-  document.body.append(link)
+  document.body.appendChild(link)
   link.click()
   link.remove()
   setTimeout(() => URL.revokeObjectURL(url), 1000)

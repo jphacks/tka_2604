@@ -1,5 +1,15 @@
 import { mockEventRepository } from '../../../mock/eventRepository'
+import { eventsApi } from '../../../shared/api/events'
+import {
+  dataSource,
+  unavailable,
+} from '../../../shared/repositories/dataSource'
 import type { EventRepository } from './types'
 
-// Composition point: replace only this adapter to connect a real API.
-export const eventRepository: EventRepository = mockEventRepository
+export const eventRepository: EventRepository =
+  dataSource === 'api'
+    ? {
+        getEvent: (eventId, signal) => eventsApi.getEvent(eventId, signal),
+        sendMessage: unavailable,
+      }
+    : mockEventRepository

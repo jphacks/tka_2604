@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
 
-import { useEventResource } from '../../../shared/hooks/useEventResource'
+import { useResource } from '../../../shared/hooks/useResource'
 import type { EventDetails } from '../../../shared/model/workspace'
 import { workspaceRepository } from '../../../shared/repositories/workspaceRepository'
 
@@ -38,12 +38,16 @@ export function useEventDeletion(eventId: string) {
   }
 }
 export function useEventSettings(eventId: string) {
-  const resource = useEventResource(eventId)
+  const load = useCallback(
+    (signal: AbortSignal) => workspaceRepository.getDetails(eventId, signal),
+    [eventId],
+  )
+  const resource = useResource(load)
   const [draft, setDraft] = useState<EventDetails | null>(null)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
-  const settings = draft ?? resource.data?.event
+  const settings = draft ?? resource.data
   async function save() {
     if (!settings || busy) return
     if (!settings.name.trim()) {
@@ -54,11 +58,11 @@ export function useEventSettings(eventId: string) {
     setError('')
     setNotice('')
     try {
-      await workspaceRepository.updateDetails(eventId, {
+      const saved = await workspaceRepository.updateDetails(eventId, {
         ...settings,
         name: settings.name.trim(),
       })
-      setDraft(settings)
+      setDraft(saved)
       resource.refresh()
       setNotice('イベントの設定を更新しました。')
     } catch (cause) {

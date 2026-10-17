@@ -13,9 +13,13 @@ export interface Performance {
   id: string
   name: string
   memberIds: string[]
+  requestText?: string | null
+  requestStatus?:
+    'pending' | 'needs_confirmation' | 'converted' | 'failed' | null
 }
 
 export interface Section {
+  name?: string | null
   id: string
   slots: (string | null)[]
 }
@@ -29,6 +33,8 @@ export interface ChatMessage {
 export interface EventData {
   id: string
   name: string
+  updatedAt?: string
+  constraintSources?: Record<string, string | null>
   members: Member[]
   performances: Performance[]
   sections: Section[]

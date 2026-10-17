@@ -1,5 +1,6 @@
 import { useParams } from 'react-router'
 
+import { dataSource } from '../../../shared/repositories/dataSource'
 import { AppFrame } from '../../../shared/ui/AppFrame'
 import { Button } from '../../../shared/ui/Button'
 import { LinkButton } from '../../../shared/ui/LinkButton'
@@ -39,9 +40,17 @@ export function EventPage() {
             </div>
           )}
           <div className="grid min-h-0 min-w-0 flex-1 xl:grid-cols-[minmax(0,1fr)_300px_320px]">
-            <SchedulePanel controller={controller} />
-            <ConstraintsPanel controller={controller} />
-            <ChatPanel controller={controller} />
+            <fieldset disabled={dataSource === 'api'} className="contents">
+              <SchedulePanel controller={controller} />
+              <ConstraintsPanel controller={controller} />
+            </fieldset>
+            {dataSource === 'mock' ? (
+              <ChatPanel controller={controller} />
+            ) : (
+              <p className="p-4 text-sm text-muted">
+                チャット・名簿編集・フォームのAPI接続は準備中です。
+              </p>
+            )}
           </div>
         </>
       )}

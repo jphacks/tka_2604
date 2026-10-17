@@ -104,3 +104,27 @@ npm run dev
 `http://localhost:8787/api/docs`のEventsで、一覧・作成・詳細・設定更新・論理削除を試行できる。PATCHにはGET応答の`updatedAt`を`expectedUpdatedAt`として渡す。APIの入出力は[イベントAPI](../apps/backend/docs/api/events.md)を参照。
 
 認証接続時は#57で仮ID定数を認証済みユーザーIDへ置き換える。Userの自動作成・認証の実装・リモートへの設定やデプロイはこの手順に含めない。
+
+## frontendをAPIモードで起動する（#19）
+
+既定は従来のモック。実装済みイベントAPIとローカルD1へ接続するには、migration・seedを先に実行する。
+
+```sh
+npm run db:migrate:local
+npm run db:seed:local
+VITE_DATA_SOURCE=api npm run dev
+```
+
+`http://localhost:5173` で「デモアカウントで試す」を選ぶ。ヘッダー下に「API接続」が表示される。Viteの `/api` proxyを経由し、Workers配信の画面でも同一originへ接続する。Vite環境変数はビルド時に固定されるため、既存サーバーは停止してから切り替える。
+
+イベントの一覧・作成・設定変更・論理削除はDBへ反映され、再読込してデモに入り直しても復元される。出演順・部名・名簿・希望原文・制約はAPIから閲覧できる。配置・制約の保存はPR #69マージ後、名簿編集は#16実装後に接続する。フォーム・チャット・Solverは対象外で、APIモードでは準備中として扱う。ログインは実認証ではなく、BEの所有者は従来どおり `demo-owner`。
+
+モックへ戻す場合は `VITE_DATA_SOURCE=mock npm run dev`。APIエラーで自動的にモックへ切り替わることはない。
+
+APIモードのブラウザテスト（ローカルD1の準備後）：
+
+```sh
+npm run test:e2e:api --workspace=@jphack-2026/frontend
+```
+
+APIモード専用の画面をポート5175で起動する。Workersが8787で未起動なら同時起動する。作成・保存失敗／再試行・再読込・更新競合・削除と、seedの名簿／部名を実API経由で確認する。テストで作成したイベントだけを削除する。既存モックのブラウザテスト `npm run test:e2e` は引き続き5174を使う。

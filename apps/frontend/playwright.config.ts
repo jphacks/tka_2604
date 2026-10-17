@@ -2,6 +2,7 @@ import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
   testDir: './e2e',
+  outputDir: './test-results/mock',
   testMatch: '**/*.spec.ts',
   fullyParallel: true,
   workers: 2,

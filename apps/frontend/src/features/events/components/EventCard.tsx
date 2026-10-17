@@ -51,7 +51,7 @@ export function EventCard({ event }: { event: EventSummary }) {
         </div>
         <div>
           <p className="text-lg font-semibold tabular-nums">
-            {event.responseCount}
+            {event.responseCount ?? '—'}
             <span className="ml-1 text-[10px] font-normal text-muted">件</span>
           </p>
           <p className="mt-1 text-[10px] text-muted">フォーム回答</p>

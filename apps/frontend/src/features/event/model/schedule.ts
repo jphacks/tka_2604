@@ -25,7 +25,7 @@ export function buildSchedule(event: EventData) {
     offset += section.slots.length
     return {
       id: section.id,
-      name: `第${index + 1}部`,
+      name: section.name || `第${index + 1}部`,
       capacity: section.slots.length,
       assigned: section.slots.filter(Boolean).length,
       range: `${start}–${offset}`,

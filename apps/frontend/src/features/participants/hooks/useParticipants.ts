@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 
-import { useEventResource } from '../../../shared/hooks/useEventResource'
+import { useResource } from '../../../shared/hooks/useResource'
 import { memberNames } from '../../../shared/model/event'
 import type { PerformanceDraft } from '../../../shared/model/workspace'
 import { validatePerformance } from '../../../shared/model/workspace'
+import { dataSource } from '../../../shared/repositories/dataSource'
 import { workspaceRepository } from '../../../shared/repositories/workspaceRepository'
 import { buildSchedule } from '../../event/model/schedule'
 
@@ -15,7 +16,11 @@ const emptyDraft: PerformanceDraft = {
   contact: '',
 }
 export function useParticipants(eventId: string) {
-  const resource = useEventResource(eventId)
+  const load = useCallback(
+    (signal: AbortSignal) => workspaceRepository.getRoster(eventId, signal),
+    [eventId],
+  )
+  const resource = useResource(load)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<'all' | 'unassigned' | 'assigned'>('all')
   const [editorOpen, setEditorOpen] = useState(false)
@@ -39,7 +44,7 @@ export function useParticipants(eventId: string) {
       : [],
   )
   const submissions = new Map(
-    resource.data?.submissions.map((submission) => [
+    resource.data?.submissions?.map((submission) => [
       submission.performanceId,
       submission,
     ]),
@@ -110,6 +115,7 @@ export function useParticipants(eventId: string) {
   }
   return {
     ...resource,
+    canEdit: dataSource === 'mock',
     query,
     filter,
     editorOpen,
@@ -133,8 +139,8 @@ export function useParticipants(eventId: string) {
       members: new Set(rows.flatMap((row) => row.memberIds)).size,
       unassigned: data?.unassigned.length ?? 0,
       responses:
-        resource.data?.submissions.filter((item) => item.source === 'form')
-          .length ?? 0,
+        resource.data?.submissions?.filter((item) => item.source === 'form')
+          .length ?? null,
     },
     setQuery,
     setFilter,
