@@ -3,21 +3,52 @@ import { HTTPException } from 'hono/http-exception'
 import { validator } from 'hono/validator'
 
 import { createDb } from '../db/index'
+import { solverClient } from '../integrations/solver'
 import { eventsRepository } from '../repositories/events'
+import { solverRepository } from '../repositories/solver'
 import { EventError } from '../services/events/errors'
 import { eventService } from '../services/events/service'
 import {
   createEventSchema,
   updateEventSchema,
 } from '../services/events/validation'
+import { SolverError } from '../services/solver/errors'
+import { solveService } from '../services/solver/service'
+import { solveInputSchema } from '../services/solver/validation'
 
 type EventEnv = {
   Bindings: CloudflareBindings
-  Variables: { eventService: ReturnType<typeof eventService> }
+  Variables: {
+    eventService: ReturnType<typeof eventService>
+    solveService: ReturnType<typeof solveService>
+  }
 }
 
 export const eventRoutes = new Hono<EventEnv>()
   .onError((error, c) => {
+    if (error instanceof SolverError) {
+      const status =
+        error.code === 'invalid_input'
+          ? 422
+          : error.code === 'solver_unavailable'
+            ? 503
+            : error.code === 'solver_timeout'
+              ? 504
+              : 502
+      return c.json(
+        {
+          error: {
+            code: error.code,
+            message:
+              status === 422
+                ? '入力データが不正です。'
+                : '出演順の計算に失敗しました。',
+            details: error.details,
+          },
+        },
+        status,
+      )
+    }
     if (error instanceof EventError) {
       const status = error.code === 'event_not_found' ? 404 : 409
       return c.json(
@@ -61,9 +92,18 @@ export const eventRoutes = new Hono<EventEnv>()
     // #57 replaces this server-side placeholder with the authenticated user ID.
     // Never resolve the owner from query parameters, request bodies or headers.
     const userId = 'demo-owner'
+    const db = createDb(c.env.DB)
+    c.set('eventService', eventService(eventsRepository(db), userId))
     c.set(
-      'eventService',
-      eventService(eventsRepository(createDb(c.env.DB)), userId),
+      'solveService',
+      solveService(
+        solverRepository(db),
+        solverClient({
+          url: c.env.SOLVER_API_URL,
+          token: c.env.SOLVER_API_TOKEN,
+        }),
+        userId,
+      ),
     )
     await next()
   })
@@ -107,6 +147,35 @@ export const eventRoutes = new Hono<EventEnv>()
       await c.var.eventService.getConstraints(c.req.param('eventId')),
       200,
     ),
+  )
+  .post(
+    '/:eventId/solve',
+    validator('json', (body: unknown, c) => {
+      const parsed = solveInputSchema.safeParse(body)
+      if (!parsed.success)
+        return c.json(
+          {
+            error: {
+              code: 'invalid_input',
+              message: '入力データが不正です。',
+              details: parsed.error.issues.map((issue) => ({
+                path: `/${issue.path.join('/')}`,
+                reason: issue.message,
+              })),
+            },
+          },
+          422,
+        )
+      return parsed.data
+    }),
+    async (c) =>
+      c.json(
+        await c.var.solveService.execute(
+          c.req.param('eventId'),
+          c.req.valid('json'),
+        ),
+        200,
+      ),
   )
   .get('/:eventId/chat', async (c) =>
     c.json(await c.var.eventService.getChat(c.req.param('eventId')), 200),

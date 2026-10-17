@@ -215,5 +215,8 @@ export async function saveEvent(
   }
   const saved = await loadEvent(db, userId, eventId)
   if (!saved) throw new Error('event_not_found')
+  // Do not hand a concurrent writer's snapshot to a subsequent solver invocation.
+  if (saved.event.updatedAt !== updatedAt)
+    throw new Error('event_save_conflict')
   return saved
 }

@@ -2,7 +2,7 @@
 
 ## 概要
 
-BEから制約・部・バンド・メンバー・所属・現在配置を受け取り、配置・探索状態・制約ごとの達成状況を返すSolver APIの入出力契約。APIは未実装。
+BEから制約・部・バンド・メンバー・所属・現在配置を受け取り、配置・探索状態・制約ごとの達成状況を返すSolver APIの入出力契約。Pythonの計算APIは#27で実装する。BE側の転送・再評価・保存は[出演順の計算API](api/solver.md)を参照。
 
 ## API仕様
 
@@ -88,8 +88,11 @@ BEから制約・部・バンド・メンバー・所属・現在配置を受け
 ```
 
 - IDは文字列として送り、Solverは同じIDを返す。例の短いIDは説明用。
-- `bands`・`parts`は必須で各1件以上。入力不備はHTTP 422で返す。
-- `constraints`は一覧全件。`enabled: false`は計算対象外。
+- 最上位の`eventId`・`parts`・`bands`・`members`・`memberships`・`constraints`・`currentPlacements`はすべて必須。`bands`・`parts`は各1件以上、その他の配列は空を許す。入力不備はHTTP 422で返す。
+- バンド・メンバー・部・制約の各IDはそれぞれ一意な空でない文字列。所属のバンド／メンバーの組合せ、現在配置のバンドIDも重複させない。所属・現在配置・有効制約の参照先は同じ入力イベント内に存在し、全制約の`event_id`は最上位の`eventId`と一致させる。
+- #15の保存形式に合わせ、部の`sortOrder`は配列順に0から連続、現在配置の`order`は配置済みの部内で0から連続とする。空の部は許す。現在配置のhard違反は構造不備として拒否しない。
+- `constraints`は一覧全件。`enabled: false`もJSONを変更せずSolverへ渡し、計算対象外にする。無効制約は対象バンド／メンバーの存在、`part_ids`の存在、位置の上限など現在の名簿・部への参照検証を省く。削除済みの対象や古い部・位置が残っていても計算を妨げず、結果は`disabled`とする。
+- 無効制約でもJSON Schema・`event_id`・hard/priorityの対応や`min <= max`・範囲の開始／終了の順序といった参照によらない検証は行う。有効化すると参照検証の対象へ戻る。
 - `currentPlacements`は探索のヒント。未配置バンドは含めず、現在配置がなければ空配列を送る。固定・変更量最小化は意味しない。
 - 部・位置・部内順は0始まり。配置の`partId`は文字列ID、制約の`part_ids`は`sortOrder`の番号。全体位置は部順に連結した配置順で、部の境界は間隔を増やさない。
 - 固定枠数は持たず、部の本数は`count`で指定する。固定位置はhardの`at_position`で指定する。
@@ -263,3 +266,7 @@ HTTP 200のレスポンスに`diagnostics`を任意で追加できる。原因�
 ## 懸念点・未決定事項
 
 契約の未確定事項は[#20](https://github.com/jphacks/tka_2604/issues/20)、評価方針は[#24](https://github.com/jphacks/tka_2604/issues/24)、実行先・認証・時間上限は[#26](https://github.com/jphacks/tka_2604/issues/26)で管理する。
+
+## 共有する受け入れ例
+
+[solver-contract.json](../../schema/examples/solver-contract.json)に本書の入力と5種類の200応答を収録する。`request`を共通入力とし、`cases[].constraints`がある場合はその全制約へ置換する。BEはこの例を`test/services/solver/contract.test.ts`から検証する。完全配置は全バンド1回、部分配置は配置・未配置の和集合が全バンド1回になること、判定できるhard違反と達成判定の不一致を拒否することを同じテスト群で確認する。

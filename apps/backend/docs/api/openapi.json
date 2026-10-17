@@ -1670,6 +1670,473 @@
           }
         }
       }
+    },
+    "/api/events/{eventId}/solve": {
+      "post": {
+        "operationId": "solveEvent",
+        "summary": "保存済みイベントから出演順を計算し表へ保存する",
+        "tags": ["Events"],
+        "security": [],
+        "description": "ボタンとchatで共有する計算Service。名簿・部・所属・現在配置・制約を同じD1 batchで取得する。constraintsを渡した場合は検証・原子的保存後に再取得した入力を送信する。省略時は保存済み制約を使う。currentPlacementsはヒント。optimal/feasible/partialの結果を再評価しupdatedAtによる競合確認後に保存する。未配置はBand_Orderに行がない状態。infeasible/unknownまたは外部エラーでは現在配置を変更しない。保存済みの条件変更は外部エラー時も維持する。通信待機は310秒、接続URLとトークンはWorkers環境変数のみ。認証は#57で追加。 無効制約はenabled:falseのまま渡し、対象ID・部・位置の参照検証と計算から除外する。古い参照が残っていても受理し、結果はdisabledを要求する。Schema・event_id・優先度やmin/max等の整合性検証は維持する。",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "example": "event-1"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolveInput"
+              },
+              "example": {
+                "expectedUpdatedAt": "2026-10-17T00:00:00.000Z"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "探索状態と計算結果。配置があれば競合確認後に保存した表、配置がなければschedule:null。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolveResponse"
+                },
+                "example": {
+                  "result": {
+                    "eventId": "event-1",
+                    "status": "unknown",
+                    "placements": null,
+                    "unassignedBandIds": null,
+                    "constraintResults": null
+                  },
+                  "schedule": null
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSONの形式が不正です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "invalid_input",
+                    "message": "JSONの形式が不正です。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "イベントが見つかりません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_not_found"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_not_found",
+                    "message": "イベントが見つかりません。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "イベントが更新されました。再取得してください。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_save_conflict"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "event_save_conflict",
+                    "message": "イベントが更新されました。再取得してください。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力データが不正です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "invalid_input",
+                    "message": "入力データが不正です。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "イベントの処理に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "internal_error",
+                    "message": "イベントの処理に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "出演順の計算に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "solver_invalid_response",
+                            "solver_upstream_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "solver_invalid_response",
+                    "message": "出演順の計算に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "出演順の計算に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["solver_unavailable"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "solver_unavailable",
+                    "message": "出演順の計算に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "出演順の計算に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["solver_timeout"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "error": {
+                    "code": "solver_timeout",
+                    "message": "出演順の計算に失敗しました。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2496,6 +2963,231 @@
             }
           }
         }
+      },
+      "SolverPlacement": {
+        "type": "object",
+        "properties": {
+          "bandId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "partId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": ["bandId", "partId", "order"]
+      },
+      "SolverDiagnostic": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "constraintIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["code", "constraintIds", "message"]
+      },
+      "SolverConstraintResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "constraintId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": ["met", "unmet", "disabled", "unchecked"]
+          }
+        },
+        "required": ["constraintId", "status"]
+      },
+      "SolverResult": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "eventId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "diagnostics": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SolverDiagnostic"
+                }
+              },
+              "status": {
+                "type": "string",
+                "enum": ["optimal", "feasible"]
+              },
+              "placements": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SolverPlacement"
+                }
+              },
+              "unassignedBandIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "maxItems": 0
+              },
+              "constraintResults": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SolverConstraintResult"
+                }
+              }
+            },
+            "required": [
+              "eventId",
+              "status",
+              "placements",
+              "unassignedBandIds",
+              "constraintResults"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "eventId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "diagnostics": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SolverDiagnostic"
+                }
+              },
+              "status": {
+                "const": "partial"
+              },
+              "placements": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SolverPlacement"
+                },
+                "minItems": 1
+              },
+              "unassignedBandIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              },
+              "constraintResults": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SolverConstraintResult"
+                }
+              }
+            },
+            "required": [
+              "eventId",
+              "status",
+              "placements",
+              "unassignedBandIds",
+              "constraintResults"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "eventId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "diagnostics": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SolverDiagnostic"
+                }
+              },
+              "status": {
+                "type": "string",
+                "enum": ["infeasible", "unknown"]
+              },
+              "placements": {
+                "type": "null"
+              },
+              "unassignedBandIds": {
+                "type": "null"
+              },
+              "constraintResults": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "eventId",
+              "status",
+              "placements",
+              "unassignedBandIds",
+              "constraintResults"
+            ]
+          }
+        ]
+      },
+      "SolveInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedUpdatedAt": {
+            "type": "string",
+            "description": "取得済みイベントのupdatedAt（UTCのISO 8601日時）"
+          },
+          "constraints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Constraint"
+            },
+            "description": "確認済みの全制約。省略時は保存済み一覧を使う。enabled:falseもそのまま保存・転送し、対象ID・部・位置の参照検証と計算から除外する。"
+          }
+        },
+        "required": ["expectedUpdatedAt"]
+      },
+      "SolveResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/SolverResult"
+          },
+          "schedule": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EventSchedule"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": ["result", "schedule"]
       }
     }
   }

@@ -1,0 +1,317 @@
+{
+  "request": {
+    "eventId": "event-1",
+    "parts": [
+      {
+        "partId": "part-1",
+        "sortOrder": 0
+      },
+      {
+        "partId": "part-2",
+        "sortOrder": 1
+      }
+    ],
+    "bands": [
+      {
+        "bandId": "band-a"
+      },
+      {
+        "bandId": "band-b"
+      },
+      {
+        "bandId": "band-c"
+      },
+      {
+        "bandId": "band-d"
+      }
+    ],
+    "members": [
+      {
+        "memberId": "m1"
+      },
+      {
+        "memberId": "m2"
+      }
+    ],
+    "memberships": [
+      {
+        "bandId": "band-a",
+        "memberId": "m1"
+      },
+      {
+        "bandId": "band-c",
+        "memberId": "m1"
+      },
+      {
+        "bandId": "band-b",
+        "memberId": "m2"
+      },
+      {
+        "bandId": "band-d",
+        "memberId": "m2"
+      }
+    ],
+    "constraints": [
+      {
+        "schema_version": "1.0.0",
+        "constraint_id": "c-gap-member",
+        "event_id": "event-1",
+        "source_text": "m1の出演の間に1バンド以上空けたい",
+        "type": "min_gap_member",
+        "hardness": "hard",
+        "priority": null,
+        "enabled": true,
+        "targets": {
+          "member_id": "m1"
+        },
+        "params": {
+          "min_diff": 2,
+          "same_part_only": false
+        }
+      },
+      {
+        "schema_version": "1.0.0",
+        "constraint_id": "c-gap-bands",
+        "event_id": "event-1",
+        "type": "min_gap_bands",
+        "hardness": "soft",
+        "priority": "high",
+        "enabled": true,
+        "targets": {
+          "band_ids": ["band-b", "band-d"]
+        },
+        "params": {
+          "min_diff": 2,
+          "same_part_only": false
+        }
+      },
+      {
+        "schema_version": "1.0.0",
+        "constraint_id": "c-count",
+        "event_id": "event-1",
+        "type": "count",
+        "hardness": "hard",
+        "priority": null,
+        "enabled": true,
+        "targets": {
+          "band_ids": ["band-a", "band-b", "band-c", "band-d"]
+        },
+        "params": {
+          "scope": "per_part",
+          "min": 2,
+          "max": 2
+        }
+      }
+    ],
+    "currentPlacements": [
+      {
+        "bandId": "band-a",
+        "partId": "part-1",
+        "order": 0
+      },
+      {
+        "bandId": "band-b",
+        "partId": "part-1",
+        "order": 1
+      }
+    ]
+  },
+  "cases": [
+    {
+      "response": {
+        "eventId": "event-1",
+        "status": "optimal",
+        "unassignedBandIds": [],
+        "placements": [
+          {
+            "bandId": "band-a",
+            "partId": "part-1",
+            "order": 0
+          },
+          {
+            "bandId": "band-b",
+            "partId": "part-1",
+            "order": 1
+          },
+          {
+            "bandId": "band-c",
+            "partId": "part-2",
+            "order": 0
+          },
+          {
+            "bandId": "band-d",
+            "partId": "part-2",
+            "order": 1
+          }
+        ],
+        "constraintResults": [
+          {
+            "constraintId": "c-gap-member",
+            "status": "met"
+          },
+          {
+            "constraintId": "c-gap-bands",
+            "status": "met"
+          },
+          {
+            "constraintId": "c-count",
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "response": {
+        "eventId": "event-1",
+        "status": "feasible",
+        "unassignedBandIds": [],
+        "placements": [
+          {
+            "bandId": "band-a",
+            "partId": "part-1",
+            "order": 0
+          },
+          {
+            "bandId": "band-b",
+            "partId": "part-1",
+            "order": 1
+          },
+          {
+            "bandId": "band-d",
+            "partId": "part-2",
+            "order": 0
+          },
+          {
+            "bandId": "band-c",
+            "partId": "part-2",
+            "order": 1
+          }
+        ],
+        "constraintResults": [
+          {
+            "constraintId": "c-gap-member",
+            "status": "met"
+          },
+          {
+            "constraintId": "c-gap-bands",
+            "status": "unmet"
+          },
+          {
+            "constraintId": "c-count",
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "response": {
+        "eventId": "event-1",
+        "status": "partial",
+        "placements": [
+          {
+            "bandId": "band-a",
+            "partId": "part-1",
+            "order": 0
+          },
+          {
+            "bandId": "band-b",
+            "partId": "part-2",
+            "order": 0
+          }
+        ],
+        "unassignedBandIds": ["band-c", "band-d"],
+        "constraintResults": [
+          {
+            "constraintId": "c-gap-member",
+            "status": "unchecked"
+          },
+          {
+            "constraintId": "c-gap-bands",
+            "status": "unchecked"
+          },
+          {
+            "constraintId": "c-count",
+            "status": "unchecked"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "hard_constraints_conflict",
+            "constraintIds": ["c-count"],
+            "message": "全4バンドに対して、2部それぞれ最大1バンドのため、全配置できません。"
+          }
+        ]
+      },
+      "constraints": [
+        {
+          "schema_version": "1.0.0",
+          "constraint_id": "c-gap-member",
+          "event_id": "event-1",
+          "source_text": "m1の出演の間に1バンド以上空けたい",
+          "type": "min_gap_member",
+          "hardness": "hard",
+          "priority": null,
+          "enabled": true,
+          "targets": {
+            "member_id": "m1"
+          },
+          "params": {
+            "min_diff": 2,
+            "same_part_only": false
+          }
+        },
+        {
+          "schema_version": "1.0.0",
+          "constraint_id": "c-gap-bands",
+          "event_id": "event-1",
+          "type": "min_gap_bands",
+          "hardness": "soft",
+          "priority": "high",
+          "enabled": true,
+          "targets": {
+            "band_ids": ["band-b", "band-d"]
+          },
+          "params": {
+            "min_diff": 2,
+            "same_part_only": false
+          }
+        },
+        {
+          "schema_version": "1.0.0",
+          "constraint_id": "c-count",
+          "event_id": "event-1",
+          "type": "count",
+          "hardness": "hard",
+          "priority": null,
+          "enabled": true,
+          "targets": {
+            "band_ids": ["band-a", "band-b", "band-c", "band-d"]
+          },
+          "params": {
+            "scope": "per_part",
+            "min": 0,
+            "max": 1
+          }
+        }
+      ]
+    },
+    {
+      "response": {
+        "eventId": "event-1",
+        "status": "infeasible",
+        "unassignedBandIds": null,
+        "placements": null,
+        "constraintResults": null
+      }
+    },
+    {
+      "response": {
+        "eventId": "event-1",
+        "status": "unknown",
+        "unassignedBandIds": null,
+        "placements": null,
+        "constraintResults": null
+      }
+    }
+  ]
+}

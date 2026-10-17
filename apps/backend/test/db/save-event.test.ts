@@ -1,10 +1,10 @@
 import { eq } from 'drizzle-orm'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createEvent, loadEvent } from '../../src/db/events'
 import { createDb } from '../../src/db/index'
 import { type EventChanges, saveEvent } from '../../src/db/save-event'
-import { bands, constraints, users } from '../../src/db/schema'
+import { bands, constraints, events, users } from '../../src/db/schema'
 import { testDatabase } from '../helpers/database'
 
 let local: Awaited<ReturnType<typeof testDatabase>>
@@ -60,6 +60,7 @@ beforeEach(async () => {
   }
 })
 afterEach(async () => {
+  vi.restoreAllMocks()
   await local?.dispose()
 })
 const save = () =>
@@ -241,4 +242,27 @@ it('keeps server-managed wishes and provenance through event-wide replacement', 
   expect(result.parts[0].partName).toBe('前半')
   expect(result.parts[1].partName).toBeNull()
   expect(await loadEvent(db, 'owner', saved.event.eventId)).toEqual(result)
+})
+
+it('does not return a newer concurrent snapshot as the result of its own save', async () => {
+  const batch = db.batch.bind(db)
+  let calls = 0
+  vi.spyOn(db, 'batch').mockImplementation(async (queries) => {
+    const result = await batch(queries)
+    // First batch loads the event, second commits this save. A writer wins before reload.
+    calls += 1
+    if (calls === 2)
+      await db
+        .update(events)
+        .set({
+          updatedAt: '2099-01-01T00:00:00.000Z',
+          title: 'Concurrent edit',
+        })
+        .where(eq(events.eventId, saved.event.eventId))
+    return result
+  })
+  await expect(save()).rejects.toThrow('event_save_conflict')
+  expect((await loadEvent(db, 'owner', saved.event.eventId))?.event.title).toBe(
+    'Concurrent edit',
+  )
 })

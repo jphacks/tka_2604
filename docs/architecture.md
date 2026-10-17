@@ -19,12 +19,12 @@
 
 ## 配置
 
-| 場所            | 責務・状態                                                                           |
-| --------------- | ------------------------------------------------------------------------------------ |
-| `apps/frontend` | 画面・メモリ上のデモデータ・制約の手動編集と達成判定                                 |
-| `apps/backend`  | Hono APIとWorkersによる配信。health・イベント本体API・OpenAPI JSON・Swagger UIを提供 |
-| `apps/schema`   | 共有する制約のJSON Schema。実装済み                                                  |
-| `apps/solver`   | Pythonの計算処理。現在は生成モデルと疎通確認用のFastAPIのみ                          |
+| 場所            | 責務・状態                                                                                   |
+| --------------- | -------------------------------------------------------------------------------------------- |
+| `apps/frontend` | 画面・メモリ上のデモデータ・制約の手動編集と達成判定                                         |
+| `apps/backend`  | Hono APIとWorkersによる配信。イベント取得・計算転送／再評価／保存・OpenAPI・Swagger UIを提供 |
+| `apps/schema`   | 共有する制約のJSON Schema。実装済み                                                          |
+| `apps/solver`   | Pythonの計算処理。現在は生成モデルと疎通確認用のFastAPIのみ                                  |
 
 ## 処理の流れ
 
@@ -53,7 +53,7 @@ health・イベント本体APIにOpenAPI定義・RPC型共有を導入済み。D
 
 外部通信・LLMはテストで差し替えられるようにする。LLMはGPT-6 Luna・lowを採用する方針。処理・保存の境界は[AIチャット設計](../apps/backend/docs/AIチャット設計.md)を参照する。認証・公開フォームの詳細、ソルバーの公開先は未確定。将来のためだけの層や汎用化は増やさない。
 
-health・イベント本体APIでOpenAPIの配信・閲覧・RPC型共有を確認する。イベント本体APIはZodで入力を検証し、テスト用D1への保存・再取得をAPIテストとDB結合テストで確認する。認証接続前はRoute内の仮ID定数`demo-owner`をServiceへ渡し、#57で認証済みユーザーIDへ置き換える。frontendの接続は#19で行う。[イベントAPI](../apps/backend/docs/api/events.md)を参照。
+health・イベント本体APIでOpenAPIの配信・閲覧・RPC型共有を確認する。イベント本体APIはZodで入力を検証し、テスト用D1への保存・再取得をAPIテストとDB結合テストで確認する。計算APIは保存済みの名簿・制約をRepositoryから取得し、外部Solverの結果を再検証して既存の原子的保存へ接続する。詳細は[計算API](../apps/backend/docs/api/solver.md)。Pythonの`/solve`とFE接続は別担当で実装する。認証接続前はRoute内の仮ID定数`demo-owner`をServiceへ渡し、#57で認証済みユーザーIDへ置き換える。frontendの接続は#19で行う。[イベントAPI](../apps/backend/docs/api/events.md)を参照。
 
 参考：[Hono RPCの解説](https://zenn.dev/yusukebe/articles/a00721f8b3b92e#rpcを作る)、[Swagger UI](https://hono.dev/examples/swagger-ui)。
 

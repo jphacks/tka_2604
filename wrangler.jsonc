@@ -18,6 +18,8 @@
   "env": {
     "develop": {
       "name": "dev",
+      "vars": { "SOLVER_API_URL": "https://tka-2604-solver.vercel.app" },
+      "secrets": { "required": ["SOLVER_API_TOKEN"] },
       "d1_databases": [
         {
           "binding": "DB",
@@ -29,6 +31,8 @@
     },
     "main": {
       "name": "main",
+      "vars": { "SOLVER_API_URL": "https://tka-2604-solver.vercel.app" },
+      "secrets": { "required": ["SOLVER_API_TOKEN"] },
       "d1_databases": [
         {
           "binding": "DB",
