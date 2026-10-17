@@ -33,9 +33,9 @@ def build_cases() -> dict[str, dict]:
         "soft_conflict": _case(
             "soft_conflict", real, seed=34, capacities=[13, 13, 12], soft_conflict=True
         ),
-        # 各部最大12組で38組は全配置できない。部分配置か返せる配置なしになる。
+        # 同じ位置を要求するhard制約が衝突し、全配置できない。
         "hard_conflict": _case(
-            "hard_conflict", real, seed=34, capacities=[12, 12, 12], exact_capacity=False
+            "hard_conflict", real, seed=34, capacities=[12, 12, 12]
         ),
         # 掛け持ち全員に2組以上の間隔を求める。探索未完了になりうる重いケース。
         "heavy": _case("heavy", real, seed=7, capacities=[13, 13, 12], member_gap=3),
@@ -49,7 +49,6 @@ def _case(
     seed: int,
     capacities: list[int],
     member_gap: int = 2,
-    exact_capacity: bool = True,
     soft_conflict: bool = False,
 ) -> dict:
     rng = random.Random(seed)
@@ -66,20 +65,6 @@ def _case(
     }
 
     builder = _Constraints(event_id)
-    if exact_capacity:
-        for i, cap in enumerate(capacities):
-            builder.add(
-                f"c-cap-{i + 1}", "count", "hard", {"band_ids": bands},
-                {"scope": "in_parts", "part_ids": [i], "min": cap, "max": cap},
-                f"第{i + 1}部は{cap}組",
-            )
-    else:
-        builder.add(
-            "c-cap", "count", "hard", {"band_ids": bands},
-            {"scope": "per_part", "min": 0, "max": max(capacities)},
-            f"各部は最大{max(capacities)}組まで",
-        )
-
     for member, member_bands in sorted(roster.bands_of.items()):
         if len(member_bands) >= 2:
             builder.add(
@@ -110,6 +95,16 @@ def _case(
         {"kind": "positions", "position_from": placed_count - 3, "position_to": placed_count - 1},
         f"{'・'.join(label(x) for x in last3)}は最後の3枠",
     )
+    if name == "hard_conflict":
+        conflict_a, conflict_b = unassigned
+        builder.add(
+            "c-conflict-a", "at_position", "hard", {"band_id": conflict_a},
+            {"position": 0}, f"{label(conflict_a)}をトップにする",
+        )
+        builder.add(
+            "c-conflict-b", "at_position", "hard", {"band_id": conflict_b},
+            {"position": 0}, f"{label(conflict_b)}をトップにする",
+        )
 
     # softは参照配置で満たすとは限らない。達成状況は参照配置での判定として記録する。
     busiest = sorted(roster.bands_of, key=lambda m: (-len(roster.bands_of[m]), m))[:3]

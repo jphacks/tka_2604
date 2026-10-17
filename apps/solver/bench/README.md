@@ -33,7 +33,7 @@ uv --directory apps/solver run python bench/csv_to_request.py bench/data/roster_
 | `demo`          | `demo_20.csv`   | 2部（10/10）。部の本数、掛け持ちの連続禁止、トップ・トリ・前後・部の指定 | optimal / feasible           |
 | `standard`      | `roster_38.csv` | 3部（13/13/12）。demoと同じ種類の制約                                    | optimal / feasible           |
 | `soft_conflict` | `roster_38.csv` | standardに両立しないsoft（AはBより前／BはAより前）を追加                 | optimal / feasible           |
-| `hard_conflict` | `roster_38.csv` | 各部最大12組（36枠）で38組は全配置できない                               | partial / infeasible         |
+| `hard_conflict` | `roster_38.csv` | 2バンドが同じ出演位置を要求するhard制約の衝突                            | partial / infeasible         |
 | `heavy`         | `roster_38.csv` | 掛け持ち全員に2組以上の間隔を求める                                      | optimal / feasible / unknown |
 
 `cases/{ケース}.request.json` は `/solve` へそのまま送るリクエスト。`cases/{ケース}.expected.json` は次の3つを持つ。
@@ -41,6 +41,8 @@ uv --directory apps/solver run python bench/csv_to_request.py bench/data/roster_
 - `allowedStatuses`：返ってよいstatus。全配置できるケースはhardを満たす解が必ずあるため、infeasible・partialは誤り。
 - `reference`：hardをすべて満たす配置の一例。最適解とは限らない。
 - `referenceResults`：参照配置での制約ごとの判定。softは未達成も含む。
+
+計測ケースには`count`制約を含めない。部ごとの固定枠数を前提にせず、hard競合ケースは対応済みの位置制約で作る。
 
 frontend・backendのテスト入力にも使ってよい。
 

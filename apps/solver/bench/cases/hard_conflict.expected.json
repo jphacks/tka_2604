@@ -194,7 +194,6 @@
     ]
   },
   "referenceResults": {
-    "c-cap": "unchecked",
     "c-gap-member-003": "met",
     "c-gap-member-004": "met",
     "c-gap-member-005": "met",
@@ -248,6 +247,8 @@
     "c-gear": "met",
     "c-late": "met",
     "c-finale": "met",
+    "c-conflict-a": "unchecked",
+    "c-conflict-b": "unchecked",
     "c-rest-member-010": "unmet",
     "c-rest-member-027": "unmet",
     "c-rest-member-029": "unmet",
