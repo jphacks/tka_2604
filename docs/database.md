@@ -129,6 +129,8 @@ Eventはis_deletedを1にする論理削除。配下は残し、通常の読み�
 
 保存処理は信頼できるuser_idを受け取る内部関数で、ユーザーの認証自体は行わない。業務APIから呼ぶ際に認証済みユーザーを渡す。
 
+#15のイベント本体APIは`Route → Service → Repository`で接続する。`apps/backend/src/repositories/events.ts`は所有者・論理削除で絞った基本情報と独立した件数集計を返し、設定更新は`updatedAt`を条件にして原子的に行う。作成・論理削除は既存の`db/events.ts`を利用する。認証の追加前はサーバー設定の仮ユーザーIDを渡し、#57で認証済みIDへ置き換える。APIの詳細は[イベントAPI](../apps/backend/docs/api/events.md)を参照。
+
 ## 後続Issueで扱うこと
 
 画面側の「保存」ボタンの接続・制約違反の表示・Solverへの接続、入力の実行時検証は業務API・画面のIssueで扱う。未保存内容のリアルタイム同期は不要。イベントの復元UIと、Band・Memberの削除機能は今回の対象外。
@@ -145,4 +147,4 @@ chat_messagesはmessage_idをPK、(event_id, seq)・reply_to_message_idをそれ
 
 0002_wishes_chat_and_part_nameはDrizzle生成SQLで、commentをpart_nameへリネームし、列・履歴テーブルを追加する。0003_chat_integrityは希望状態・由来・返信の整合性を保証するカスタムトリガー。親テーブルの作り直しを避け、既存の所属・配置・名前・NULLを維持する。適用済みの0000・0001は変更していない。
 
-業務APIはまだhealth等のみのため、OpenAPIの公開契約に変更はない。後続APIではpartName・希望状態・由来を用途に応じてDTOへ写し、パスワードハッシュやDB管理項目を不用意に公開しない。
+イベント本体の業務APIは#15で追加。表・制約・チャット履歴は後続の別APIで取得する。後続APIではpartName・希望状態・由来を用途に応じてDTOへ写し、パスワードハッシュやDB管理項目を不用意に公開しない。

@@ -6,25 +6,25 @@
 | ---------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------- |
 | フロントエンド         | React / TypeScript / Vite / Tailwind CSS / React Router / dnd-kit  | 導入済み。画面を素早く実装する                              |
 | API・配信              | Hono / Cloudflare Workers                                          | 導入済み。TypeScriptでAPIと画面配信をまとめる               |
-| API入力検証・仕様      | Zod / OpenAPI                                                      | OpenAPIは別JSONで管理。Zodは入力APIの実装時に導入           |
-| FE・BEの型共有         | Hono RPC                                                           | healthの型共有を確認済み。frontend接続は未実装              |
+| API入力検証・仕様      | Zod / OpenAPI                                                      | イベント本体APIにZod導入済み。OpenAPIは別JSONで管理         |
+| FE・BEの型共有         | Hono RPC                                                           | health・イベント本体APIの型共有を確認。frontend接続は未実装 |
 | APIドキュメント閲覧    | Swagger UI                                                         | 導入済み。developドメインで仕様を共有・APIを試行する        |
 | 制約の共有             | JSON Schema / json-schema-to-typescript / datamodel-code-generator | 導入済み。TypeScriptとPythonのモデルを同じ定義から生成する  |
 | Python環境・入力モデル | uv / Pydantic                                                      | 導入済み。依存管理と構造化データの検証                      |
 | 最適化API              | FastAPI / OR-Tools CP-SAT / Vercel                                 | 疎通確認済み（#26）。順序・間隔の制約をPythonで扱う         |
-| 保存                   | Cloudflare D1 / Drizzle                                            | 導入済み。業務テーブルとローカル保存処理。API接続は今後追加 |
+| 保存                   | Cloudflare D1 / Drizzle                                            | 導入済み。イベント本体APIから保存・再取得を接続済み         |
 | テスト                 | Vitest / Testing Library / Playwright                              | 導入済み。frontend・backendの振る舞いを確認する             |
 | LLM                    | OpenAI Responses API / GPT-6 Luna（effort: low）                   | 採用方針を合意済み。接続は#31                               |
 | ソルバー公開先         | 未確定                                                             | 対応Issueで決める                                           |
 
 ## 配置
 
-| 場所            | 責務・状態                                                              |
-| --------------- | ----------------------------------------------------------------------- |
-| `apps/frontend` | 画面・メモリ上のデモデータ・制約の手動編集と達成判定                    |
-| `apps/backend`  | Hono APIとWorkersによる配信。health API・OpenAPI JSON・Swagger UIを提供 |
-| `apps/schema`   | 共有する制約のJSON Schema。実装済み                                     |
-| `apps/solver`   | Pythonの計算処理。現在は生成モデルと疎通確認用のFastAPIのみ             |
+| 場所            | 責務・状態                                                                           |
+| --------------- | ------------------------------------------------------------------------------------ |
+| `apps/frontend` | 画面・メモリ上のデモデータ・制約の手動編集と達成判定                                 |
+| `apps/backend`  | Hono APIとWorkersによる配信。health・イベント本体API・OpenAPI JSON・Swagger UIを提供 |
+| `apps/schema`   | 共有する制約のJSON Schema。実装済み                                                  |
+| `apps/solver`   | Pythonの計算処理。現在は生成モデルと疎通確認用のFastAPIのみ                          |
 
 ## 処理の流れ
 
@@ -41,7 +41,7 @@
 
 ## APIの実装時
 
-health APIにOpenAPI定義・RPC型共有を導入済み。DrizzleとDBの保存処理は導入済み。業務API・frontend接続は今後追加する。
+health・イベント本体APIにOpenAPI定義・RPC型共有を導入済み。DrizzleとDBの保存処理をイベント本体APIへ接続済み。frontend接続・認証・他の業務APIは今後追加する。
 
 - APIは通常のHonoの`app.get()`・`app.post()`で実装し、入力のあるAPIではZodで検証する。OpenAPI仕様は`apps/backend/docs/api/openapi.json`に別途手書きし、API変更時は実装・仕様・対象APIの動作テストを揃える。
 - ルート登録の返り値から`AppType`を公開し、frontendのRepositoryで`hc<AppType>()`を使う。backendからは型のみをimportし、サーバーの実装をfrontendへ持ち込まない。
@@ -53,7 +53,7 @@ health APIにOpenAPI定義・RPC型共有を導入済み。DrizzleとDBの保存
 
 外部通信・LLMはテストで差し替えられるようにする。LLMはGPT-6 Luna・lowを採用する方針。処理・保存の境界は[AIチャット設計](../apps/backend/docs/AIチャット設計.md)を参照する。認証・公開フォームの詳細、ソルバーの公開先は未確定。将来のためだけの層や汎用化は増やさない。
 
-既存のhealth APIでOpenAPIの配信・閲覧・RPC型共有を確認済み。DBの保存・再取得はローカルD1で確認済み。次にイベントの作成・一覧でZod検証と業務API・frontendを接続する。機能ごとのテストを実装と一緒に追加する。
+health・イベント本体APIでOpenAPIの配信・閲覧・RPC型共有を確認する。イベント本体APIはZodで入力を検証し、テスト用D1への保存・再取得をAPIテストとDB結合テストで確認する。認証接続前はサーバー設定`EVENTS_USER_ID`をServiceへ渡し、#57で認証済みユーザーIDへ置き換える。frontendの接続は#19で行う。[イベントAPI](../apps/backend/docs/api/events.md)を参照。
 
 参考：[Hono RPCの解説](https://zenn.dev/yusukebe/articles/a00721f8b3b92e#rpcを作る)、[Swagger UI](https://hono.dev/examples/swagger-ui)。
 

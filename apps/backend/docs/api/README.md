@@ -4,7 +4,9 @@ OpenAPI 3.1.0の仕様を`apps/backend/docs/api/openapi.json`に手書きで管�
 
 APIを変更するときは実装・OpenAPI仕様・APIの動作テストを同じ変更で更新する。OpenAPIの自動生成は行わない。`apps/backend/src/openapi.ts`は仕様JSONの読み込みとSwagger UIの設定だけを担当する。
 
-現在のAPIは`GET /api/health`のみ。入力はなく、200で`{"status":"ok"}`を返す。DBの稼働確認は含まない。イベント・認証・制約・計算APIは未実装。
+イベント本体の一覧・作成・詳細取得・設定更新・論理削除は[イベントAPI](events.md)を参照。認証接続前はサーバー設定`EVENTS_USER_ID`で所有者を渡し、#57で認証済みIDへ置き換える。表・制約・チャット履歴は別取得とし、チャット履歴のパスは`GET /api/events/{eventId}/chat`とする（後続Issueで実装）。
+
+`GET /api/health`は入力なしで200と`{"status":"ok"}`を返す。DBの稼働確認は含まない。イベント本体APIは#15で追加し、認証・制約・計算APIは後続Issueで扱う。
 
 BE ↔ Solverの契約案は[BE - Solver API設計](<../BE - Solver API設計.md>)を参照。リクエスト・レスポンス例と探索状態を記載している。未実装のため、現在配信するOpenAPIには含めない。
 
