@@ -4,7 +4,7 @@
 
 ブラウザ → backendのイベント本体の一覧・作成・詳細取得・設定更新・論理削除を実装する。
 
-イベント本体と、表情報・制約情報・チャット情報は取得APIを分ける。本Issueの詳細取得はイベント本体だけを返す。表は`GET /api/events/{eventId}/schedule`、制約は`GET /api/events/{eventId}/constraints`、チャット履歴は合意済みの`GET /api/events/{eventId}/chat`を後続Issueで実装する。`/all`は設けない。
+イベント本体と、表情報・制約情報・チャット情報は取得APIを分ける。本Issueの詳細取得はイベント本体だけを返す。表は`GET /api/events/{eventId}/schedule`、制約は`GET /api/events/{eventId}/constraints`、チャット履歴は合意済みの`GET /api/events/{eventId}/chat`を後続Issueで実装する。個別取得に加え、`GET /api/events/{eventId}/all`で全情報をまとめて返す案も[取得APIの叩き台](events-draft.md)に整理する。これら4つはSwaggerに未実装の仕様案として掲載する。
 
 ## API仕様
 

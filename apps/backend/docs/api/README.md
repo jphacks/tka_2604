@@ -4,7 +4,9 @@ OpenAPI 3.1.0の仕様を`apps/backend/docs/api/openapi.json`に手書きで管�
 
 APIを変更するときは実装・OpenAPI仕様・APIの動作テストを同じ変更で更新する。OpenAPIの自動生成は行わない。`apps/backend/src/openapi.ts`は仕様JSONの読み込みとSwagger UIの設定だけを担当する。
 
-イベント本体の一覧・作成・詳細取得・設定更新・論理削除は[イベントAPI](events.md)を参照。認証接続前はRoute内の仮ID定数`demo-owner`を所有者として渡し、#57で認証済みIDへ置き換える。環境変数の設定は不要。表・制約・チャット履歴は別取得とし、チャット履歴のパスは`GET /api/events/{eventId}/chat`とする（後続Issueで実装）。
+イベント本体の一覧・作成・詳細取得・設定更新・論理削除は[イベントAPI](events.md)を参照。認証接続前はRoute内の仮ID定数`demo-owner`を所有者として渡し、#57で認証済みIDへ置き換える。環境変数の設定は不要。
+
+表・制約・チャット履歴の個別取得（`/schedule`・`/constraints`・`/chat`）と全情報の一括取得（`/all`）は[取得APIの叩き台](events-draft.md)を参照。この4つはSwaggerの「イベント取得（未実装・仕様案）」にも掲載する。各操作に`x-implementation-status: planned`を付け、現在は404となることを明記する。予定の200応答・フィールド・未決定事項をレビューするための定義で、API実装・RPC型・実応答との契約テストは後続Issueで揃える。
 
 `GET /api/health`は入力なしで200と`{"status":"ok"}`を返す。DBの稼働確認は含まない。イベント本体APIは#15で追加し、認証・制約・計算APIは後続Issueで扱う。
 
@@ -26,7 +28,7 @@ MarkdownのAPI定義書は[共通テンプレート](template.md)を使い、次
 
 具体例を中心に簡潔に書き、細かなフィールド表は必要な場合だけ追加する。資料の対象となる通信区間を明記し、別区間のAPIや保存フローを混在させない。
 
-制約JSONの正本は`apps/schema`を参照し、説明用の別スキーマを作らない。Markdownの検討資料と、実装済みAPIを配信する`openapi.json`の役割は分ける。
+制約JSONの正本は`apps/schema`を参照し、説明用の別スキーマを作らない。Markdownに検討内容を残し、`openapi.json`で共有する仕様案には未実装と明記する。実装済みの契約と混同しない。
 
 ## developで共有・試行
 
