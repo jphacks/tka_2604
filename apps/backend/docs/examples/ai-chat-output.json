@@ -1,0 +1,16 @@
+{
+  "type": "approval_required",
+  "message": "Aを第2部に配置する条件を追加します。必須／任意を設定して承認してください。",
+  "actions": [
+    {
+      "type": "add_constraint",
+      "constraint": {
+        "type": "in_range",
+        "targets": { "band_ids": ["band-a"] },
+        "params": { "kind": "parts", "part_ids": [1] },
+        "hardness": null,
+        "priority": null
+      }
+    }
+  ]
+}

@@ -4,6 +4,8 @@
 
 #45の変更対象はbackendと関連資料のみ。部名の画面表示・frontendモデルへの反映は#32で扱い、この変更ではfrontendを編集しない。
 
+チャットのLLM入出力・共有Schemaに基づく検証・変更案生成と、送信APIのuser先行保存・LLM呼び出し・assistant本文保存を実装済み。[AIチャット入出力](AIチャット入出力.md)に型・呼び出し方、[チャットAPI](api/chat.md)に保存・再送の契約を記載。承認待ち案の管理・制約の適用・画面の履歴同期・Solver連携は後続。
+
 ## 1. やりたいことと役割
 
 | やりたいこと                                     | 担当                                                           |
@@ -37,7 +39,7 @@
 
 1. Band・Member・所属とともに、**希望の原文をBand.request_textへ保存**する。原文が空ならLLMは呼ばない。
 2. 希望があるBandはrequest_status=pendingにする。登録は先に保存するので、LLM失敗で名簿・原文が消えない。
-3. Lunaのlowへ、希望原文・回答元のband_id・同イベントのID付き名簿・部・現在の制約を渡す。
+3. Gemini 3.5 Flash-Liteへ、希望原文・回答元のband_id・同イベントのID付き名簿・部・現在の制約を渡す。
 4. backendが6種類の共有スキーマ、対象IDの存在・イベント所属、hard/priority、位置・部・数値を検証する。
 5. 全件が検証できたら、新しいconstraint_idを発行し、source_textに原文、enabled=trueを設定する。Constraintsへの追加、Bandのconverted化、Event.updatedAtの更新を同じD1 batchで保存する。
 6. 保存されたJSONを管理画面で取得し、制約カードを自動表示する。開いたままの管理画面も更新する必要があるので、MVPは短い間隔の再取得で実現する案。WebSocket専用基盤は増やさない。
@@ -195,22 +197,22 @@ Partの部名は`part_name`、並び順は`sort_order`で分ける。部名はNU
 
 ## 8. LLM・記憶・速度
 
-- 合意済み：OpenAI APIの **GPT-6 Luna（gpt-6-luna）、reasoning.effort=low**。Responses APIで接続する案。
+- 2026-10-17更新：Google AI Studioの **Gemini 3.5 Flash-Lite（`gemini-3.5-flash-lite`）**を使用する。Google GenAI SDKの`models.generateContent`で接続し、固定指示を`systemInstruction`、入力JSONを`contents`へ分けて渡す。思考設定はモデルの既定値を使う。
 - フォーム変換にはチャット全履歴を付けない。希望・ID付き名簿・部・現在制約を渡す。
-- チャットには最新の業務JSON＋直近の会話を入力予算内で渡す。過去の発言から現在制約を復元しない。
+- チャットには最新の業務JSON＋直近6メッセージ（通常3往復）を時系列順で渡す。今回の発言は履歴に含めず`userMessage`へ入れる。過去の発言から現在制約を復元しない。総入力予算は引き続き未決定。
 - 原文履歴はDBへ保存するが、全履歴は毎回送らない。範囲外の古い「さっきの条件」等が特定できない場合は、必要な発言を取得するか確認する。
 - 要約・学習メモリ・Redis・汎用ツール実行基盤は、最初の必須にはしない。長い会話で必要性を確認して追加する。
 - 接続後、同じ30〜40バンド・希望例で「LLM待ち／DB取得・保存／全体時間」、p50・p95、正しく制約化できた割合を測る。通常テストはLLMをモックし、実速度測定は別実行する。
 
 ## 9. 実装順とIssueの担当境界
 
-1. #30：自然文→6種類の制約／要確認の例、hard/soft未指定時の扱い、チャットの計算意図を決める。Luna・low、自動追加・実行タイミングは今回の合意を反映する。
+1. #30：自然文→6種類の制約／要確認の例、hard/soft未指定時の扱い、チャットの計算意図を決める。Gemini 3.5 Flash-Lite、自動追加・実行タイミングは今回の合意を反映する。
 2. #33の範囲を確認し、フォームの実保存と希望変換の接続タスクを具体化する。既存Issueはフォーム方式の検討までで、実API実装は含まない。
 3. #17・#31：共通の実行時検証とLLM変換。#31の変換Serviceは保存・計算を直接行わず、フォーム／チャット側のServiceが保存と実行を組み立てる。
 4. #18・#19・#32：共通制約一覧、希望原文と由来の保存、更新競合、自動追加、最小のチャット履歴を接続する。
 5. #28・#29・#32：ボタンとチャットの実行依頼を同じSolver呼出しへ接続し、制約だけの変更では呼ばないことを確認する。
 
-従来の「候補テーブル・実行テーブル・要約テーブルを追加する」計画は、この最小案では採用しない。#30・#32・docs/product.mdの確認後適用という従来仕様と異なるため、実装時は今回合意した自動追加の範囲をリポジトリ仕様・Issue本文へ揃える。2026-10-17に下記のGitHub Issue計画へ反映済み。履歴取得の`GET /api/events/{eventId}/chat`は実装済み（[イベントAPI](api/events.md)）。LLM・フォーム・チャット送信の業務APIは未実装。
+従来の「候補テーブル・実行テーブル・要約テーブルを追加する」計画は、この最小案では採用しない。#30・#32・docs/product.mdの確認後適用という従来仕様と異なるため、実装時は今回合意した自動追加の範囲をリポジトリ仕様・Issue本文へ揃える。2026-10-17に下記のGitHub Issue計画へ反映済み。履歴取得の`GET /api/events/{eventId}/chat`は実装済み（[イベントAPI](api/events.md)）。チャット送信のLLM接続と会話本文保存も実装済み。フォーム希望の制約化・承認後の適用・計算は後続。
 
 ## GitHubの実装タスク（2026-10-17更新）
 
@@ -219,7 +221,7 @@ Partの部名は`part_name`、並び順は`sort_order`で分ける。部名はNU
 | Issue                                                | 担当する処理                                                   |
 | ---------------------------------------------------- | -------------------------------------------------------------- |
 | [#30](https://github.com/jphacks/tka_2604/issues/30) | 構造化出力・制約保存・計算依頼の契約と具体例                   |
-| [#31](https://github.com/jphacks/tka_2604/issues/31) | Luna low＋Structured Outputsから検証済みConstraintを返す       |
+| [#31](https://github.com/jphacks/tka_2604/issues/31) | Geminiの構造化出力から検証済みの制約・変更案を返す             |
 | [#32](https://github.com/jphacks/tka_2604/issues/32) | 共通制約一覧・自動表示・チャットの画面接続                     |
 | [#45](https://github.com/jphacks/tka_2604/issues/45) | Drizzleスキーマ・追加migration・既存データ移行・取得保存の追従 |
 | [#46](https://github.com/jphacks/tka_2604/issues/46) | 希望原文を残し、フォームから制約へ変換してDBへ自動保存         |
@@ -231,7 +233,7 @@ Partの部名は`part_name`、並び順は`sort_order`で分ける。部名はNU
 
 `原文 → Structured Outputs用DTO → backendで管理項目を確定 → apps/schemaと業務検証 → 完成したConstraint → ConstraintsへJSON文字列として保存 → 再取得・パース・検証 → Solver入力のconstraints配列`
 
-- Responses APIの`text.format`へJSON Schemaと`strict: true`を指定する。モデルは`gpt-6-luna`、`reasoning.effort: low`。
+- Google GenAI SDKの`models.generateContent`へ`responseMimeType: application/json`と`responseJsonSchema`を指定する。モデルは`gemini-3.5-flash-lite`。チャットはServiceで出力を再検証し、未完成の変更案を完成済みConstraintとして保存しない。
 - 元のSchemaを正本に保ち、LLM API向けにはobjectで包み、参照・union・optional/null等の対応を調整する。6typeの意味を別定義に複製したり、モデルに合わせて元Schemaを緩めたりしない。
 - Structured Outputsでも対象ID・意味・イベント所属が正しいとは限らない。拒否・未完了・出力切断も成功と扱わない。
 - backendがevent_id、新規constraint_id、元のsource_text、自動追加時のenabledを確定し、全必須項目を持つConstraintを検証して保存する。
@@ -240,7 +242,7 @@ Partの部名は`part_name`、並び順は`sort_order`で分ける。部名はNU
 
 DB変更は`apps/backend/src/db/schema.ts`更新 → `npm run db:generate` → SQL・meta・journal確認 → `npm run db:migrate:local` → 実D1で移行・結合テスト → `npm run check`。既存migrationは変更せず、remote DBへの適用は別依頼時だけ行う。
 
-[公開の公式資料：Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)
+[公開の公式資料：Geminiの構造化出力](https://ai.google.dev/gemini-api/docs/generate-content/structured-output)
 
 ## 10. 具体的な確認例
 
@@ -254,7 +256,7 @@ DB変更は`apps/backend/src/db/schema.ts`更新 → `npm run db:generate` → S
 
 ## 参照・実装範囲
 
-確認した実装：docs/database.md、docs/schema.md、apps/backend/src/db/schema.ts・save-event.ts、frontendのconstraintDraft.ts・ConstraintsPanel.tsx・workspace.ts・workspaceStore.ts。モデル仕様は[公開の公式モデル資料](https://developers.openai.com/api/docs/models/gpt-6-luna)を前の検討で確認済み。
+確認した実装：docs/database.md、docs/schema.md、apps/backend/src/db/schema.ts・save-event.ts、frontendのconstraintDraft.ts・ConstraintsPanel.tsx・workspace.ts・workspaceStore.ts。モデルは2026-10-17の指定に従いGeminiへ変更。[公開の公式モデル資料](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite)も確認済み。
 
 未決定：hard/soft・優先度未指定時の既定ルール、フォームの公開・認証・連絡先・再回答履歴、保存期間、入力予算・タイムアウト・速度目標。これらのためだけにテーブルを先に増やさない。
 

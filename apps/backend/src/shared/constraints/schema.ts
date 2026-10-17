@@ -1,13 +1,13 @@
 import { z } from 'zod'
 
-import atPosition from '../../../../schema/at_position.schema.json'
-import before from '../../../../schema/before.schema.json'
-import common from '../../../../schema/common.schema.json'
-import constraint from '../../../../schema/constraint.schema.json'
-import count from '../../../../schema/count.schema.json'
-import inRange from '../../../../schema/in_range.schema.json'
-import minGapBands from '../../../../schema/min_gap_bands.schema.json'
-import minGapMember from '../../../../schema/min_gap_member.schema.json'
+import atPosition from '../../../../schema/at_position.schema.json' with { type: 'json' }
+import before from '../../../../schema/before.schema.json' with { type: 'json' }
+import common from '../../../../schema/common.schema.json' with { type: 'json' }
+import constraint from '../../../../schema/constraint.schema.json' with { type: 'json' }
+import count from '../../../../schema/count.schema.json' with { type: 'json' }
+import inRange from '../../../../schema/in_range.schema.json' with { type: 'json' }
+import minGapBands from '../../../../schema/min_gap_bands.schema.json' with { type: 'json' }
+import minGapMember from '../../../../schema/min_gap_member.schema.json' with { type: 'json' }
 import type { Constraint } from '../../generated/constraint'
 
 const documents: Record<string, unknown> = {
@@ -45,9 +45,14 @@ function resolve(value: unknown, file: string): unknown {
   )
 }
 
-const schema = z.fromJSONSchema(
-  resolve(constraint, 'constraint.schema.json') as z.core.JSONSchema.JSONSchema,
-)
+export type JsonSchema = z.core.JSONSchema.JSONSchema
+
+export const constraintJsonSchema = resolve(
+  constraint,
+  'constraint.schema.json',
+) as JsonSchema
+
+const schema = z.fromJSONSchema(constraintJsonSchema)
 
 export function validateConstraint(value: unknown): value is Constraint {
   return schema.safeParse(value).success

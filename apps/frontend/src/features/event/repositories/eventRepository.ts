@@ -1,5 +1,9 @@
 import { mockEventRepository } from '../../../mock/eventRepository'
+import { sendChatMessage } from './chatRepository'
 import type { EventRepository } from './types'
 
-// Composition point: replace only this adapter to connect a real API.
-export const eventRepository: EventRepository = mockEventRepository
+// Event loading stays on the demo store until the event APIs are connected.
+export const eventRepository: EventRepository = {
+  ...mockEventRepository,
+  sendMessage: sendChatMessage,
+}
