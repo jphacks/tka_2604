@@ -1190,63 +1190,6 @@
   "constraints": [
     {
       "schema_version": "1.0.0",
-      "constraint_id": "c-cap",
-      "event_id": "bench-hard_conflict",
-      "source_text": "各部は最大12組まで",
-      "type": "count",
-      "hardness": "hard",
-      "priority": null,
-      "enabled": true,
-      "targets": {
-        "band_ids": [
-          "band-01",
-          "band-02",
-          "band-03",
-          "band-04",
-          "band-05",
-          "band-06",
-          "band-07",
-          "band-08",
-          "band-09",
-          "band-10",
-          "band-11",
-          "band-12",
-          "band-13",
-          "band-14",
-          "band-15",
-          "band-16",
-          "band-17",
-          "band-18",
-          "band-19",
-          "band-20",
-          "band-21",
-          "band-22",
-          "band-23",
-          "band-24",
-          "band-25",
-          "band-26",
-          "band-27",
-          "band-28",
-          "band-29",
-          "band-30",
-          "band-31",
-          "band-32",
-          "band-33",
-          "band-34",
-          "band-35",
-          "band-36",
-          "band-37",
-          "band-38"
-        ]
-      },
-      "params": {
-        "scope": "per_part",
-        "min": 0,
-        "max": 12
-      }
-    },
-    {
-      "schema_version": "1.0.0",
       "constraint_id": "c-gap-member-003",
       "event_id": "bench-hard_conflict",
       "source_text": "ダミー003さんの出演の間は1組以上空ける",
@@ -2151,6 +2094,38 @@
         "kind": "positions",
         "position_from": 33,
         "position_to": 35
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-conflict-a",
+      "event_id": "bench-hard_conflict",
+      "source_text": "月のワルツ/諫山実生をトップにする",
+      "type": "at_position",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "band_id": "band-10"
+      },
+      "params": {
+        "position": 0
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-conflict-b",
+      "event_id": "bench-hard_conflict",
+      "source_text": "光について/GRAPEVINEをトップにする",
+      "type": "at_position",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "band_id": "band-34"
+      },
+      "params": {
+        "position": 0
       }
     },
     {
