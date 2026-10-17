@@ -224,9 +224,12 @@ test('position checkbox, constraint controls, and deletion guard agree', async (
   ).toBeChecked()
 })
 
-test('chat is a demo, generation is disabled and CSV downloads the current order', async ({
+test('chat displays an API reply, generation is disabled and CSV downloads the current order', async ({
   page,
 }) => {
+  await page.route('**/api/events/*/chat', (route) =>
+    route.fulfill({ json: { reply: 'テスト用の返信です。' } }),
+  )
   await openEvent(page)
   await expect(
     page.getByRole('button', { name: '自動生成（準備中）' }),
@@ -236,7 +239,7 @@ test('chat is a demo, generation is disabled and CSV downloads the current order
     .getByRole('textbox', { name: 'AIへのメッセージ' })
     .fill('出演間隔を空けたい')
   await chat.getByRole('button', { name: 'メッセージを送信' }).click()
-  await expect(chat.getByText(/定型返信のデモです/)).toBeVisible()
+  await expect(chat.getByText('テスト用の返信です。')).toBeVisible()
   await expect(chat.getByRole('log').locator('> div')).toHaveCount(3)
   const download = page.waitForEvent('download')
   await page.getByRole('button', { name: 'CSVを出力' }).click()

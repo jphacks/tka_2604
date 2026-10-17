@@ -9,6 +9,7 @@
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
+    "@google/genai": "^2.30.0",
     "@hono/swagger-ui": "^0.6.1",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.13",

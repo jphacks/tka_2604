@@ -215,5 +215,7 @@ export async function saveEvent(
   }
   const saved = await loadEvent(db, userId, eventId)
   if (!saved) throw new Error('event_not_found')
+  if (saved.event.updatedAt !== updatedAt)
+    throw new Error('event_save_conflict')
   return saved
 }

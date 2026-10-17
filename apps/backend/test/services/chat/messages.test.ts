@@ -1,0 +1,125 @@
+import { describe, expect, it, vi } from 'vitest'
+
+import { AIChatError } from '../../../src/services/chat/errors'
+import { chatMessageService } from '../../../src/services/chat/messages'
+import type {
+  ChatMessage,
+  ChatModel,
+  ChatRepository,
+} from '../../../src/services/chat/types'
+import type { EventRepository } from '../../../src/services/events/types'
+import { approval, snapshot } from './fixtures'
+
+function fixture() {
+  const state = snapshot()
+  const user: ChatMessage = {
+    messageId: 'u1',
+    seq: 0,
+    role: 'user',
+    text: 'Aを第2部にしたい',
+    replyToMessageId: null,
+    createdAt: state.event.createdAt,
+  }
+  const assistant: ChatMessage = {
+    ...user,
+    messageId: 'a1',
+    seq: 1,
+    role: 'assistant',
+    text: approval().message,
+    replyToMessageId: user.messageId,
+  }
+  state.chat.messages = [user]
+  const events = {
+    get: vi.fn<EventRepository['get']>().mockResolvedValue(state.event),
+    getSchedule: vi
+      .fn<EventRepository['getSchedule']>()
+      .mockResolvedValue(state.schedule),
+    getConstraints: vi
+      .fn<EventRepository['getConstraints']>()
+      .mockResolvedValue({
+        eventId: state.event.eventId,
+        updatedAt: state.event.updatedAt,
+        constraints: state.constraints.constraints.map(
+          ({ constraint, sourceBandId }) => ({
+            constraintId: constraint.constraint_id,
+            constraintJson: JSON.stringify(constraint),
+            sourceBandId,
+          }),
+        ),
+      }),
+    getChat: vi.fn<EventRepository['getChat']>().mockResolvedValue(state.chat),
+    list: vi.fn<EventRepository['list']>(),
+    create: vi.fn<EventRepository['create']>(),
+    update: vi.fn<EventRepository['update']>(),
+    remove: vi.fn<EventRepository['remove']>(),
+  }
+  const messages = {
+    saveUser: vi.fn<ChatRepository['saveUser']>().mockResolvedValue(user),
+    getReply: vi.fn<ChatRepository['getReply']>().mockResolvedValue(null),
+    saveReply: vi
+      .fn<ChatRepository['saveReply']>()
+      .mockResolvedValue(assistant),
+  }
+  const model = vi.fn<ChatModel>().mockResolvedValue(approval())
+  const service = chatMessageService(events, messages, 'owner', model)
+  return { events, messages, model, service, user, assistant }
+}
+const input = { messageId: 'u1', message: 'Aを第2部にしたい' }
+
+describe('chat message persistence service', () => {
+  it('saves the user before model invocation and extracts only output.message for storage', async () => {
+    const { service, messages, model, events } = fixture()
+    model.mockImplementationOnce((request) => {
+      expect(messages.saveUser).toHaveBeenCalledWith(
+        'owner',
+        'event-1',
+        'u1',
+        input.message,
+      )
+      expect(messages.saveReply).not.toHaveBeenCalled()
+      expect(request.recentMessages).toEqual([])
+      return Promise.resolve(approval())
+    })
+    expect(await service.send('event-1', input)).toEqual({
+      reply: approval().message,
+    })
+    expect(messages.saveReply).toHaveBeenCalledWith(
+      'owner',
+      'event-1',
+      'u1',
+      approval().message,
+    )
+    expect(events.update).not.toHaveBeenCalled()
+  })
+
+  it('reuses a persisted reply without generating or saving another answer', async () => {
+    const { service, messages, model, events, assistant } = fixture()
+    messages.getReply.mockResolvedValueOnce(assistant)
+    expect(await service.send('event-1', input)).toEqual({
+      reply: assistant.text,
+    })
+    expect(model).not.toHaveBeenCalled()
+    expect(events.get).not.toHaveBeenCalled()
+    expect(messages.saveReply).not.toHaveBeenCalled()
+  })
+
+  it('does not read context or invoke the model when saving the user fails', async () => {
+    const { service, messages, model, events } = fixture()
+    messages.saveUser.mockRejectedValueOnce(new Error('save failed'))
+    await expect(service.send('event-1', input)).rejects.toThrow('save failed')
+    expect(events.get).not.toHaveBeenCalled()
+    expect(model).not.toHaveBeenCalled()
+    expect(messages.getReply).not.toHaveBeenCalled()
+    expect(messages.saveReply).not.toHaveBeenCalled()
+  })
+
+  it('keeps provider failures as failures without writing an assistant message', async () => {
+    const { service, messages, model } = fixture()
+    model.mockRejectedValueOnce(new AIChatError('ai_chat_timeout'))
+    await expect(service.send('event-1', input)).rejects.toMatchObject({
+      code: 'ai_chat_timeout',
+    })
+    expect(messages.saveUser).toHaveBeenCalledOnce()
+    expect(messages.saveReply).not.toHaveBeenCalled()
+  })
+})

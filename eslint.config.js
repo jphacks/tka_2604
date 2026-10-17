@@ -82,6 +82,7 @@ export default defineConfig([
           patterns: [
             {
               group: ['**/backend/**'],
+              allowTypeImports: true,
               message: 'API 経由で backend にアクセスしてください。',
             },
           ],
