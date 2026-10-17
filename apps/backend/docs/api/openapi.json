@@ -3,7 +3,7 @@
   "info": {
     "title": "JPHACKS 出演順作成 API",
     "version": "0.0.0",
-    "description": "イベント本体・表・制約・チャット履歴と、表・制約の個別保存・保存済みデータからの計算API。認証は#57で追加し、現段階はサーバー側のデモユーザーで所有者を絞り込む。"
+    "description": "イベント本体・表・制約・チャット履歴と、表・制約の個別保存・保存済みデータからの計算API。認証は#57で追加し、現段階はサーバー側のデモユーザーで所有者を絞り込む。 フォーム名簿APIは独立したformルートで、イベントURLを知る人が認証なしで利用できる。"
   },
   "servers": [
     {
@@ -3571,6 +3571,659 @@
           }
         }
       }
+    },
+    "/api/events/{eventId}/form": {
+      "parameters": [
+        {
+          "name": "eventId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getForm",
+        "summary": "フォームの選択用名簿を取得する",
+        "tags": ["Form"],
+        "security": [],
+        "description": "URLを知る人が認証なしで利用できる。削除済みイベントは対象外。公開応答はID・名前・所属と更新日時だけで、希望・連絡先・回答・制約・配置は含めない。",
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormRoster"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "イベントまたは対象バンドが存在しない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_not_found"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "保存・取得失敗。内部情報を公開せず、部分保存しない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{eventId}/form/bands": {
+      "parameters": [
+        {
+          "name": "eventId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "post": {
+        "operationId": "createFormBand",
+        "summary": "フォームからバンドと所属メンバーを登録する",
+        "tags": ["Form"],
+        "security": [],
+        "description": "URLを知る人が認証なしで利用できる。削除済みイベントは対象外。公開応答はID・名前・所属と更新日時だけで、希望・連絡先・回答・制約・配置は含めない。 保存時にexpectedUpdatedAtを再確認し、Band・Member・所属・Event.updatedAtを同じD1 batchで保存する。希望・制約・配置は保持し、LLM・Solverは呼ばない。",
+        "responses": {
+          "201": {
+            "description": "登録成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedFormBand"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "イベントまたは対象バンドが存在しない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_not_found"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "保存・取得失敗。内部情報を公開せず、部分保存しない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSONの形式が不正",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "不正入力・別イベント参照。保存しない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "他の保存と競合。全体を保存せず再取得を促す",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_save_conflict"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFormBand"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{eventId}/form/bands/{bandId}": {
+      "parameters": [
+        {
+          "name": "eventId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "bandId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "patch": {
+        "operationId": "updateFormBand",
+        "summary": "フォームからバンド名と所属メンバーを更新する",
+        "tags": ["Form"],
+        "security": [],
+        "description": "URLを知る人が認証なしで利用できる。削除済みイベントは対象外。公開応答はID・名前・所属と更新日時だけで、希望・連絡先・回答・制約・配置は含めない。 保存時にexpectedUpdatedAtを再確認し、Band・Member・所属・Event.updatedAtを同じD1 batchで保存する。希望・制約・配置は保持し、LLM・Solverは呼ばない。",
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedFormBand"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "イベントまたは対象バンドが存在しない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_not_found", "band_not_found"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "保存・取得失敗。内部情報を公開せず、部分保存しない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSONの形式が不正",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "不正入力・別イベント参照。保存しない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "他の保存と競合。全体を保存せず再取得を促す",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_save_conflict"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFormBand"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4545,6 +5198,257 @@
             }
           }
         ]
+      },
+      "FormMember": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["memberId", "memberName"],
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "memberName": {
+            "type": "string"
+          }
+        }
+      },
+      "FormBand": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["bandId", "bandName"],
+        "properties": {
+          "bandId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "bandName": {
+            "type": "string"
+          }
+        }
+      },
+      "FormRoster": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "eventId",
+          "eventTitle",
+          "updatedAt",
+          "bands",
+          "members",
+          "memberships"
+        ],
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "eventTitle": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+          },
+          "bands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormBand"
+            }
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormMember"
+            }
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["bandId", "memberId"],
+              "properties": {
+                "bandId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "memberId": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "SavedFormBand": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["eventId", "updatedAt", "band", "members"],
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "updatedAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+          },
+          "band": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["bandId", "bandName", "memberIds"],
+            "properties": {
+              "bandId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "bandName": {
+                "type": "string"
+              },
+              "memberIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              }
+            }
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormMember"
+            }
+          }
+        }
+      },
+      "CreateFormBand": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedUpdatedAt",
+          "bandName",
+          "memberIds",
+          "newMembers"
+        ],
+        "properties": {
+          "expectedUpdatedAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+          },
+          "bandName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "pattern": "\\S"
+          },
+          "memberIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 20,
+            "uniqueItems": true
+          },
+          "newMembers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["memberName"],
+              "properties": {
+                "memberName": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 40,
+                  "pattern": "\\S"
+                }
+              }
+            },
+            "maxItems": 20
+          }
+        },
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "memberIds": {
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "newMembers": {
+                    "minItems": 1
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "description": "memberIdsとnewMembersの合計は1〜20人。名前は前後の空白を除去して検証する。同名のnewMembersは別IDで登録する。"
+      },
+      "UpdateFormBand": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["expectedUpdatedAt"],
+        "properties": {
+          "expectedUpdatedAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+          },
+          "bandName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "pattern": "\\S"
+          },
+          "memberIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 20,
+            "uniqueItems": true
+          },
+          "newMembers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["memberName"],
+              "properties": {
+                "memberName": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 40,
+                  "pattern": "\\S"
+                }
+              }
+            },
+            "maxItems": 20
+          }
+        },
+        "dependentRequired": {
+          "memberIds": ["newMembers"],
+          "newMembers": ["memberIds"]
+        },
+        "anyOf": [
+          {
+            "required": ["bandName"]
+          },
+          {
+            "required": ["memberIds", "newMembers"]
+          }
+        ],
+        "description": "memberIdsとnewMembersの合計は0〜20人。両配列を指定すると対象バンドの所属を全置換し、省略時は保持する。所属解除後もMemberは名簿に残り、他バンド所属も保持する。"
       }
     }
   }
