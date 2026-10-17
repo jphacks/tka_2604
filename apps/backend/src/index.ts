@@ -1,12 +1,14 @@
 import { Hono } from 'hono'
 
 import { apiDocs, openApiDocument } from './openapi'
+import { chatRoutes } from './routes/chat-worker'
 import { eventRoutes } from './routes/events'
 
 const app = new Hono<{ Bindings: CloudflareBindings }>()
 
 export const routes = app
   .get('/api/health', (c) => c.json({ status: 'ok' }))
+  .route('/api/events', chatRoutes)
   .route('/api/events', eventRoutes)
 
 export type AppType = typeof routes

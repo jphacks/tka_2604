@@ -35,7 +35,7 @@ uv python install 3.13
 uv sync --locked --directory apps/solver
 ```
 
-現在のローカル起動にAPIキー・Cloudflareログインは不要。ローカルD1はWorkersが手元に作成し、Cloudflare上の検証・本番DBは操作しない。DBの雛形と適用手順は[DB手順](../apps/backend/db/README.md)を参照。LLM導入時に必要な環境変数を追記する。秘密情報はGitに含めない。
+画面・health・イベントAPIのローカル起動にAPIキー・Cloudflareログインは不要。チャット送信はルートの`.env`または`.dev.vars`のどちらかに`GOOGLE_AI_API_TOKEN`を設定し、migration済みD1と有効なイベントを用意する。ローカルD1はWorkersが手元に作成し、Cloudflare上の検証・本番DBは操作しない。DBの雛形と適用手順は[DB手順](../apps/backend/db/README.md)を参照。Cloudflare上のチャット送信にはdevelop/mainごとに同名のSecretを登録する。秘密情報はGitに含めない。
 
 ## Solverの環境変数
 
@@ -96,7 +96,7 @@ npx playwright install chromium # ブラウザテストを初めて実行する�
 npm run test:e2e
 ```
 
-ブラウザテストは通常の開発画面とは別にポート5174を使う。型検査は `npm run check` に含むが、ブラウザテストの実行は別途必要。
+ブラウザテストはポート5174でfrontendを起動し、チャットAPI契約に合わせたモック応答の表示も確認する。実LLMは呼ばない。通常の開発画面とは別のfrontendポートを使う。型検査は `npm run check` に含むが、ブラウザテストの実行は別途必要。
 
 ## イベントAPIのローカル確認（#15）
 

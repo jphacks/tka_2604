@@ -12,7 +12,7 @@ export function ChatPanel({ controller }: { controller: EventController }) {
   )
   if (!controller.event || !controller.schedule) return null
   return (
-    <Panel title="AIチャット" action={<Badge>デモ · AI未接続</Badge>}>
+    <Panel title="AIチャット" action={<Badge>制約適用は準備中</Badge>}>
       <div
         ref={endRef}
         className="max-h-[55dvh] min-h-64 scrollbar-thin overflow-y-auto p-3 xl:max-h-none xl:min-h-0 xl:flex-1"
@@ -115,7 +115,7 @@ export function ChatPanel({ controller }: { controller: EventController }) {
           </div>
         </div>
         <p className="mt-2 text-center text-[10px] text-muted/80">
-          定型返信のデモです。送信しても制約は自動で追加されません。
+          AIが返信します。提案された制約はまだ適用されません。
         </p>
       </form>
     </Panel>

@@ -18,7 +18,7 @@
   "env": {
     "develop": {
       "name": "dev",
-      "secrets": { "required": ["SOLVER_API_URL", "SOLVER_API_TOKEN"] },
+      "secrets": { "required": ["SOLVER_API_URL", "SOLVER_API_TOKEN", "GOOGLE_AI_API_TOKEN"] },
       "d1_databases": [
         {
           "binding": "DB",
@@ -30,7 +30,7 @@
     },
     "main": {
       "name": "main",
-      "secrets": { "required": ["SOLVER_API_URL", "SOLVER_API_TOKEN"] },
+      "secrets": { "required": ["SOLVER_API_URL", "SOLVER_API_TOKEN", "GOOGLE_AI_API_TOKEN"] },
       "d1_databases": [
         {
           "binding": "DB",
