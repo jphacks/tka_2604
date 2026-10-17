@@ -76,11 +76,9 @@ Repositoryは既存の`loadEvent`を使い、イベント・名簿・所属・�
 
 ## 接続設定と確認
 
-Workersの`SOLVER_API_URL`はSolverのベースURL（`/solve`を付ける前）。`SOLVER_API_TOKEN`はSecretとして環境ごとに登録する。ローカルはGit対象外の`.dev.vars.develop`に設定する。HTTP接続はlocalhostのみ許可し、リダイレクト先へトークンを転送しない。
+Workersの`SOLVER_API_URL`はSolverのベースURL（`/solve`を付ける前）。`SOLVER_API_TOKEN`はSolver側と共通のトークン。値はリポジトリルートのGit対象外ファイル`.env.develop` / `.env.main`で管理する。`.env.example`からの作成と設定手順は[環境構築](../../../../docs/setup.md#workersの環境変数)を参照。
 
-```sh
-npx wrangler secret put SOLVER_API_TOKEN --env develop
-```
+ローカル起動では`.env.develop`を読み込む。`npm run deploy:develop` / `npm run deploy:main`では対応するファイルを`--secrets-file`で渡し、URLとトークンをWorkersのSecretへ登録する。ファイルで省略した既存Secretは保持する。`wrangler.jsonc`には型生成・必須設定の確認に使うキー名だけを宣言する。HTTP接続はlocalhostのみ許可し、リダイレクト先へトークンを転送しない。
 
 Solver呼出しの通信待機上限は30秒。レスポンス本文の読込みもこの期限に含め、超過時は通信を中断して504を返す。Solverの探索上限はリクエストに含めず、2MiBを超える応答は拒否する。探索の`unknown`と通信の504を混同しない。
 

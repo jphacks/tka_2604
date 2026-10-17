@@ -37,6 +37,22 @@ uv sync --locked --directory apps/solver
 
 現在のローカル起動にAPIキー・Cloudflareログインは不要。ローカルD1はWorkersが手元に作成し、Cloudflare上の検証・本番DBは操作しない。DBの雛形と適用手順は[DB手順](../apps/backend/db/README.md)を参照。LLM導入時に必要な環境変数を追記する。秘密情報はGitに含めない。
 
+## Workersの環境変数
+
+Solverの接続URL・トークンは、リポジトリルートの環境別envファイルで管理する。使う環境のファイルを用意する（既存ファイルは上書きしない）。
+
+```sh
+cp -n .env.example .env.develop
+# 本番への公開時のみ用意する
+cp -n .env.example .env.main
+```
+
+`SOLVER_API_URL`はSolverのベースURL。計算APIを使う場合は`SOLVER_API_TOKEN`の行を有効にし、Solver側と同じトークンを設定する。ローカルSolverへ接続する場合はURLを`http://localhost:8000`に変更する。基本画面・イベントAPIの確認だけならトークンは不要。
+
+`npm run dev:backend`は`.env.develop`を読み込む。`.dev.vars`があるとenvファイルより優先されるため、既存設定はenvファイルへ移す。envファイルはGit対象外とし、`.env.example`だけを共有する。
+
+`npm run deploy:develop` / `npm run deploy:main`は、それぞれ`.env.develop` / `.env.main`の値をコードと一緒にWorkersのSecretへ登録する。ファイルで省略したキーの既存Secretは保持される。ビルド・`npm run check`はenvファイルなしで実行できる。
+
 ## 起動・確認
 
 実行場所：リポジトリルート。
