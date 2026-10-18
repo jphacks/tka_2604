@@ -121,7 +121,7 @@ def test_solve_respects_each_part_band_count_as_capacity(client: TestClient) -> 
     ] == [1, 1]
 
 
-def test_solve_rejects_band_counts_with_insufficient_total_capacity(
+def test_solve_returns_partial_with_insufficient_total_capacity(
     client: TestClient,
 ) -> None:
     payload = solve_payload()
@@ -133,8 +133,15 @@ def test_solve_rejects_band_counts_with_insufficient_total_capacity(
 
     response = post_solve(client, payload)
 
-    assert response.status_code == 422
-    assert response.json()["error"]["code"] == "invalid_input"
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "partial"
+    assert len(body["placements"]) == 2
+    assert len(body["unassignedBandIds"]) == 1
+    assert {item["partId"] for item in body["placements"]} == {"part-1", "part-2"}
+    ids = [item["bandId"] for item in body["placements"]] + body["unassignedBandIds"]
+    assert len(ids) == len(set(ids)) == 3
+    assert set(ids) == {"band-a", "band-b", "band-c"}
 
 
 def test_solve_rejects_partially_specified_band_counts(client: TestClient) -> None:
