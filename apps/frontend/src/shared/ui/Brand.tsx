@@ -1,7 +1,5 @@
 import { Link } from 'react-router'
 
-import { Badge } from './Badge'
-
 export function Brand({ to = '/event' }: { to?: string }) {
   return (
     <Link
@@ -15,7 +13,6 @@ export function Brand({ to = '/event' }: { to?: string }) {
         className="size-[30px] rounded-[7px]"
       />
       <span className="text-xl font-bold tracking-wide">Setly</span>
-      <Badge>デモ</Badge>
     </Link>
   )
 }

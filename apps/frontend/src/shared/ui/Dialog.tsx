@@ -19,10 +19,12 @@ export function Dialog({
   title,
   children,
   onClose,
+  busy = false,
 }: {
   title: string
   children: ReactNode
   onClose: () => void
+  busy?: boolean
 }) {
   const titleId = useId()
   const ref = useRef<HTMLDialogElement>(null)
@@ -68,6 +70,7 @@ export function Dialog({
           variant="ghost"
           className="px-1.5"
           aria-label="閉じる"
+          disabled={busy}
           onClick={onClose}
         >
           <Icon name="close" />

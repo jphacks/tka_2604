@@ -2,14 +2,16 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, it, vi } from 'vitest'
 
-import { mockEvent } from '../../../mock/eventData'
+import { eventFixture } from '../../../test/fixtures/event'
 import { ConstraintForm } from './ConstraintForm'
 
 it('guides a person from a condition choice through validation, preview, and a typed constraint', async () => {
   const user = userEvent.setup()
   const onSave = vi.fn()
   const onClose = vi.fn()
-  render(<ConstraintForm event={mockEvent} onSave={onSave} onClose={onClose} />)
+  render(
+    <ConstraintForm event={eventFixture} onSave={onSave} onClose={onClose} />,
+  )
   const dialog = within(screen.getByRole('dialog'))
   await user.click(dialog.getByRole('button', { name: /出演位置を指定する/ }))
   await user.click(dialog.getByRole('button', { name: 'この条件を追加' }))
@@ -33,7 +35,7 @@ it('guides a person from a condition choice through validation, preview, and a t
   expect(onSave).toHaveBeenCalledWith(
     expect.objectContaining({
       type: 'at_position',
-      event_id: mockEvent.id,
+      event_id: eventFixture.id,
       hardness: 'soft',
       priority: 'mid',
       params: { position: 0 },

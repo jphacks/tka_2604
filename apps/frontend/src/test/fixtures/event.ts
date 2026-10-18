@@ -1,4 +1,4 @@
-import type { EventData } from '../shared/model/event'
+import type { EventData } from '../../shared/model/event'
 
 const base = {
   schema_version: '1.0.0',
@@ -8,7 +8,7 @@ const base = {
   enabled: true,
 } as const
 
-export const mockEvent: EventData = {
+export const eventFixture: EventData = {
   id: 'spring-live-2026',
   name: '春ライブ 2026',
   members: [
@@ -137,7 +137,7 @@ export const mockEvent: EventData = {
     {
       id: 'welcome',
       role: 'assistant',
-      text: 'ここはチャットのデモです。条件は「手動追加」から種類・対象・数値を選んで登録できます。AIとの接続は準備中です。',
+      text: '条件は「手動追加」から種類・対象・数値を選んで登録できます。希望や相談はチャットに入力してください。',
     },
   ],
 }

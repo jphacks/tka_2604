@@ -35,13 +35,9 @@ jobs:
       - run: npm run check
 
   e2e:
-    name: E2E (${{ matrix.mode }})
+    name: E2E (api)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        mode: [mock, api]
     env:
       CI: 'true'
       HUSKY: '0'
@@ -56,23 +52,16 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Prepare local API and D1
-        if: matrix.mode == 'api'
         run: |
           npm run cf:typegen
           npm run build --workspace=@jphack-2026/frontend
-          npm run db:migrate:local
-          npm run db:seed:local
-      - name: Run mock E2E
-        if: matrix.mode == 'mock'
-        run: npm run test:e2e -- --workers=1 --reporter=list,html
       - name: Run API E2E
-        if: matrix.mode == 'api'
         run: npm run test:e2e:api -- --workers=1 --reporter=list,html
       - name: Upload Playwright results
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-${{ matrix.mode }}
+          name: playwright-api
           path: |
             apps/frontend/playwright-report/
             apps/frontend/test-results/

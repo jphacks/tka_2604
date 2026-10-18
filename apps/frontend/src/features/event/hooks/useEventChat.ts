@@ -1,7 +1,6 @@
 import { type Dispatch, useEffect, useRef, useState } from 'react'
 
 import type { ChatMessage, EventData } from '../../../shared/model/event'
-import { dataSource } from '../../../shared/repositories/dataSource'
 import type { ChatProposal } from '../model/chatProposal'
 import type { EventAction } from '../model/eventReducer'
 import { eventRepository } from '../repositories/eventRepository'
@@ -52,19 +51,8 @@ export function useEventChat(
           messageId: message.id,
           sourceText: text,
         })
-      if (dataSource === 'api') {
-        const messages = await eventRepository.getMessages(eventId, signal)
-        if (!signal?.aborted) dispatch({ type: 'messages', messages })
-      } else
-        dispatch({
-          type: 'message',
-          message: {
-            id: crypto.randomUUID(),
-            role: 'assistant',
-            text: reply.reply,
-            replyToMessageId: message.id,
-          },
-        })
+      const messages = await eventRepository.getMessages(eventId, signal)
+      if (!signal?.aborted) dispatch({ type: 'messages', messages })
       pending.current = null
     } catch (error) {
       if (!signal?.aborted) {
@@ -82,15 +70,11 @@ export function useEventChat(
     }
   }
   const unanswered =
-    dataSource === 'api'
-      ? (event?.messages.filter(
-          (message) =>
-            message.role === 'user' &&
-            !event.messages.some(
-              (reply) => reply.replyToMessageId === message.id,
-            ),
-        ) ?? [])
-      : []
+    event?.messages.filter(
+      (message) =>
+        message.role === 'user' &&
+        !event.messages.some((reply) => reply.replyToMessageId === message.id),
+    ) ?? []
   return {
     chatDraft,
     setChatDraft,

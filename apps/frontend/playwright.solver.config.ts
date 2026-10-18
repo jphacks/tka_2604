@@ -36,7 +36,7 @@ export default defineConfig({
     },
     {
       command: 'npm run dev -- --host 127.0.0.1 --port 5176 --strictPort',
-      env: { VITE_DATA_SOURCE: '', API_PROXY_TARGET: 'http://127.0.0.1:8790' },
+      env: { API_PROXY_TARGET: 'http://127.0.0.1:8790' },
       url: 'http://127.0.0.1:5176',
       reuseExistingServer: false,
       timeout: 30000,

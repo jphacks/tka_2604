@@ -1,6 +1,6 @@
 import { assert, test } from 'vitest'
 
-import { mockEvent } from '../../../mock/eventData'
+import { eventFixture } from '../../../test/fixtures/event'
 import { eventReducer, initialState } from './eventReducer'
 import {
   buildSchedule,
@@ -9,8 +9,8 @@ import {
   setPerformanceOrder,
 } from './schedule'
 
-const fresh = () => structuredClone(mockEvent)
-function assertRoster(event: typeof mockEvent) {
+const fresh = () => structuredClone(eventFixture)
+function assertRoster(event: typeof eventFixture) {
   const placed = event.sections.flatMap((section) =>
     section.slots.filter(Boolean),
   )
@@ -24,7 +24,7 @@ function assertRoster(event: typeof mockEvent) {
   )
 }
 
-test('initial mock: 3 parts, 4 slots each, 2 unassigned', () => {
+test('fixture: 3 parts, 4 slots each, 2 unassigned', () => {
   const schedule = buildSchedule(fresh())
   assert.equal(schedule.capacity, 12)
   assert.equal(schedule.assignedCount, 12)
