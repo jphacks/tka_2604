@@ -56,4 +56,4 @@ backendの振る舞いを変更するときは、次の順で進める。
 
 予定するデモは「データ入力 → 対話で制約追加 → 確認 → 生成 → 未達成確認 → 手動調整」。フロントデモのダミーデータと最短の操作手順は[フロントエンドのデモ](frontend.md)に記載する。自動生成は接続前。チャットAPIはLLM生成・会話本文保存へ接続済みで、利用にはDBイベントとAPIキーが必要。画面名簿はモックのためDB同期は後続。条件追加はGUIで行う。
 
-Workersの公開は検証用が `npm run deploy:develop`（`npm run deploy` も同じ）、本番用が `npm run deploy:main`。ビルド後に公開し、DBマイグレーションは別途適用する。[DB手順](../apps/backend/db/README.md)を参照。公開の依頼がある場合に実行する。SolverのURL・トークンは[環境構築](setup.md#solverの環境変数)に従って環境別envファイルで管理する。秘密情報をGitやログに残さず、PRプレビューの自動生成は前提にしない。
+Workersの公開は検証用が `npm run deploy:develop`（`npm run deploy` も同じ）、本番用が `npm run deploy:main`。ビルド後に公開し、DBマイグレーションは別途適用する。OGP画像などの絶対URLはビルド時に`SITE_URL`で決まり、未指定ならdevelopのURL、`deploy:main`では本番のURLになる。[DB手順](../apps/backend/db/README.md)を参照。公開の依頼がある場合に実行する。SolverのURL・トークンは[環境構築](setup.md#solverの環境変数)に従って環境別envファイルで管理する。秘密情報をGitやログに残さず、PRプレビューの自動生成は前提にしない。
