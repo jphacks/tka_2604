@@ -31,7 +31,7 @@ export function chatMessageService(
         pendingProposal: null,
         currentMessageId: user.messageId,
       })
-      // Proposals stay transient until explicitly applied through constraint saving.
+      // Proposals and reorders stay transient until explicitly applied by saving.
       // Only the request that inserted this answer may return its proposal.
       const replyId = crypto.randomUUID()
       const assistant = await messages.saveReply(
@@ -41,14 +41,22 @@ export function chatMessageService(
         generated.output.message,
         replyId,
       )
+      const fresh = assistant.messageId === replyId
       return {
         reply: assistant.text,
-        ...(generated.output.type === 'approval_required' &&
-        assistant.messageId === replyId
+        ...(generated.output.type === 'approval_required' && fresh
           ? {
               proposal: {
                 expectedUpdatedAt: generated.updatedAt,
                 actions: generated.output.actions,
+              },
+            }
+          : {}),
+        ...(generated.reorder && fresh
+          ? {
+              reorder: {
+                expectedUpdatedAt: generated.updatedAt,
+                ...generated.reorder,
               },
             }
           : {}),

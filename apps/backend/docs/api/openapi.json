@@ -2519,7 +2519,7 @@
         },
         "responses": {
           "200": {
-            "description": "ユーザー発言と検証済みAI回答の保存後の返信。新規生成時のみ未適用のproposalを返すことがある。再送では保存済み回答本文だけを返す。",
+            "description": "ユーザー発言と検証済みAI回答の保存後の返信。新規生成時のみ、未適用のproposal（制約の変更案）またはreorder（並べ替え案とBEの判定）を返すことがある。再送では保存済み回答本文だけを返す。",
             "content": {
               "application/json": {
                 "schema": {
@@ -2528,6 +2528,121 @@
                     "reply": {
                       "type": "string",
                       "minLength": 1
+                    },
+                    "reorder": {
+                      "type": "object",
+                      "description": "LLMの並べ替え案をBEが判定した結果。hard違反があればSolverで一番近いhard充足の並びに直す。承認時は既存のスケジュール保存APIで保存する。",
+                      "properties": {
+                        "expectedUpdatedAt": {
+                          "type": "string",
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+                        },
+                        "placements": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "bandId": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "partId": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "order": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": ["bandId", "partId", "order"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": ["llm", "solver"]
+                        },
+                        "results": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "constraintId": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "hardness": {
+                                "type": "string",
+                                "enum": ["hard", "soft"]
+                              },
+                              "priority": {
+                                "type": ["string", "null"],
+                                "enum": ["high", "mid", "low", null]
+                              },
+                              "before": {
+                                "type": "string",
+                                "enum": [
+                                  "met",
+                                  "unmet",
+                                  "disabled",
+                                  "unchecked"
+                                ]
+                              },
+                              "after": {
+                                "type": "string",
+                                "enum": [
+                                  "met",
+                                  "unmet",
+                                  "disabled",
+                                  "unchecked"
+                                ]
+                              },
+                              "violations": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "type": "string",
+                                      "enum": [
+                                        "too_close",
+                                        "order",
+                                        "out_of_position",
+                                        "count"
+                                      ]
+                                    }
+                                  },
+                                  "required": ["kind"]
+                                }
+                              },
+                              "explanations": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "required": [
+                              "constraintId",
+                              "hardness",
+                              "priority",
+                              "before",
+                              "after",
+                              "violations",
+                              "explanations"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "expectedUpdatedAt",
+                        "placements",
+                        "source",
+                        "results"
+                      ],
+                      "additionalProperties": false
                     },
                     "proposal": {
                       "$ref": "#/components/schemas/ChatProposal"

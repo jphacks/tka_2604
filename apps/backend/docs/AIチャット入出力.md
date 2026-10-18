@@ -57,7 +57,7 @@ BE内部の変更案生成と、チャット送信APIからのLLM呼び出し・
 - 2026-10-18時点のSolverは`count`を計算に含めず`unchecked`を返す（#75）。hardの`count`がある場合はSolverの案もBEの判定で違反となり、LLMの案に戻る。
 - このSolver呼出しは提案を直すためのもので、保存も実行ボタンの計算も行わない。
 
-HTTP応答への`reorder`の追加と、確認モーダル（許可なら既存の`POST /:eventId/schedule`で保存、拒否なら破棄）は後続で接続する。
+送信APIは新規生成時のみ`reorder`（`expectedUpdatedAt`付きの判定結果）を返し、保存はしない。再送では本文だけを返す。確認モーダル（許可なら既存の`POST /:eventId/schedule`で保存、拒否なら破棄）は後続でfrontendに接続する。
 
 ## 確認と反映の契約
 

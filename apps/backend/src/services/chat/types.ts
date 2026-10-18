@@ -104,6 +104,8 @@ export type ChatGeneration = {
 export interface ChatResponse {
   reply: string
   proposal?: { expectedUpdatedAt: string; actions: ConstraintProposalAction[] }
+  // Saved only when approved, through the schedule API with expectedUpdatedAt.
+  reorder?: ReorderResult & { expectedUpdatedAt: string }
 }
 
 export type ChatMessage = EventChat['messages'][number]
