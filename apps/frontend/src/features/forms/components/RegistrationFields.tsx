@@ -97,7 +97,7 @@ export function RegistrationFields({
               id="request-text-help"
               className="mt-2 block text-xs leading-6 font-normal text-muted"
             >
-              出演順や時間帯などの希望を入力してください。希望は原文で保存されます。主催者による確認・制約への反映が必要です。
+              出演順や時間帯などの希望を入力してください。制約に反映するには、主催者による確認が必要です。
             </span>
           </label>
           <section aria-labelledby="members-heading">
