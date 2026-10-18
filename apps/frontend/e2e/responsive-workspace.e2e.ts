@@ -1,5 +1,48 @@
 import { expect, test } from './database-fixture'
 
+for (const width of [320, 390, 1280]) {
+  test(`schedule stays aligned at the right scroll edge at ${width}px`, async ({
+    page,
+    databaseEvent,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto(`/event/${databaseEvent.eventId}`)
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    const table = page.getByRole('region', { name: '出演順の表' })
+    const row = table.locator('[data-performance]').first()
+    await expect(row).toBeVisible()
+    await table.evaluate((element) => {
+      element.scrollLeft = element.scrollWidth
+    })
+    await page.screenshot({
+      path: testInfo.outputPath(`schedule-right-${width}.png`),
+    })
+    const rowBox = (await row.boundingBox())!
+    const tableRight = await table.evaluate(
+      (element) =>
+        element.getBoundingClientRect().left +
+        element.clientLeft +
+        element.clientWidth,
+    )
+    expect(Math.abs(rowBox.x + rowBox.width - tableRight)).toBeLessThanOrEqual(
+      1,
+    )
+    for (const heading of [
+      table.getByRole('heading', { name: /^第1部 ·/ }),
+      table.getByRole('heading', { name: /^未配置 ·/ }),
+    ]) {
+      const headerBox = (await heading.locator('..').boundingBox())!
+      expect(Math.abs(headerBox.x - rowBox.x)).toBeLessThanOrEqual(1)
+      expect(Math.abs(headerBox.width - rowBox.width)).toBeLessThanOrEqual(1)
+    }
+    const columnBox = (await table
+      .getByText('紹介', { exact: true })
+      .locator('..')
+      .boundingBox())!
+    expect(columnBox.width).toBe(rowBox.width)
+  })
+}
+
 for (const width of [320, 390, 768, 1279]) {
   test(`workspace tabs fit ${width}px and preserve edits`, async ({
     page,
