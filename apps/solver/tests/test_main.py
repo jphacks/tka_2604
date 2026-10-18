@@ -92,6 +92,158 @@ def test_solve_accepts_real_http_request_and_returns_complete_placements(
     assert "diagnostics" not in body or body["diagnostics"] == []
 
 
+def test_solve_accepts_band_count_for_each_part(client: TestClient) -> None:
+    payload = solve_payload()
+    payload["parts"] = [
+        {"partId": "part-1", "sortOrder": 0, "bandCount": 5},
+        {"partId": "part-2", "sortOrder": 1, "bandCount": 5},
+    ]
+
+    response = post_solve(client, payload)
+
+    assert response.status_code == 200
+
+
+def test_solve_respects_each_part_band_count_as_capacity(client: TestClient) -> None:
+    payload = solve_payload()
+    payload["parts"] = [
+        {"partId": "part-1", "sortOrder": 0, "bandCount": 1},
+        {"partId": "part-2", "sortOrder": 1, "bandCount": 1},
+    ]
+
+    response = post_solve(client, payload)
+
+    assert response.status_code == 200
+    placements = response.json()["placements"]
+    assert [
+        sum(placement["partId"] == part_id for placement in placements)
+        for part_id in ("part-1", "part-2")
+    ] == [1, 1]
+
+
+def test_solve_rejects_band_counts_with_insufficient_total_capacity(
+    client: TestClient,
+) -> None:
+    payload = solve_payload()
+    payload["bands"].append({"bandId": "band-c"})
+    payload["parts"] = [
+        {"partId": "part-1", "sortOrder": 0, "bandCount": 1},
+        {"partId": "part-2", "sortOrder": 1, "bandCount": 1},
+    ]
+
+    response = post_solve(client, payload)
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "invalid_input"
+
+
+def test_solve_rejects_partially_specified_band_counts(client: TestClient) -> None:
+    payload = solve_payload()
+    payload["parts"] = [
+        {"partId": "part-1", "sortOrder": 0, "bandCount": 1},
+        {"partId": "part-2", "sortOrder": 1},
+    ]
+
+    response = post_solve(client, payload)
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "invalid_input"
+
+
+@pytest.mark.parametrize(
+    ("gap_type", "same_part_only", "hardness", "expected_status"),
+    [
+        ("min_gap_member", True, "hard", "met"),
+        ("min_gap_bands", True, "hard", "met"),
+        ("min_gap_member", False, "soft", "unmet"),
+        ("min_gap_bands", False, "soft", "unmet"),
+    ],
+)
+def test_solve_applies_same_part_only_for_min_gap_pairs_across_parts(
+    client: TestClient,
+    gap_type: str,
+    same_part_only: bool,
+    hardness: str,
+    expected_status: str,
+) -> None:
+    payload = solve_payload()
+    payload["parts"] = [
+        {"partId": "part-1", "sortOrder": 0, "bandCount": 1},
+        {"partId": "part-2", "sortOrder": 1, "bandCount": 1},
+    ]
+    payload["constraints"] = [
+        {
+            "schema_version": "1.0.0",
+            "constraint_id": "c-part-a",
+            "event_id": "event-1",
+            "type": "in_range",
+            "hardness": "hard",
+            "priority": None,
+            "enabled": True,
+            "targets": {"band_ids": ["band-a"]},
+            "params": {"kind": "parts", "part_ids": [0]},
+        },
+        {
+            "schema_version": "1.0.0",
+            "constraint_id": "c-part-b",
+            "event_id": "event-1",
+            "type": "in_range",
+            "hardness": "hard",
+            "priority": None,
+            "enabled": True,
+            "targets": {"band_ids": ["band-b"]},
+            "params": {"kind": "parts", "part_ids": [1]},
+        },
+        {
+            "schema_version": "1.0.0",
+            "constraint_id": "c-gap",
+            "event_id": "event-1",
+            "type": gap_type,
+            "hardness": hardness,
+            "priority": None if hardness == "hard" else "mid",
+            "enabled": True,
+            "targets": (
+                {"member_id": "member-1"}
+                if gap_type == "min_gap_member"
+                else {"band_ids": ["band-a", "band-b"]}
+            ),
+            "params": {"min_diff": 2, "same_part_only": same_part_only},
+        },
+    ]
+    if gap_type == "min_gap_member":
+        payload["members"] = [{"memberId": "member-1"}]
+        payload["memberships"] = [
+            {"bandId": "band-a", "memberId": "member-1"},
+            {"bandId": "band-b", "memberId": "member-1"},
+        ]
+
+    response = post_solve(client, payload)
+
+    assert response.status_code == 200
+    body = response.json()
+    placements = {item["bandId"]: item["partId"] for item in body["placements"]}
+    assert placements == {"band-a": "part-1", "band-b": "part-2"}
+    assert body["constraintResults"][-1] == {
+        "constraintId": "c-gap",
+        "status": expected_status,
+    }
+
+
+@pytest.mark.parametrize("band_count", [-1, 1.5, True, "5"])
+def test_solve_rejects_invalid_part_band_count(
+    client: TestClient, band_count: object
+) -> None:
+    payload = solve_payload()
+    payload["parts"] = [
+        {"partId": "part-1", "sortOrder": 0, "bandCount": band_count},
+    ]
+
+    response = post_solve(client, payload)
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "invalid_input"
+
+
 def test_solve_integrates_supported_constraint_types_and_parameter_branches(
     client: TestClient,
 ) -> None:

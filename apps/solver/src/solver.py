@@ -67,6 +67,8 @@ def _build_model(request: SolveRequest, allow_partial: bool) -> ModelVariables:
                 assignment[band_index, part_index] for band_index in range(band_count)
             )
         )
+        if parts[part_index].bandCount is not None:
+            model.add(part_sizes[part_index] <= parts[part_index].bandCount)
         for band_index in range(band_count):
             selected = assignment[band_index, part_index]
             model.add(local_order[band_index] < part_sizes[part_index]).only_enforce_if(
