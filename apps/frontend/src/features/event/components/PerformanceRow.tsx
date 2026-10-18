@@ -6,7 +6,7 @@ import { NumberField } from '../../../shared/ui/NumberField'
 import type { PerformanceRow as Row, PerformanceView } from '../model/types'
 
 export const rowColumns =
-  'grid min-w-[680px] grid-cols-[36px_45px_62px_minmax(140px,1fr)_minmax(120px,0.8fr)_minmax(160px,1.4fr)] items-center gap-1 px-3'
+  'grid grid-cols-[36px_45px_62px_minmax(140px,1fr)_minmax(120px,0.8fr)_minmax(160px,1.4fr)] items-center gap-1 px-3'
 
 export function PerformanceRow({
   row,

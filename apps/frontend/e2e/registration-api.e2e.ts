@@ -196,6 +196,7 @@ test('production flow: create an event, open its form, register and update DB me
     .getByRole('dialog')
     .getByRole('button', { name: 'イベントを作成', exact: true })
     .click()
+  await expect(page).toHaveURL(/\/event\/[^/?]+$/)
   await expect(
     page.getByRole('heading', { name: '実利用の登録フロー', exact: true }),
   ).toBeVisible()

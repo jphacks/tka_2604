@@ -133,7 +133,11 @@ test('mobile layout and modal remain usable without page overflow', async ({
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(390)
-  const dialog = await choose(page, /出演位置を指定する/)
+  await page.getByRole('tab', { name: '制約', exact: true }).click()
+  // The schedule actions are in a separate tab on mobile.
+  await page.getByRole('button', { name: '手動追加' }).click()
+  const dialog = page.getByRole('dialog', { name: '制約を手動追加' })
+  await dialog.getByRole('button', { name: /出演位置を指定する/ }).click()
   await dialog
     .getByRole('combobox', { name: '位置を指定する出演枠' })
     .selectOption(databaseEvent.bandIds.p2)

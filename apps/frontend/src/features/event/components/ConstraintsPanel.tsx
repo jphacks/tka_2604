@@ -50,7 +50,7 @@ export function ConstraintsPanel({
           未達成のみ（{controller.unmetCount}）
         </Button>
       </div>
-      <div className="max-h-[75dvh] min-h-0 space-y-2 overflow-y-auto p-2 xl:max-h-none xl:flex-1">
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2 wrap-anywhere">
         {controller.constraintViews.map(
           ({ constraint, text, status, detail }) => (
             <article
@@ -70,7 +70,7 @@ export function ConstraintsPanel({
                   }
                 />
                 <h3
-                  className={`flex-1 text-sm leading-6 ${constraint.enabled ? '' : 'text-muted line-through'}`}
+                  className={`min-w-0 flex-1 text-sm leading-6 ${constraint.enabled ? '' : 'text-muted line-through'}`}
                 >
                   {text}
                 </h3>

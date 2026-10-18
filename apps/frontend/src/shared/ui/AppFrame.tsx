@@ -24,30 +24,34 @@ export function AppFrame({
   return (
     <div
       className={
-        workspace
-          ? 'flex min-h-dvh flex-col xl:h-dvh xl:overflow-hidden'
-          : 'min-h-dvh'
+        workspace ? 'flex h-dvh flex-col overflow-hidden' : 'min-h-dvh'
       }
     >
-      <header className="flex min-h-16 shrink-0 flex-wrap items-center justify-between gap-3 border-b border-line bg-white px-4 py-3">
-        <div className="flex items-center gap-4 sm:gap-8">
+      <header className="flex min-h-12 shrink-0 items-center justify-between gap-2 border-b border-line bg-white px-3 py-1.5 sm:min-h-16 sm:px-4 sm:py-3">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-8">
           <Brand />
-          <Link to="/event" className="text-xs text-muted hover:text-brand">
+          <Link
+            to="/event"
+            className="shrink-0 text-xs whitespace-nowrap text-muted hover:text-brand"
+          >
             マイイベント
           </Link>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="flex size-7 items-center justify-center rounded-full bg-wash text-xs font-semibold text-brand">
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="hidden size-7 items-center justify-center rounded-full bg-wash text-xs font-semibold text-brand sm:flex">
             運
           </span>
-          <span className="text-xs">{session?.name}</span>
+          <span className="hidden max-w-32 truncate text-xs sm:inline">
+            {session?.name}
+          </span>
           <Button
             variant="ghost"
             className="text-xs"
+            aria-label="ログアウト"
             onClick={() => void signOut()}
           >
             <Icon name="logout" />
-            ログアウト
+            <span className="hidden sm:inline">ログアウト</span>
           </Button>
         </div>
       </header>
@@ -55,14 +59,15 @@ export function AppFrame({
         <div className="shrink-0 border-b border-line bg-white">
           <nav
             aria-label="イベント内の移動"
-            className="flex flex-wrap items-center gap-x-5 px-4 sm:px-6"
+            className="flex min-w-0 flex-wrap items-center gap-x-4 px-3 sm:gap-x-5 sm:px-6"
           >
             <Link
               to={`/event/${eventId}`}
-              className="mr-auto py-4 text-sm font-semibold"
+              className="w-full min-w-0 truncate py-2 text-sm font-semibold sm:mr-auto sm:w-auto sm:flex-1 sm:py-4"
+              title={eventName || 'イベント'}
             >
               {workspace ? (
-                <h1 className="text-sm font-semibold">
+                <h1 className="truncate text-sm font-semibold">
                   {eventName || 'イベント'}
                 </h1>
               ) : (
@@ -83,7 +88,7 @@ export function AppFrame({
                 to={item.path}
                 end
                 className={({ isActive }) =>
-                  `border-b-2 py-4 text-xs ${isActive ? 'border-brand font-semibold text-brand' : 'border-transparent text-muted hover:text-brand'}`
+                  `shrink-0 border-b-2 py-2 text-xs whitespace-nowrap sm:py-4 ${isActive ? 'border-brand font-semibold text-brand' : 'border-transparent text-muted hover:text-brand'}`
                 }
               >
                 {/* 太字の幅を先に確保し、選択中のタブが変わっても位置がずれないようにする */}
