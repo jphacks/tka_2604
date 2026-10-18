@@ -43,6 +43,7 @@
     "test:e2e": "npm run test:e2e --workspace=@jphack-2026/frontend --",
     "test:e2e:api": "npm run test:e2e:api --workspace=@jphack-2026/frontend --",
     "test:e2e:solver": "node scripts/test-e2e-solver.mjs",
+    "eval:chat": "vitest run --config vitest.eval.config.ts",
     "db:generate": "npm run db:generate --workspace=@jphack-2026/backend --",
     "db:seed:local": "wrangler d1 execute DB --env develop --local --file apps/backend/db/seed.sql",
     "db:prepare:e2e": "wrangler d1 migrations apply DB --env develop --local --persist-to .wrangler/e2e-api && wrangler d1 execute DB --env develop --local --persist-to .wrangler/e2e-api --file apps/backend/db/seed.sql"

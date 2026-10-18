@@ -7,5 +7,11 @@
     "resolveJsonModule": true,
     "types": ["./worker-configuration.d.ts"]
   },
-  "include": ["src", "test", "worker-configuration.d.ts", "drizzle.config.ts"]
+  "include": [
+    "src",
+    "test",
+    "eval",
+    "worker-configuration.d.ts",
+    "drizzle.config.ts"
+  ]
 }
