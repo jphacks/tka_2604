@@ -1,6 +1,6 @@
 # AIチャットのLLM入出力
 
-BE内部の変更案生成と、チャット送信APIからのLLM呼び出し・会話本文の保存を実装済み。`POST /api/events/:eventId/chat`は`chatMessageService`を通してuserを先に保存し、生成・検証後にassistantの本文だけを保存する。HTTPの応答は`{ reply }`を維持する。承認対象の保持、構造化した変更案のHTTP応答、制約の保存・適用、計算は後続で扱う。
+BE内部の変更案生成と、チャット送信APIからのLLM呼び出し・会話本文の保存を実装済み。`POST /api/events/:eventId/chat`は`chatMessageService`を通してuserを先に保存し、生成・検証後にassistantの本文だけを保存する。HTTPの応答は`{ reply, proposal? }`。新規の変更案を一時的に返し、画面で確認・必要な設定値の選択後、既存の制約保存APIへ反映する。未適用案は履歴へ保存せず、再送は本文のみ。チャット発言からの計算実行は後続で扱う。
 
 ## 入力と応答
 
@@ -43,9 +43,9 @@ BE内部の変更案生成と、チャット送信APIからのLLM呼び出し・
 
 生成Serviceは成功時に検証済みの`AIChatOutput`を返す。LLMの入出力・通信の失敗時は`AIChatError`を投げ、`code`に`ai_chat_invalid_input`・`ai_chat_invalid_output`・`ai_chat_missing_api_key`・`ai_chat_provider_error`・`ai_chat_timeout`・`ai_chat_refused`・`ai_chat_incomplete_response`・`ai_chat_invalid_provider_response`等の識別子を設定する。実LLMの利用にはAPI料金が発生する。
 
-## 後続で決める契約
+## 確認と反映の契約
 
-承認用IDの発行・保持・有効期限・再送、最新イベントとの競合確認、設定値の確定、複数アクションの原子的な保存、更新時の由来・enabledの保持を接続する。フォーム由来の制約の自動追加とは別のチャット用の契約として扱う。
+提案は画面内でuser発言IDと生成時のupdatedAtに紐づける。確認前の更新を検出したら再相談を案内し、確認後は全actionsを検証して同じ一覧へ一度に反映する。未指定の設定値をUIで選択し、既存の制約保存APIで原子的に保存する。新規制約IDは発言IDとactionの順序から安定して作り、更新のID・enabledとbackend側の由来は引き継ぐ。専用の提案テーブルは作らず、再読込・保存済み発言の再送では未適用案を復元しない。自然文での提案の再編集や永続的な承認管理は後続。
 
 提示された3種類の応答には計算意図が含まれないため、この生成処理はSolverを呼ばない。「今の条件で作って」「条件を変更して生成し直して」を扱うには、既存のAIチャット設計に従い計算意図と承認後の実行タイミングを別途定義する。暫定の固定指示は実行ボタンの利用を案内する。
 

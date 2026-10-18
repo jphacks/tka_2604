@@ -153,7 +153,13 @@ describe('persisted chat POST API', () => {
     const response = await post({ message: '  hello  ', messageId: 'u1' })
     expect(response.status).toBe(200)
     await expectJsonResponse(response, responses)
-    expect(await response.json()).toEqual({ reply: output.message })
+    expect(await response.json()).toEqual({
+      reply: output.message,
+      proposal: {
+        expectedUpdatedAt: before!.updatedAt,
+        actions: output.actions,
+      },
+    })
     expect(response.headers.get('X-Chat-Message-Id')).toBe('u1')
     expect((await rows()).slice(-2)).toMatchObject([
       { messageId: 'u1', role: 'user', text: 'hello', replyToMessageId: null },
@@ -371,7 +377,10 @@ describe('persisted chat POST API', () => {
     })
     if (response.status !== 200) throw new Error('Expected success')
     const body = await response.json()
-    expectTypeOf(body).toEqualTypeOf<{ reply: string }>()
+    expectTypeOf(body.reply).toEqualTypeOf<string>()
+    expectTypeOf<
+      NonNullable<typeof body.proposal>['expectedUpdatedAt']
+    >().toEqualTypeOf<string>()
     expect(body.reply).toBe(answer.message)
   })
 })

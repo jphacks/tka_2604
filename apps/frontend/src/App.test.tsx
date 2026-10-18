@@ -65,6 +65,32 @@ describe('event creation entry points', () => {
       await screen.findByRole('heading', { name: '空の一覧から作成' }),
     ).toBeVisible()
   })
+  it('keeps creation input after a save failure and allows a retry', async () => {
+    const create = vi
+      .spyOn(workspaceRepository, 'createEvent')
+      .mockRejectedValueOnce(new Error('DBへの保存に失敗しました。'))
+    mockWorkspaceStore.signIn('demo@example.com')
+    window.history.replaceState(null, '', '/event?create=1')
+    const user = userEvent.setup()
+    render(<App />)
+    const name = await screen.findByRole('textbox', { name: /イベント名/ })
+    await user.type(name, '保存を再試行するイベント')
+    await user.click(
+      screen.getAllByRole('button', { name: 'イベントを作成' }).at(-1)!,
+    )
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'DBへの保存に失敗しました。',
+    )
+    expect(name).toHaveValue('保存を再試行するイベント')
+    expect(window.location.pathname).toBe('/event')
+    await user.click(
+      screen.getAllByRole('button', { name: 'イベントを作成' }).at(-1)!,
+    )
+    expect(
+      await screen.findByRole('heading', { name: '保存を再試行するイベント' }),
+    ).toBeVisible()
+    expect(create).toHaveBeenCalledTimes(2)
+  })
   it('opens the creation form from an unavailable event and can return to the list', async () => {
     mockWorkspaceStore.signIn('demo@example.com')
     window.history.replaceState(null, '', '/event/missing-event')

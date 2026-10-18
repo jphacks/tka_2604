@@ -35,7 +35,7 @@ uv python install 3.13
 uv sync --locked --directory apps/solver
 ```
 
-画面・health・イベントAPIのローカル起動にAPIキー・Cloudflareログインは不要。チャット送信はルートの`.env`または`.dev.vars`のどちらかに`GOOGLE_AI_API_TOKEN`を設定し、migration済みD1と有効なイベントを用意する。ローカルD1はWorkersが手元に作成し、Cloudflare上の検証・本番DBは操作しない。DBの雛形と適用手順は[DB手順](../apps/backend/db/README.md)を参照。Cloudflare上のチャット送信にはdevelop/mainごとに同名のSecretを登録する。秘密情報はGitに含めない。
+画面・health・イベントAPIのローカル起動にAPIキー・Cloudflareログインは不要。画面は既定でローカルD1を使うため、初回は下記のmigrationとseedを適用する。チャット送信はルートの`.env`または`.dev.vars`のどちらかに`GOOGLE_AI_API_TOKEN`を設定し、migration済みD1と有効なイベントを用意する。ローカルD1はWorkersが手元に作成し、Cloudflare上の検証・本番DBは操作しない。DBの雛形と適用手順は[DB手順](../apps/backend/db/README.md)を参照。Cloudflare上のチャット送信にはdevelop/mainごとに同名のSecretを登録する。秘密情報はGitに含めない。
 
 ## Solverの環境変数
 
@@ -56,6 +56,8 @@ cp -n .env.example .env.main
 実行場所：リポジトリルート。
 
 ```sh
+npm run db:migrate:local
+npm run db:seed:local
 npm run dev
 ```
 
@@ -89,7 +91,7 @@ npm run check
 
 ## フロントエンドのデモとブラウザテスト
 
-`npm run dev` で起動した画面から「デモアカウントで試す」を選ぶ。追加の認証情報は不要。操作とデータのリセットについては[フロントエンドのデモ](frontend.md)を参照。
+モックのデモは `VITE_DATA_SOURCE=mock npm run dev` で起動した画面から「デモアカウントで試す」を選ぶ。通常の `npm run dev` はDBのデータを使う。追加の認証情報は不要。操作とデータのリセットについては[フロントエンドのデモ](frontend.md)を参照。
 
 ```sh
 npx playwright install chromium # ブラウザテストを初めて実行する環境のみ
@@ -118,3 +120,29 @@ npm run dev
 `http://localhost:8787/api/docs`のEventsで、一覧・作成・詳細・設定更新・論理削除を試行できる。PATCHにはGET応答の`updatedAt`を`expectedUpdatedAt`として渡す。APIの入出力は[イベントAPI](../apps/backend/docs/api/events.md)を参照。
 
 認証接続時は#57で仮ID定数を認証済みユーザーIDへ置き換える。Userの自動作成・認証の実装・リモートへの設定やデプロイはこの手順に含めない。
+
+## frontendをAPIモードで起動する（#19）
+
+既定で実装済みイベントAPIとローカルD1へ接続する。初回はmigration・seedを先に実行する。
+
+```sh
+npm run db:migrate:local
+npm run db:seed:local
+npm run dev
+```
+
+`http://localhost:5173` で「デモアカウントで試す」を選ぶ。画面構成はモックUIと共通で、API接続の説明帯は表示しない。Viteの `/api` proxyを経由し、Workers配信の画面でも同一originへ接続する。Vite環境変数はビルド時に固定されるため、既存サーバーは停止してから切り替える。
+
+イベントの一覧・作成・設定変更・論理削除に加え、出演順・部と制約の保存もDBへ反映される。出演順は右上の「保存」で明示保存し、制約は操作後に自動保存される。制約の自動保存では未保存の出演順は保存しない。計算ボタンは出演順→制約→計算の順に呼び、両方の保存が成功した後にD1の内容をVercelのSolverへ送る。保存失敗・競合ではSolverを呼ばない。失敗・競合では自動保存を止めて編集内容を保持し、通知欄の「保存を再試行」または「最新の状態を取得」で復旧できる。未保存編集を破棄する場合は確認が出る。元の画面と同じ各部の組数入力・空き枠・ドラッグを使える。空き枠と枠数は画面内だけで保持し、APIには実際の出演順だけを保存する。空き枠は採番せず、位置指定・制約評価も実際の出演順に合わせる。再取得時の枠数は各部4以上かつ配置数以上に戻る。名簿・希望原文・由来は保持する。
+
+チャットは保存済み履歴を復元し、送信・再試行に同じ発言IDを使う。返信の生成には `GOOGLE_AI_API_TOKEN` が必要で、APIキーなしでも既存履歴の閲覧はできる。未保存の出演順は右上から保存し、制約の自動保存完了後に送信する。チャットの変更案は「確認して反映」で一覧へ追加・更新・削除し、同じ制約保存APIで自動保存する。未指定の必須／任意・優先度を画面で選択する。未適用案は画面内だけで保持し、再読込で消える。名簿編集・CSV取込は#16のAPI実装後に接続する。フォーム接続とチャットからの計算実行は後続。Solverは`SOLVER_API_URL`・`SOLVER_API_TOKEN`と実`/solve`の提供が必要で、未設定・外部失敗は画面へエラーを返す。ログインは実認証ではなく、BEの所有者は従来どおり `demo-owner`。
+
+モックを使う場合は `VITE_DATA_SOURCE=mock npm run dev`。APIエラーで自動的にモックへ切り替わることはない。
+
+APIモードのブラウザテスト（ローカルD1の準備後）：
+
+```sh
+npm run test:e2e:api --workspace=@jphack-2026/frontend
+```
+
+APIモード専用の画面をポート5175で起動する。専用のWorkersを8789で起動し、このworktreeのローカルD1を使う（通常開発の8787は再利用しない）。作成・出演順／制約保存・失敗／再試行・再読込・更新競合・削除、seedの名簿／部名／履歴を実API経由で確認する。チャットの新規生成はHTTP応答を差し替え、外部LLMを呼ばない。seedの配置・制約を変更するテストは終了時に復元し、作成したイベントは論理削除する。既存モックのブラウザテスト `npm run test:e2e` は引き続き5174を使う。

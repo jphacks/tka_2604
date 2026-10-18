@@ -40,6 +40,7 @@ export function ScheduleDragSurface({
   )
   const describe = (id: string | number) => {
     const row = rows.find((row) => row.key === String(id))
+    if (row && !row.performance && row.order === null) return '空き枠'
     return row
       ? `${row.performance?.name ?? '空き枠'}（${row.order === null ? '未配置' : `${row.order}番`}）`
       : '未配置一覧'

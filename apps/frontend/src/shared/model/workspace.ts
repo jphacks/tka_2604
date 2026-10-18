@@ -12,14 +12,15 @@ export interface EventDetails {
   venue: string
   description: string
   status: EventStatus
+  updatedAt?: string
 }
 export interface EventSummary extends EventDetails {
   performanceCount: number
   assignedCount: number
   partCount: number
-  responseCount: number
+  responseCount: number | null
 }
-export type EventDraft = Omit<EventDetails, 'id' | 'status'>
+export type EventDraft = Omit<EventDetails, 'id' | 'status' | 'updatedAt'>
 export interface FormSettings {
   title: string
   description: string

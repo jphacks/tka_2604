@@ -11,6 +11,10 @@ import { useEvent } from '../hooks/useEvent'
 
 export function EventPage() {
   const { eventId = '' } = useParams()
+  return <EventWorkspace key={eventId} eventId={eventId} />
+}
+
+function EventWorkspace({ eventId }: { eventId: string }) {
   const controller = useEvent(eventId)
   return (
     <AppFrame workspace eventId={eventId} eventName={controller.event?.name}>
@@ -50,21 +54,33 @@ export function EventPage() {
           </div>
         </>
       )}
-      {(controller.notice || controller.error) && (
-        <div
-          role={controller.error ? 'alert' : 'status'}
-          className={`fixed right-3 bottom-3 left-3 z-40 flex items-center justify-between gap-3 rounded-lg border bg-white p-3 shadow-sm xl:right-auto xl:max-w-xl ${controller.error ? 'border-red-200 text-red-700' : 'border-brand/30 text-brand'}`}
-        >
-          <p>{controller.error || controller.notice}</p>
-          <Button
-            variant="ghost"
-            aria-label="通知を閉じる"
-            onClick={controller.dismissNotice}
+      {controller.event &&
+        (controller.notice || controller.error || controller.loadError) && (
+          <div
+            role={controller.error || controller.loadError ? 'alert' : 'status'}
+            className={`fixed right-3 bottom-3 left-3 z-40 flex items-center justify-between gap-3 rounded-lg border bg-white p-3 shadow-sm xl:right-auto xl:max-w-xl ${controller.error || controller.loadError ? 'border-red-200 text-red-700' : 'border-brand/30 text-brand'}`}
           >
-            閉じる
-          </Button>
-        </div>
-      )}
+            <p>
+              {controller.error || controller.loadError || controller.notice}
+            </p>
+            {controller.saveFailed ? (
+              <>
+                <Button onClick={() => void controller.retrySave()}>
+                  保存を再試行
+                </Button>
+                <Button onClick={controller.retryLoad}>最新の状態を取得</Button>
+              </>
+            ) : (
+              <Button
+                variant="ghost"
+                aria-label="通知を閉じる"
+                onClick={controller.dismissNotice}
+              >
+                閉じる
+              </Button>
+            )}
+          </div>
+        )}
     </AppFrame>
   )
 }

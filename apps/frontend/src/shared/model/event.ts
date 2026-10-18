@@ -13,22 +13,30 @@ export interface Performance {
   id: string
   name: string
   memberIds: string[]
+  requestText?: string | null
+  requestStatus?:
+    'pending' | 'needs_confirmation' | 'converted' | 'failed' | null
 }
 
 export interface Section {
+  name?: string | null
   id: string
   slots: (string | null)[]
 }
 
 export interface ChatMessage {
+  replyToMessageId?: string | null
   id: string
   role: 'user' | 'assistant'
   text: string
 }
 
 export interface EventData {
+  scheduleMode?: 'dense'
   id: string
   name: string
+  updatedAt?: string
+  constraintSources?: Record<string, string | null>
   members: Member[]
   performances: Performance[]
   sections: Section[]
@@ -61,7 +69,7 @@ export function positions(event: EventData) {
   event.sections.forEach((section, part) => {
     section.slots.forEach((id) => {
       if (id !== null) result.set(id, { position, part })
-      position += 1
+      if (id !== null || event.scheduleMode !== 'dense') position += 1
     })
   })
   return result
@@ -82,4 +90,22 @@ export function isFixed(event: EventData, bandId: string) {
   return fixedConstraints(event, bandId).some(
     (constraint) => constraint.params.position === current,
   )
+}
+
+/** Persisted schedules use all registered bands as the possible position range. */
+export function positionLimit(event: EventData) {
+  return event.scheduleMode === 'dense'
+    ? event.performances.length
+    : event.sections.reduce((sum, section) => sum + section.slots.length, 0)
+}
+
+/** Empty frames are view state; only band order belongs to the schedule API. */
+export function scheduleContent(event: EventData) {
+  return [
+    event.sections.map((section) => ({
+      ...section,
+      slots: section.slots.filter((id) => id !== null),
+    })),
+    event.unassigned,
+  ]
 }

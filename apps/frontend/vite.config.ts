@@ -9,7 +9,7 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     proxy: {
-      '/api': 'http://localhost:8787',
+      '/api': process.env.API_PROXY_TARGET ?? 'http://localhost:8787',
     },
   },
   plugins: [

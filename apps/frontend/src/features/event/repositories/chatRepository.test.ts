@@ -11,14 +11,14 @@ describe('chat HTTP adapter', () => {
       .mockResolvedValue(Response.json({ reply: 'backendの返信' }))
     vi.stubGlobal('fetch', fetch)
     const controller = new AbortController()
-    expect(await sendChatMessage('event-a', '本文', controller.signal)).toBe(
-      'backendの返信',
-    )
+    expect(
+      await sendChatMessage('event-a', '本文', controller.signal, 'stable-id'),
+    ).toEqual({ reply: 'backendの返信' })
     expect(fetch).toHaveBeenCalledWith(
       '/api/events/event-a/chat',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ message: '本文' }),
+        body: JSON.stringify({ message: '本文', messageId: 'stable-id' }),
         signal: controller.signal,
       }),
     )
@@ -49,5 +49,21 @@ describe('chat HTTP adapter', () => {
         '送信に失敗しました',
       )
     },
+  )
+})
+
+it.each([
+  { expectedUpdatedAt: 'now', actions: [] },
+  {
+    expectedUpdatedAt: 'now',
+    actions: [{ type: 'add_constraint', constraint: null }],
+  },
+])('rejects a malformed proposal without displaying it', async (proposal) => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(Response.json({ reply: '案です', proposal })),
+  )
+  await expect(sendChatMessage('event-a', '本文')).rejects.toThrow(
+    '変更案を読み取れませんでした',
   )
 })
