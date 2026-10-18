@@ -11,8 +11,8 @@ export function recordChatDecision(
 ) {
   const text =
     input.decision === 'applied'
-      ? '制約の変更案を適用しました。'
-      : '制約の変更案を破棄しました。'
+      ? '提案を受理しました。'
+      : '提案を破棄しました。'
   return messages.saveUser(userId, eventId, input.messageId, text)
 }
 

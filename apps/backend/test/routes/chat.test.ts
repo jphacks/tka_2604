@@ -89,7 +89,7 @@ describe('decision log API', () => {
     await expectJsonResponse(response, decisionResponses)
     expect(await response.json()).toEqual({
       messageId,
-      text: '制約の変更案を適用しました。',
+      text: '提案を受理しました。',
     })
     expect((await decide('applied')).status).toBe(200)
     expect(await rows()).toMatchObject([
@@ -102,6 +102,7 @@ describe('decision log API', () => {
   })
   it('rejects different decisions for one ID and invalid input without writing', async () => {
     await decide('discarded')
+    expect((await rows())[0].text).toBe('提案を破棄しました。')
     const conflict = await decide('applied')
     expect(conflict.status).toBe(409)
     await expectJsonResponse(conflict, decisionResponses)

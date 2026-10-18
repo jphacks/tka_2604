@@ -79,7 +79,7 @@ PR #60のイベントAPIと同じ`{ error: { code, message, details } }`でエ�
 
 ## 懸念点・未決定事項
 
-制約変更案の適用・破棄は`POST /api/events/:eventId/chat/decision`へ`{ "messageId": "decision-<UUID>", "decision": "applied" | "discarded" }`を送る。backendが「制約の変更案を適用しました。」「制約の変更案を破棄しました。」の固定文をuser発言として保存して返す。LLMは呼ばず、返信発言は作らない。同じIDと選択の再送は同じ発言を返し、異なる選択なら409。適用時は制約保存の成功後に記録する。通常の未返信発言の再試行対象から`decision-`で始まる記録IDを除外する。
+制約変更案と順序変更案の受理・破棄は`POST /api/events/:eventId/chat/decision`へ`{ "messageId": "decision-<UUID>", "decision": "applied" | "discarded" }`を送る。backendが「提案を受理しました。」「提案を破棄しました。」の固定文をuser発言として保存して返す。LLMは呼ばず、返信発言は作らない。同じIDと選択の再送は同じ発言を返し、異なる選択なら409。受理時は制約または出演順の保存成功後に記録する。通常の未返信発言の再試行対象から`decision-<UUID>`形式の記録IDを除外する。
 
 - 履歴には本文だけを使い、新規応答に限って変更案を一時的に返す。提案の自然文での再編集と、チャット発言によるSolver実行は後続。未確認のactionsを完成済み制約として保存しない。
 - frontendのAPIモードはDBの名簿と履歴を取得し、送信に`messageId`を指定する。返信後は履歴を再取得し、失敗後・再読込後の未回答発言も同じID・本文で再試行できる。未保存の出演順は右上の保存ボタンから保存し、制約の自動保存完了後に送信する。IDを省略した送信では、本文が同じでも新しい発言になる。

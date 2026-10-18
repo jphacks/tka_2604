@@ -2335,7 +2335,7 @@
     "/api/events/{eventId}/chat/decision": {
       "post": {
         "operationId": "recordChatDecision",
-        "summary": "制約提案の適用・破棄をuser発言として記録する",
+        "summary": "制約・順序の提案の受理・破棄をuser発言として記録する",
         "description": "固定文を既存のチャット履歴へ保存する。LLM・Solverを呼ばず、Event.updatedAtを変更しない。同じmessageIdとdecisionの再送は同じ発言を返す。",
         "tags": ["Chat"],
         "parameters": [
@@ -2388,7 +2388,7 @@
                 },
                 "example": {
                   "messageId": "decision-123e4567-e89b-42d3-a456-426614174000",
-                  "text": "制約の変更案を適用しました。"
+                  "text": "提案を受理しました。"
                 }
               }
             }
