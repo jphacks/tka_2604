@@ -38,6 +38,7 @@ export interface EventSchedule {
   bands: {
     bandId: string
     bandName: string
+    description: string | null
     requestText: string | null
     requestStatus:
       'pending' | 'needs_confirmation' | 'converted' | 'failed' | null

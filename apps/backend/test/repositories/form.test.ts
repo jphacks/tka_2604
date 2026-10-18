@@ -26,12 +26,36 @@ afterEach(async () => {
 const change = (id: string) => ({
   bandId: id,
   bandName: id,
+  description: null,
   create: true,
   memberIds: ['a-m1'],
   newMembers: [],
 })
 
 describe('form repository with D1', () => {
+  it('saves a band description on create and replaces it on update', async () => {
+    const created = await formRepository(db).save(
+      seed.event.eventId,
+      seed.event.updatedAt,
+      { ...change('new'), description: 'メロコア' },
+    )
+    expect(
+      (await formRepository(db).get(seed.event.eventId))?.bands,
+    ).toContainEqual({
+      bandId: 'new',
+      bandName: 'new',
+      description: 'メロコア',
+    })
+    await formRepository(db).save(seed.event.eventId, created.updatedAt, {
+      ...change('new'),
+      create: false,
+      description: null,
+    })
+    expect(
+      (await formRepository(db).get(seed.event.eventId))?.bands,
+    ).toContainEqual({ bandId: 'new', bandName: 'new', description: null })
+  })
+
   it('commits a new band and advances the event token', async () => {
     const saved = await formRepository(db).save(
       seed.event.eventId,
@@ -43,7 +67,7 @@ describe('form repository with D1', () => {
     )
     expect(
       (await formRepository(db).get(seed.event.eventId))?.bands,
-    ).toContainEqual({ bandId: 'new', bandName: 'new' })
+    ).toContainEqual({ bandId: 'new', bandName: 'new', description: null })
   })
 
   it('allows only one simultaneous save with the same token', async () => {
@@ -75,6 +99,7 @@ describe('form repository with D1', () => {
       formRepository(db).save(seed.event.eventId, seed.event.updatedAt, {
         bandId: 'a-b1',
         bandName: 'should roll back',
+        description: 'should roll back',
         create: false,
         newMembers: [
           { memberId: 'new-member', memberName: 'should roll back' },
@@ -95,6 +120,7 @@ describe('form repository with D1', () => {
       formRepository(db).save(seed.event.eventId, seed.event.updatedAt, {
         bandId: 'other-b1',
         bandName: 'wrong event',
+        description: null,
         create: false,
         memberIds: [],
         newMembers: [],

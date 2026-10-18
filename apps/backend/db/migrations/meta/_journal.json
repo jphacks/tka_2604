@@ -43,6 +43,13 @@
       "when": 1792293287090,
       "tag": "0005_part_band_count_integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1792298183356,
+      "tag": "0006_band_description",
+      "breakpoints": true
     }
   ]
 }

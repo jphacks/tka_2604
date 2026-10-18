@@ -22,8 +22,13 @@ describe('parseRosterCsv', () => {
 
     expect(result).toEqual({
       rows: [
-        { line: 2, name: '時の歌/手嶌葵', members: ['佐藤', '田中'] },
-        { line: 3, name: 'ソロギター', members: ['鈴木'] },
+        {
+          line: 2,
+          name: '時の歌/手嶌葵',
+          description: null,
+          members: ['佐藤', '田中'],
+        },
+        { line: 3, name: 'ソロギター', description: null, members: ['鈴木'] },
       ],
     })
   })
@@ -32,16 +37,51 @@ describe('parseRosterCsv', () => {
     const result = parseRosterCsv(`${header}"Hello, World","A ""B""","C\nD"\n`)
 
     expect(result).toEqual({
-      rows: [{ line: 2, name: 'Hello, World', members: ['A "B"', 'C\nD'] }],
+      rows: [
+        {
+          line: 2,
+          name: 'Hello, World',
+          description: null,
+          members: ['A "B"', 'C\nD'],
+        },
+      ],
     })
   })
 
-  it('reads its own template, including a shared member', () => {
+  it('reads its own template, including descriptions and a shared member', () => {
     const result = parseRosterCsv(rosterTemplate())
     const rows = 'rows' in result ? result.rows : []
 
     expect(rows).toHaveLength(2)
+    expect(rows[0].description).toBe('明るいポップス。手拍子で盛り上がる')
+    expect(rows[0].members).toEqual(['佐藤', '田中', '鈴木'])
     expect(planRosterImport(rows, []).shared).toEqual(['田中'])
+  })
+
+  it('reads the optional 紹介 column only when its header is present', () => {
+    expect(
+      parseRosterCsv('曲名,紹介,メンバー1\n曲A, メタル ,佐藤\n曲B,,田中\n'),
+    ).toEqual({
+      rows: [
+        { line: 2, name: '曲A', description: 'メタル', members: ['佐藤'] },
+        { line: 3, name: '曲B', description: null, members: ['田中'] },
+      ],
+    })
+    expect(parseRosterCsv('曲名,メンバー1,メンバー2\n曲A,紹介,佐藤\n')).toEqual(
+      {
+        rows: [
+          {
+            line: 2,
+            name: '曲A',
+            description: null,
+            members: ['紹介', '佐藤'],
+          },
+        ],
+      },
+    )
+    expect(
+      errorOf(`曲名,紹介,メンバー1\n曲A,${'あ'.repeat(501)},佐藤\n`),
+    ).toContain('2行目: 紹介は500文字以内')
   })
 
   it('rejects a file without the roster header', () => {
@@ -74,9 +114,9 @@ describe('decodeCsv', () => {
 
 describe('planRosterImport', () => {
   const rows = [
-    { line: 2, name: '曲A', members: ['佐藤', '田中'] },
-    { line: 3, name: '曲B', members: ['田中', '鈴木'] },
-    { line: 4, name: '曲C', members: ['田中', '山本'] },
+    { line: 2, name: '曲A', description: null, members: ['佐藤', '田中'] },
+    { line: 3, name: '曲B', description: null, members: ['田中', '鈴木'] },
+    { line: 4, name: '曲C', description: null, members: ['田中', '山本'] },
   ]
 
   it('counts bands, people and shared members, reusing registered names', () => {

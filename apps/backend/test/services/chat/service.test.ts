@@ -67,6 +67,45 @@ describe('chat service aligned with event APIs', () => {
     expect(repository.remove).not.toHaveBeenCalled()
   })
 
+  it('passes band descriptions to the model and returns the BE judgement of a reorder', async () => {
+    const { model, state, service } = fixture()
+    state.schedule.bands[0].description = '明るいポップス'
+    const placements = [{ bandId: 'band-a', partId: 'part-2', order: 0 }]
+    const output = {
+      type: 'reorder_proposal' as const,
+      message: 'Aを後ろにしました。',
+      actions: [],
+      placements,
+    }
+    model.mockResolvedValueOnce(output)
+    const result = await service.generate('event-1', turn)
+    expect(model.mock.calls[0][0].context.bands[0]).toEqual({
+      bandId: 'band-a',
+      bandName: 'A',
+      description: '明るいポップス',
+    })
+    expect(result).toEqual({
+      eventId: 'event-1',
+      updatedAt: state.event.updatedAt,
+      output,
+      reorder: {
+        placements,
+        source: 'llm',
+        results: [
+          {
+            constraintId: 'constraint-1',
+            hardness: 'soft',
+            priority: 'high',
+            before: 'disabled',
+            after: 'disabled',
+            violations: [],
+            explanations: [],
+          },
+        ],
+      },
+    })
+  })
+
   it.each(['get', 'getSchedule', 'getConstraints', 'getChat'] as const)(
     'does not call the model when %s cannot see the event',
     async (method) => {

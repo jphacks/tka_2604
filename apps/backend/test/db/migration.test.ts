@@ -25,6 +25,11 @@ it('upgrades populated legacy data without losing names, nulls, memberships or p
       .prepare('SELECT part_name FROM parts ORDER BY sort_order')
       .all()
     expect(names.map((row) => row.part_name)).toEqual(['前半', null])
+    expect(
+      await local.binding
+        .prepare("SELECT band_name, description FROM bands WHERE band_id = 'b'")
+        .first(),
+    ).toEqual({ band_name: 'A', description: null })
     for (const table of [
       'users',
       'events',

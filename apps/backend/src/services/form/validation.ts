@@ -1,6 +1,13 @@
 import { z } from 'zod'
 
 const bandName = z.string().trim().min(1).max(80)
+// Genre, mood and the like, used by the AI reorder. Blank clears it.
+const description = z
+  .string()
+  .trim()
+  .max(500)
+  .nullable()
+  .transform((value) => value || null)
 const memberIds = z.array(z.string().min(1)).max(20)
 const newMembers = z
   .array(z.strictObject({ memberName: z.string().trim().min(1).max(40) }))
@@ -39,6 +46,7 @@ export const createFormBandSchema = z
   .strictObject({
     expectedUpdatedAt: z.iso.datetime(),
     bandName,
+    description: description.optional(),
     memberIds,
     newMembers,
   })
@@ -48,12 +56,14 @@ export const updateFormBandSchema = z
   .strictObject({
     expectedUpdatedAt: z.iso.datetime(),
     bandName: bandName.optional(),
+    description: description.optional(),
     memberIds: memberIds.optional(),
     newMembers: newMembers.optional(),
   })
   .superRefine((input, ctx) => {
     if (
       input.bandName === undefined &&
+      input.description === undefined &&
       input.memberIds === undefined &&
       input.newMembers === undefined
     )

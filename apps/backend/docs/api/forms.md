@@ -62,7 +62,7 @@ Content-Type: application/json
 }
 ```
 
-全項目必須。使わない配列は空配列にする。希望原文・変換状態はともに`null`で開始する。
+`description`（バンド紹介）以外は必須。使わない配列は空配列にする。希望原文・変換状態はともに`null`で開始する。`description`はジャンル・雰囲気などの紹介で、AIの並べ替え案に使う。500文字まで、省略・空文字・`null`は紹介なし。
 
 ### バンドの編集・メンバーの追加・差し替え・所属解除
 
@@ -81,7 +81,7 @@ Content-Type: application/json
 }
 ```
 
-- `bandName`と所属のどちらかを指定する。省略した項目は保持する。
+- `bandName`・`description`・所属のいずれかを指定する。省略した項目は保持する。`description`は空文字・`null`で消去する。
 - 所属を変える場合は`memberIds`と`newMembers`を両方指定する。保存後の所属全体を渡す。
 - 既存の佐藤へ差し替える場合は、佐藤のIDを`memberIds`に含め、`newMembers`は空配列にする。
 - 外す人のIDは`memberIds`から除く。追加する既存の人のIDは含める。

@@ -12,8 +12,8 @@ export async function mockRegistrationApi(page: Page, eventId = 'public-live') {
     eventTitle: '春ライブ 2026',
     updatedAt: '2026-10-18T00:00:00.000Z',
     bands: [
-      { bandId: 'a', bandName: 'サンセット・レコード' },
-      { bandId: 'b', bandName: 'ブルーノート' },
+      { bandId: 'a', bandName: 'サンセット・レコード', description: null },
+      { bandId: 'b', bandName: 'ブルーノート', description: null },
     ],
     members: [
       { memberId: 'm1', memberName: '田中 花' },
@@ -62,7 +62,11 @@ export async function mockRegistrationApi(page: Page, eventId = 'public-live') {
       }),
     )
     roster.members.push(...members)
-    const band = { bandId, bandName: body.bandName }
+    const band = {
+      bandId,
+      bandName: body.bandName,
+      description: body.description ?? null,
+    }
     roster.bands = [
       ...roster.bands.filter((item) => item.bandId !== bandId),
       band,

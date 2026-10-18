@@ -100,6 +100,7 @@ describe('chat DTOs derived from apps/schema', () => {
         validateStructuredOutput({
           ...approval(),
           actions: [{ type: 'add_constraint', constraint }],
+          placements: [],
         }),
       ).toBe(true)
     },
@@ -167,9 +168,31 @@ describe('chat DTOs derived from apps/schema', () => {
   )
 
   it('validates approval cardinality more strictly than the provider schema', () => {
-    const invalid = { ...approval(), actions: [] }
+    const invalid = { ...approval(), actions: [], placements: [] }
     expect(validateStructuredOutput(invalid)).toBe(true)
     expect(aiChatOutputSchema.safeParse(invalid).success).toBe(false)
+  })
+
+  it('drops the provider-required empty placements only outside reorder proposals', () => {
+    const output = { ...approval(), placements: [] }
+    expect(validateStructuredOutput(output)).toBe(true)
+    expect(aiChatOutputSchema.parse(output)).toEqual(approval())
+    const placements = [{ bandId: 'band-a', partId: 'part-1', order: 0 }]
+    const reorder = {
+      type: 'reorder_proposal',
+      message: '盛り上がる順に並べ替えました。',
+      actions: [],
+      placements,
+    }
+    expect(validateStructuredOutput(reorder)).toBe(true)
+    expect(aiChatOutputSchema.parse(reorder)).toEqual(reorder)
+    for (const invalid of [
+      { ...reorder, placements: [] },
+      { ...reorder, actions: approval().actions },
+      { ...approval(), placements },
+      { ...reorder, placements: [{ ...placements[0], order: -1 }] },
+    ])
+      expect(aiChatOutputSchema.safeParse(invalid).success).toBe(false)
   })
 
   it('emits strict objects with all keys required and no external refs', () => {

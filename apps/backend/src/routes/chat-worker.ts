@@ -1,5 +1,6 @@
 import { createDb } from '../db/index'
 import { createGeminiChatModel } from '../integrations/llm/gemini'
+import { solverClient } from '../integrations/solver'
 import { chatRepository } from '../repositories/chat'
 import { eventsRepository } from '../repositories/events'
 import { chatMessageService } from '../services/chat/messages'
@@ -19,6 +20,14 @@ export const chatRoutes = createChatRoutes<CloudflareBindings>(
         createGeminiChatModel({ apiKey: bindings.GOOGLE_AI_API_TOKEN ?? '' })(
           modelInput,
         ),
+      // Brings a reorder proposal that breaks a hard constraint back into a
+      // hard-feasible order. Without a configured Solver it stays unrepaired.
+      bindings.SOLVER_API_URL && bindings.SOLVER_API_TOKEN
+        ? solverClient({
+            url: bindings.SOLVER_API_URL,
+            token: bindings.SOLVER_API_TOKEN,
+          })
+        : undefined,
     )
     return service.send(eventId, input)
   },

@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import { Button } from '../../../shared/ui/Button'
 import { Panel } from '../../../shared/ui/Panel'
 import type { EventController } from '../hooks/useEvent'
+import { useScheduleFlip } from '../hooks/useScheduleFlip'
 import { LiveInfoDialog } from './LiveInfoDialog'
 import {
   EmptyPerformanceRow,
@@ -13,6 +14,8 @@ import { ScheduleDragSurface, UnassignedDropZone } from './ScheduleDragSurface'
 
 export function SchedulePanel({ controller }: { controller: EventController }) {
   const unassignedRef = useRef<HTMLElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  useScheduleFlip(scrollRef, controller.reorderRevision)
   const { event, schedule, setOrder, setFixed } = controller
   const [editingLive, setEditingLive] = useState(false)
   if (!event || !schedule) return null
@@ -93,7 +96,10 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
         />
       )}
       <ScheduleDragSurface controller={controller}>
-        <div className="max-h-[65dvh] min-h-64 scrollbar-thin overflow-auto xl:max-h-none xl:min-h-0 xl:flex-1">
+        <div
+          ref={scrollRef}
+          className="max-h-[65dvh] min-h-64 scrollbar-thin overflow-auto xl:max-h-none xl:min-h-0 xl:flex-1"
+        >
           <div
             className={`${rowColumns} sticky top-0 z-10 min-h-9 border-b border-line bg-white text-xs text-muted`}
           >

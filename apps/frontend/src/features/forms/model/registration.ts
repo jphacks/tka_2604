@@ -106,7 +106,11 @@ export function applySavedBand(
     updatedAt: saved.updatedAt,
     bands: [
       ...roster.bands.filter((band) => band.bandId !== saved.band.bandId),
-      { bandId: saved.band.bandId, bandName: saved.band.bandName },
+      {
+        bandId: saved.band.bandId,
+        bandName: saved.band.bandName,
+        description: saved.band.description,
+      },
     ],
     members: [
       ...roster.members.filter(

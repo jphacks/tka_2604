@@ -123,6 +123,7 @@ export function eventsRepository(db: Database): EventRepository {
           .select({
             bandId: bands.bandId,
             bandName: bands.bandName,
+            description: bands.description,
             requestText: bands.requestText,
             requestStatus: bands.requestStatus,
           })
