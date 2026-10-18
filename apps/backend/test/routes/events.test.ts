@@ -150,7 +150,10 @@ describe('event HTTP API', () => {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ expectedUpdatedAt: created.updatedAt }),
+        body: JSON.stringify({
+          expectedUpdatedAt: created.updatedAt,
+          parts: snapshot.parts.map(({ partId }) => ({ partId, bandCount: 5 })),
+        }),
       },
       { DB: local.binding },
     )

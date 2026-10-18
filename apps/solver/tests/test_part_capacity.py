@@ -22,7 +22,9 @@ def request(counts: list[int], bands: int) -> SolveRequest:
     )
 
 
-@pytest.mark.parametrize("counts,bands", [([2, 3], 5), ([2, 3], 3), ([1, 2], 5)])
+@pytest.mark.parametrize(
+    "counts,bands", [([2, 3], 5), ([2, 3], 3), ([1, 2], 5), ([0, 2], 3), ([0, 2], 2)]
+)
 def test_solver_respects_configured_part_counts(counts: list[int], bands: int):
     result = solve_request(request(counts, bands))
     assert result.status in ("optimal", "feasible", "partial")
@@ -37,7 +39,14 @@ def test_solver_respects_configured_part_counts(counts: list[int], bands: int):
     assert len(ids) == len(set(ids)) == bands
 
 
-@pytest.mark.parametrize("count", [0, -1, 1.5, True])
+@pytest.mark.parametrize("count", [-1, 1.5, True])
 def test_invalid_part_count_is_rejected(count):
     with pytest.raises(ValidationError):
         request([count], 2)
+
+
+def test_zero_total_capacity_returns_no_placement():
+    result = solve_request(request([0, 0], 2))
+    assert result.status == "infeasible"
+    assert result.placements is None
+    assert result.unassignedBandIds is None

@@ -35,7 +35,13 @@ function request(body: unknown, eventId = 'demo-event') {
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        parts: [
+          { partId: 'demo-part-2', bandCount: 0 },
+          { partId: 'demo-part-1', bandCount: 5 },
+        ],
+        ...(body as Record<string, unknown>),
+      }),
     },
     {
       DB: local.binding,
@@ -67,7 +73,15 @@ it('rejects a Solver result that overflows configured part counts without changi
   const client = vi.fn().mockResolvedValue(solved())
   vi.spyOn(integration, 'solverClient').mockReturnValueOnce(client)
   expect(
-    (await request({ expectedUpdatedAt: before.event.updatedAt })).status,
+    (
+      await request({
+        expectedUpdatedAt: before.event.updatedAt,
+        parts: before.parts.map(({ partId, bandCount }) => ({
+          partId,
+          bandCount,
+        })),
+      })
+    ).status,
   ).toBe(502)
   expect(client.mock.calls[0][0]).toMatchObject({
     parts: [
@@ -79,6 +93,42 @@ it('rejects a Solver result that overflows configured part counts without changi
 })
 
 describe('solve from persisted event data', () => {
+  it.each([
+    undefined,
+    [],
+    [{ partId: 'demo-part-1', bandCount: 5 }],
+    [
+      { partId: 'demo-part-1', bandCount: 5 },
+      { partId: 'demo-part-1', bandCount: 5 },
+    ],
+    [
+      { partId: 'demo-part-1', bandCount: 5 },
+      { partId: 'other-part', bandCount: 5 },
+    ],
+    ...[undefined, -1, 1.5, '5'].map((bandCount) => [
+      { partId: 'demo-part-1', bandCount },
+      { partId: 'demo-part-2', bandCount: 5 },
+    ]),
+  ])(
+    'rejects invalid part capacities without calling Solver or saving: %j',
+    async (parts) => {
+      const before = (await snapshot())!
+      const send = vi.fn<typeof fetch>()
+      vi.stubGlobal('fetch', send)
+      const response = await request({
+        expectedUpdatedAt: before.event.updatedAt,
+        parts,
+      })
+      expect(response.status).toBe(422)
+      await expectJsonResponse(
+        response,
+        openApiDocument.paths['/api/events/{eventId}/solve'].post.responses,
+      )
+      expect(send).not.toHaveBeenCalled()
+      expect(await snapshot()).toEqual(before)
+    },
+  )
+
   it.each(['soft', 'disabled'])(
     'accepts %s constraints while keeping their original JSON',
     async (kind) => {
@@ -223,10 +273,10 @@ describe('solve from persisted event data', () => {
     const sent: unknown = JSON.parse(sentBody)
     expect(sent).toEqual({
       eventId: 'demo-event',
-      parts: before.parts.map(({ partId, sortOrder, bandCount }) => ({
+      parts: before.parts.map(({ partId, sortOrder }) => ({
         partId,
         sortOrder,
-        bandCount,
+        bandCount: sortOrder === 0 ? 5 : 0,
       })),
       bands: before.bands.map(({ bandId }) => ({ bandId })),
       members: before.members.map(({ memberId }) => ({ memberId })),

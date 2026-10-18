@@ -59,8 +59,6 @@ def _build_model(request: SolveRequest, allow_partial: bool) -> ModelVariables:
             model.add(present[band_index] == 1)
 
     for part_index in range(part_count):
-        if parts[part_index].bandCount is not None:
-            model.add(part_sizes[part_index] <= parts[part_index].bandCount)
         model.add(
             part_sizes[part_index]
             == sum(

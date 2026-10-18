@@ -233,13 +233,7 @@ export const eventRoutes = new Hono<EventEnv>()
     return c.body(null, 204)
   })
   .post('/:eventId/solve', jsonInput(solveInputSchema), async (c) =>
-    c.json(
-      await c.var.solve(
-        c.req.param('eventId'),
-        c.req.valid('json').expectedUpdatedAt,
-      ),
-      200,
-    ),
+    c.json(await c.var.solve(c.req.param('eventId'), c.req.valid('json')), 200),
   )
   .post('/:eventId/schedule', jsonInput(saveScheduleSchema), async (c) =>
     c.json(

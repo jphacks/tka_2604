@@ -21,8 +21,8 @@ const input: SolverRequest = {
     { bandId: 'b', memberId: 'm' },
   ],
   parts: [
-    { partId: 'p', bandCount: 4, sortOrder: 0 },
-    { partId: 'q', bandCount: 4, sortOrder: 1 },
+    { partId: 'p', sortOrder: 0, bandCount: 5 },
+    { partId: 'q', sortOrder: 1, bandCount: 5 },
   ],
   constraints: [],
   currentPlacements: [],

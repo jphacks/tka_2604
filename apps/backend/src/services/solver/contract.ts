@@ -5,6 +5,14 @@ import { placementSchema } from '../scheduling/validation'
 
 export const solveInputSchema = z.strictObject({
   expectedUpdatedAt: z.iso.datetime(),
+  parts: z
+    .array(
+      z.strictObject({
+        partId: z.string().min(1),
+        bandCount: z.number().int().nonnegative(),
+      }),
+    )
+    .min(1),
 })
 const diagnostics = z
   .array(
