@@ -3,7 +3,7 @@
 JPHACKS向けの出演順作成アプリ。ハッカソンのMVPとデモを優先し、必要な変更を小さく実装する。
 
 - 技術選定は`docs/architecture.md`、共通の仕様・開発手順は`docs/`、backend固有の仕様は`apps/backend/docs/`に記載する。
-- chat・フォーム希望の制約化・関連DBの作業前に[AIチャット設計](apps/backend/docs/AIチャット設計.md)を読み、合意済み仕様と未決定事項を確認する。
+- chat・フォーム希望の制約化・関連DBの作業前に[チャットAPI](apps/backend/docs/api/chat.md)・[フォームAPI](apps/backend/docs/api/forms.md)・[DB方針](docs/database.md)を読み、合意済み仕様と未決定事項を確認する。
 - backendの作業前に[apps/backend/AGENTS.md](apps/backend/AGENTS.md)を読み、追加の開発・テストルールに従う。
 
 - 仕様は[docs/product.md](docs/product.md)、全体構成は[docs/architecture.md](docs/architecture.md)、制約は[docs/schema.md](docs/schema.md)。backendの構成・責務は[apps/backend/AGENTS.md](apps/backend/AGENTS.md)に従う。実装用の合意済み仕様はリポジトリで管理する。未決定事項を勝手に確定しない。

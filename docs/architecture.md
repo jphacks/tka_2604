@@ -51,7 +51,7 @@ health・イベント本体と情報取得・チャット送信APIにOpenAPI定�
 
 対応Issueで入力・出力・エラー・必要な権限を具体例とともに決める。生成型だけを信頼せず、IDの存在とイベントへの所属も検証する。探索結果は成功、解なし、探索未完了、内部エラーを区別する。
 
-外部通信・LLMはテストで差し替えられるようにする。LLMはGoogle AI StudioのGemini 3.5 Flash-Lite（`gemini-3.5-flash-lite`）を使用する。Google GenAI SDKによる外部通信は`integrations/llm`、入力の組み立て・履歴の選択・変更案の検証は`services/chat`へ置く。イベント関連のDTO・取得Repository・`EventError`・共有Schema＋Zodの制約検証は、マージ済みPR #60の共通実装を使う。処理・保存の境界は[AIチャット設計](../apps/backend/docs/AIチャット設計.md)を参照する。認証・公開フォームの詳細、ソルバーの公開先は未確定。将来のためだけの層や汎用化は増やさない。
+外部通信・LLMはテストで差し替えられるようにする。LLMはGoogle AI StudioのGemini 3.5 Flash-Lite（`gemini-3.5-flash-lite`）を使用する。Google GenAI SDKによる外部通信は`integrations/llm`、入力の組み立て・履歴の選択・変更案の検証は`services/chat`へ置く。イベント関連のDTO・取得Repository・`EventError`・共有Schema＋Zodの制約検証は、マージ済みPR #60の共通実装を使う。処理・保存の境界は[チャットAPI](../apps/backend/docs/api/chat.md)を参照する。内部の入出力は[チャット契約](../apps/backend/src/services/chat/contract.ts)、生成・検証は[生成処理](../apps/backend/src/services/chat/generate.ts)で確認する。認証・公開フォームの詳細、ソルバーの公開先は未確定。将来のためだけの層や汎用化は増やさない。
 
 health・イベント本体APIでOpenAPIの配信・閲覧・RPC型共有を確認する。イベント本体APIはZodで入力を検証し、テスト用D1への保存・再取得をAPIテストとDB結合テストで確認する。認証接続前はRoute内の仮ID定数`demo-owner`をServiceへ渡し、#57で認証済みユーザーIDへ置き換える。frontendは#19で既存APIへ接続する。[イベントAPI](../apps/backend/docs/api/events.md)を参照。
 

@@ -140,7 +140,7 @@ Eventはis_deletedを1にする論理削除。配下は残し、通常の読み�
 
 ## 希望・由来・チャットの保存（#45）
 
-[AIチャット設計](../apps/backend/docs/AIチャット設計.md)を参照する。希望はBand.request_text、状態はrequest_status。両方NULLなら希望なし、原文がある場合はpending／needs_confirmation／converted／failedを指定する。convertedは制約へ変換済みを意味し、計算の成功を意味しない。
+[チャットAPI](../apps/backend/docs/api/chat.md)・[フォームAPI](../apps/backend/docs/api/forms.md)を参照する。希望はBand.request_text、状態はrequest_status。両方NULLなら希望なし、原文がある場合はpending／needs_confirmation／converted／failedを指定する。convertedは制約へ変換済みを意味し、計算の成功を意味しない。
 
 Constraints.source_band_idは任意の希望元。FKと挿入・更新トリガーで同イベントのBandだけを許す。既存saveEventは、同じconstraint_idの由来とBandの希望を保持し、クライアント入力の余分な項目で上書きしない。
 
