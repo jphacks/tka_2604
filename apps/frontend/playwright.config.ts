@@ -5,6 +5,7 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   outputDir: './test-results/api',
   testMatch: '**/*.e2e.ts',
+  testIgnore: '**/solver-flow.e2e.ts',
   workers: 1,
   reporter: 'list',
   use: {

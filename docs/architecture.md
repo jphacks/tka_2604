@@ -24,7 +24,7 @@
 | `apps/frontend` | 画面・実APIへの接続・制約の手動編集と達成判定                                                  |
 | `apps/backend`  | Hono APIとWorkersによる配信。health・イベントAPI・チャット送信・OpenAPI JSON・Swagger UIを提供 |
 | `apps/schema`   | 共有する制約のJSON Schema。実装済み                                                            |
-| `apps/solver`   | Pythonの計算処理。現在は生成モデルと疎通確認用のFastAPIのみ                                    |
+| `apps/solver`   | Python・OR-Tools CP-SATの計算処理。FastAPIの`/solve`で配置と探索状態を返す                     |
 
 ## 処理の流れ
 

@@ -56,4 +56,4 @@ backendの振る舞いを変更するときは、次の順で進める。
 
 通常の画面は「イベント作成 → 出演登録 → 条件追加 → 確認 → 生成 → 手動調整」の流れで実API・DBを使う。操作手順と現在の対応範囲は[フロントエンドの使い方](frontend.md)を参照。devとmainのDBは環境ごとに分離し、画面内の固定サンプルやモック切替は持たない。
 
-Workersの公開は検証用が `npm run deploy:develop`（`npm run deploy` も同じ）、本番用が `npm run deploy:main`。ビルド後に公開し、DBマイグレーションは別途適用する。[DB手順](../apps/backend/db/README.md)を参照。公開の依頼がある場合に実行する。SolverのURL・トークンは[環境構築](setup.md#solverの環境変数)に従って環境別envファイルで管理する。秘密情報をGitやログに残さず、PRプレビューの自動生成は前提にしない。
+Workersの公開は検証用が `npm run deploy:develop`（`npm run deploy` も同じ）、本番用が `npm run deploy:main`。ビルド後に公開し、DBマイグレーションは別途適用する。OGP画像などの絶対URLはビルド時に`SITE_URL`で決まり、未指定ならdevelopのURL、`deploy:main`では本番のURLになる。[DB手順](../apps/backend/db/README.md)を参照。公開の依頼がある場合に実行する。SolverのURL・トークンは[環境構築](setup.md#solverの環境変数)に従って環境別envファイルで管理する。秘密情報をGitやログに残さず、PRプレビューの自動生成は前提にしない。
