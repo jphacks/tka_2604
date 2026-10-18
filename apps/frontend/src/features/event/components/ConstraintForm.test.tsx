@@ -21,10 +21,11 @@ it('guides a person from a condition choice through validation, preview, and a t
   await user.click(dialog.getByRole('button', { name: 'この条件を追加' }))
   expect(dialog.getByRole('alert')).toHaveTextContent('出演枠を選んで')
   expect(onSave).not.toHaveBeenCalled()
-  await user.selectOptions(
+  await user.type(
     dialog.getByRole('combobox', { name: '位置を指定する出演枠' }),
-    'p2',
+    'Pret',
   )
+  await user.click(dialog.getByRole('option', { name: 'Pretender' }))
   await user.type(
     dialog.getByRole('spinbutton', { name: '出演位置（番）' }),
     '1',

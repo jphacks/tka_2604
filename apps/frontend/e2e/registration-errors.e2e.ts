@@ -1,10 +1,11 @@
+import { memberOptionLabel } from '../src/features/forms/model/registration'
 import { expect, test } from './fixtures'
 import { mockRegistrationApi } from './registration-fixture'
 
 test('public registration adds name rows, reuses existing IDs, distinguishes same-name people and survives reload', async ({
   page,
 }) => {
-  const { writes } = await mockRegistrationApi(page)
+  const { roster, writes } = await mockRegistrationApi(page)
   await page.goto('/event/public-live/forms')
   await page.getByRole('button', { name: '出演登録を送信' }).click()
   await expect(page.getByRole('alert')).toContainText('出演名')
@@ -14,12 +15,11 @@ test('public registration adds name rows, reuses existing IDs, distinguishes sam
   await expect(page.getByRole('alert')).toContainText('1〜20人')
   expect(writes).toHaveLength(0)
   await page.getByRole('button', { name: 'メンバーの行を追加' }).click()
-  await page.getByRole('button', { name: '名簿から選ぶ' }).click()
-  const select = page.getByRole('combobox', { name: 'メンバー1を名簿から選択' })
-  await expect(select.getByRole('option', { name: /田中 花/ })).toHaveCount(2)
-  await select.selectOption('m1')
+  await page.getByRole('combobox', { name: 'メンバー1の名前' }).fill('田中')
+  await expect(page.getByRole('option', { name: /田中 花/ })).toHaveCount(2)
+  await page.getByRole('option', { name: /田中 花（サンセット/ }).click()
   await page.getByRole('button', { name: 'メンバーの行を追加' }).click()
-  await page.getByRole('textbox', { name: 'メンバー2の名前' }).fill('田中 花')
+  await page.getByRole('combobox', { name: 'メンバー2の名前' }).fill('田中 花')
   await page.getByRole('button', { name: '出演登録を送信' }).click()
   await expect(
     page.getByRole('heading', { name: '出演登録を受け付けました' }),
@@ -37,11 +37,11 @@ test('public registration adds name rows, reuses existing IDs, distinguishes sam
     '新しい出演枠',
   )
   await expect(
-    page.getByRole('combobox', { name: 'メンバー1を名簿から選択' }),
-  ).toHaveValue('m1')
+    page.getByText(memberOptionLabel(roster, 'm1'), { exact: true }),
+  ).toBeVisible()
   await expect(
-    page.getByRole('combobox', { name: 'メンバー2を名簿から選択' }),
-  ).toHaveValue('person-1-0')
+    page.getByText(memberOptionLabel(roster, 'person-1-0'), { exact: true }),
+  ).toBeVisible()
 })
 
 test('updates only the chosen band, removes everyone and re-adds the same ID', async ({
@@ -80,10 +80,8 @@ test('updates only the chosen band, removes everyone and re-adds the same ID', a
   await page.getByRole('radio', { name: /登録内容の更新/ }).check()
   await band.selectOption('a')
   await page.getByRole('button', { name: 'メンバーの行を追加' }).click()
-  await page.getByRole('button', { name: '名簿から選ぶ' }).click()
-  await page
-    .getByRole('combobox', { name: 'メンバー1を名簿から選択' })
-    .selectOption('m1')
+  await page.getByRole('combobox', { name: 'メンバー1の名前' }).click()
+  await page.getByRole('option', { name: /田中 花（ブルーノート/ }).click()
   await page.getByRole('button', { name: '変更を保存' }).click()
   await expect(
     page.getByRole('heading', { name: '登録内容を更新しました' }),
@@ -99,7 +97,7 @@ test('conflicts and failures keep input and require refresh before retry', async
   await page
     .getByRole('textbox', { name: '出演名 必須' })
     .fill('保持する出演枠')
-  await page.getByRole('textbox', { name: 'メンバー1の名前' }).fill('佐藤')
+  await page.getByRole('combobox', { name: 'メンバー1の名前' }).fill('佐藤')
   api.fail(409)
   await page.getByRole('button', { name: '出演登録を送信' }).click()
   await expect(page.getByRole('alert')).toContainText('別の変更')
@@ -107,7 +105,7 @@ test('conflicts and failures keep input and require refresh before retry', async
     page.getByRole('button', { name: '出演登録を送信' }),
   ).toBeDisabled()
   await expect(
-    page.getByRole('textbox', { name: 'メンバー1の名前' }),
+    page.getByRole('combobox', { name: 'メンバー1の名前' }),
   ).toHaveValue('佐藤')
   api.fail(0)
   await page.getByRole('button', { name: '入力を残して名簿を再取得' }).click()
