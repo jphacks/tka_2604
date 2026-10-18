@@ -47,11 +47,6 @@ const choices: {
     example: 'AとBを第2部か第3部にする',
     description: '出演できる部、または順番号の範囲を指定。',
   },
-  {
-    type: 'count',
-    example: '選んだ出演枠を各部に1〜2組ずつ',
-    description: '各部の本数、または複数部の合計を指定。',
-  },
 ]
 
 export function ConstraintForm({
