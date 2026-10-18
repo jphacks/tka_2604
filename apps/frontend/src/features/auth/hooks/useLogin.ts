@@ -11,9 +11,9 @@ export function useLogin() {
     setBusy(true)
     setError('')
     try {
-      await signIn('demo@example.com')
+      await signIn('operator@example.com')
     } catch {
-      setError('デモを開始できませんでした。もう一度お試しください。')
+      setError('ワークスペースを開けませんでした。もう一度お試しください。')
     } finally {
       setBusy(false)
     }

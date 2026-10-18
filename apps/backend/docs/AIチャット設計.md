@@ -87,6 +87,7 @@ LLMは決められた「制約変更／確認質問／計算依頼」等の種�
 ### Constraintsの由来
 
 - 既存のconstraint_id・event_id・constraint_jsonはそのまま使い、source_band_idだけ追加する。
+- バンド本体の削除時は、そのBandがsource_band_idの制約も同じトランザクションで削除する。別の生成元・生成元なしの制約は残す。
 - source_band_idは「どのBandの希望から作ったか」。制約のtargetsが別のバンドやメンバーを指すこともあるので、targetsから生成元を推測しない。
 - 1つのBandの希望から0〜複数のConstraintsが作られる。手動追加・チャット由来でフォームの希望に紐づかない場合はNULL。
 - source_textは既存JSONの任意項目を使う。type・hardness等を別列へ重複定義せず、由来だけをDB側のメタデータとして持つ。

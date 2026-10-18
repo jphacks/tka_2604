@@ -37,7 +37,7 @@ test('real API: create, failed save, retry, reload, conflict and delete', async 
   request,
 }) => {
   await page.goto('/login')
-  await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
   await expect(page.getByText(/API接続 ·/)).toHaveCount(0)
   await page
     .getByRole('button', { name: 'イベントを作成', exact: true })
@@ -77,8 +77,8 @@ test('real API: create, failed save, retry, reload, conflict and delete', async 
     await page.getByRole('button', { name: '変更を保存' }).click()
     await expect(page.getByText('イベントの設定を更新しました。')).toBeVisible()
     await page.reload()
-    // Authentication is still the in-memory demo session (#59).
-    await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+    // Authentication is still the temporary workspace session (#59).
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
     await expect(name).toHaveValue('RPC保存確認')
     const revision = (await (await request.get(apiPath)).json()) as {
       updatedAt: string
@@ -105,11 +105,11 @@ test('real API: create, failed save, retry, reload, conflict and delete', async 
   }
 })
 
-test('real API: roster, part names, saved history and read-only roster controls', async ({
+test('real API: roster, part names, saved history and roster registration links', async ({
   page,
 }) => {
   await page.goto('/event/demo-event')
-  await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
   await expect(
     page.getByRole('heading', { name: 'デモライブ', exact: true }),
   ).toBeVisible()
@@ -132,8 +132,8 @@ test('real API: roster, part names, saved history and read-only roster controls'
     page.getByRole('cell', { name: '必須で先頭にする', exact: true }),
   ).toBeVisible()
   await expect(
-    page.getByRole('button', { name: '出演枠を追加', exact: true }),
-  ).toBeDisabled()
+    page.getByRole('link', { name: '出演枠を追加', exact: true }),
+  ).toHaveAttribute('href', '/event/demo-event/forms')
   await page.screenshot({
     path: test.info().outputPath('api-roster.png'),
     fullPage: true,
@@ -162,7 +162,7 @@ test('real API: schedule and constraints survive reload, failures and concurrent
   }
   try {
     await page.goto('/event/demo-event')
-    await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
     const part = page.getByRole('region', { name: '第2部', exact: true })
     await page.route(`**${path}/schedule`, (route) =>
       route.request().method() === 'POST'
@@ -303,7 +303,7 @@ test('real API: schedule and constraints survive reload, failures and concurrent
     )!
     expect(created.sourceBandId).toBeNull()
     await page.reload()
-    await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
     await expect(
       part.getByRole('textbox', { name: 'バンドBの出演順', exact: true }),
     ).toHaveValue('2')
@@ -472,14 +472,14 @@ test('chat contract: retry uses the same ID after reopening, with no duplicate m
   })
   try {
     await page.goto('/event/demo-event')
-    await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
     await page
       .getByRole('textbox', { name: 'AIへのメッセージ' })
       .fill('再送確認の希望')
     await page.getByRole('button', { name: 'メッセージを送信' }).click()
     await expect(page.getByRole('alert')).toContainText('送信に失敗')
     await page.reload()
-    await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
     await expect(page.getByText('再送確認の希望', { exact: true })).toHaveCount(
       1,
     )
@@ -518,12 +518,10 @@ test('chat contract: retry uses the same ID after reopening, with no duplicate m
 })
 
 for (const width of [1280, 1600]) {
-  test(`API preserves the original mock layout at ${width}px`, async ({
-    page,
-  }) => {
+  test(`API preserves the workspace layout at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 })
     await page.goto('/event/demo-event')
-    await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
     const schedule = page.getByRole('region', { name: '出演順', exact: true })
     const constraints = page.getByRole('region', { name: '制約', exact: true })
     const chat = page.getByRole('region', { name: 'AIチャット', exact: true })
@@ -645,7 +643,7 @@ test('chat proposals require confirmation and auto-save only constraints', async
   })
   try {
     await page.goto('/event/demo-event')
-    await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
     await page
       .getByRole('textbox', { name: 'AIへのメッセージ' })
       .fill('AをBより前にしたい')
@@ -704,7 +702,7 @@ test('chat proposals require confirmation and auto-save only constraints', async
     expect(scheduleWrites).toBe(0)
     expect(solveCalls).toBe(0)
     await page.reload()
-    await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
     await expect(
       page.getByRole('heading', {
         name: 'バンドAをバンドBより前にする',
@@ -789,7 +787,7 @@ test('generation saves the displayed schedule and constraints before calling sol
   })
   try {
     await page.goto('/event/demo-event')
-    await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
     const order = page.getByRole('textbox', {
       name: 'バンドBの出演順',
       exact: true,

@@ -122,7 +122,13 @@ export function solverService(
         bandCount: bandCounts.get(partId)!,
       })),
       constraints,
-      currentPlacements: snapshot.placements,
+      // Vacant display slots are not bands; Solver hints use dense band ranks.
+      currentPlacements: snapshot.parts.flatMap((part) =>
+        snapshot.placements
+          .filter((row) => row.partId === part.partId)
+          .toSorted((a, b) => a.order - b.order)
+          .map((row, order) => ({ ...row, order })),
+      ),
     }
     const result = validateResult(snapshot, input, await client(input))
     if (result.placements === null) return { result, schedule: null }

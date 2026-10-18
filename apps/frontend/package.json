@@ -9,8 +9,8 @@
     "typecheck": "tsc -b && tsc -b e2e/tsconfig.json",
     "preview": "vite preview",
     "test": "npm --prefix ../.. run test -- --project frontend",
-    "test:e2e": "playwright test",
-    "test:e2e:api": "playwright test --config playwright.api.config.ts",
+    "test:e2e": "npm --prefix ../.. run db:prepare:e2e && playwright test",
+    "test:e2e:api": "npm run test:e2e --",
     "test:e2e:solver": "playwright test --config playwright.solver.config.ts"
   },
   "dependencies": {

@@ -3,22 +3,31 @@ import { defineConfig } from '@playwright/test'
 export default defineConfig({
   testDir: './e2e',
   forbidOnly: Boolean(process.env.CI),
-  outputDir: './test-results/mock',
-  testMatch: '**/*.spec.ts',
-  fullyParallel: true,
-  workers: 2,
+  outputDir: './test-results/api',
+  testMatch: '**/*.e2e.ts',
+  testIgnore: '**/solver-flow.e2e.ts',
+  workers: 1,
   reporter: 'list',
   use: {
-    baseURL: 'http://127.0.0.1:5174',
+    baseURL: 'http://127.0.0.1:5175',
     viewport: { width: 1600, height: 1000 },
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
   },
-  webServer: {
-    command: 'npm run dev -- --host 127.0.0.1 --port 5174 --strictPort',
-    env: { VITE_DATA_SOURCE: 'mock' },
-    url: 'http://127.0.0.1:5174',
-    reuseExistingServer: !process.env.CI,
-    timeout: 30000,
-  },
+  webServer: [
+    {
+      command:
+        'npm --prefix ../.. run dev:backend -- --port 8789 --persist-to .wrangler/e2e-api',
+      url: 'http://127.0.0.1:8789/api/health',
+      reuseExistingServer: false,
+      timeout: 30000,
+    },
+    {
+      command: 'npm run dev -- --host 127.0.0.1 --port 5175 --strictPort',
+      env: { API_PROXY_TARGET: 'http://127.0.0.1:8789' },
+      url: 'http://127.0.0.1:5175',
+      reuseExistingServer: false,
+      timeout: 30000,
+    },
+  ],
 })

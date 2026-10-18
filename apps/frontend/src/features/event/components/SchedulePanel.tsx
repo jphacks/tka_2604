@@ -1,9 +1,8 @@
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 
 import { Button } from '../../../shared/ui/Button'
 import { NumberField } from '../../../shared/ui/NumberField'
 import { Panel } from '../../../shared/ui/Panel'
-import { PerformanceEditor } from '../../participants/components/PerformanceEditor'
 import type { EventController } from '../hooks/useEvent'
 import {
   EmptyPerformanceRow,
@@ -13,33 +12,6 @@ import {
 import { ScheduleDragSurface, UnassignedDropZone } from './ScheduleDragSurface'
 
 export function SchedulePanel({ controller }: { controller: EventController }) {
-  const [editingId, setEditingId] = useState<string | null>(null)
-  return (
-    <>
-      <ScheduleTable controller={controller} onEdit={setEditingId} />
-      {editingId && controller.event && (
-        <PerformanceEditor
-          key={editingId}
-          eventId={controller.event.id}
-          performanceId={editingId}
-          onSaved={(updated) => {
-            controller.applyPerformanceEdits(updated)
-            setEditingId(null)
-          }}
-          onClose={() => setEditingId(null)}
-        />
-      )}
-    </>
-  )
-}
-
-function ScheduleTable({
-  controller,
-  onEdit,
-}: {
-  controller: EventController
-  onEdit: (id: string) => void
-}) {
   const unassignedRef = useRef<HTMLElement>(null)
   const { event, schedule, setOrder, setFixed, resize } = controller
   if (!event || !schedule) return null
@@ -54,24 +26,22 @@ function ScheduleTable({
       title="出演順"
       action={
         <div className="flex items-center gap-2">
-          {controller.persistent && (
-            <Button
-              aria-label="出演順を保存"
-              className="text-xs"
-              variant={controller.scheduleDirty ? 'primary' : 'secondary'}
-              disabled={
-                !controller.scheduleDirty ||
-                controller.saving ||
-                controller.solving ||
-                controller.refreshing ||
-                controller.sending
-              }
-              onClick={() => void controller.saveSchedule()}
-            >
-              {controller.savingSchedule ? '保存中…' : '保存'}
-              {controller.scheduleDirty && ' *'}
-            </Button>
-          )}
+          <Button
+            aria-label="出演順を保存"
+            className="text-xs"
+            variant={controller.scheduleDirty ? 'primary' : 'secondary'}
+            disabled={
+              !controller.scheduleDirty ||
+              controller.saving ||
+              controller.solving ||
+              controller.refreshing ||
+              controller.sending
+            }
+            onClick={() => void controller.saveSchedule()}
+          >
+            {controller.savingSchedule ? '保存中…' : '保存'}
+            {controller.scheduleDirty && ' *'}
+          </Button>
           {schedule.unassigned.length > 0 ? (
             <Button
               variant="subtle"
@@ -97,26 +67,17 @@ function ScheduleTable({
       <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-line bg-canvas/50 px-3 py-2 text-xs">
         <Button
           disabled={
-            !controller.persistent ||
             !event.performances.length ||
             controller.saving ||
             controller.solving ||
             controller.refreshing ||
             controller.sending
           }
-          title={
-            controller.persistent
-              ? '出演順・制約を保存してから計算します'
-              : 'ソルバー接続は準備中です'
-          }
+          title="出演順・制約を保存してから計算します"
           className="text-xs"
           onClick={() => void controller.generate()}
         >
-          {controller.solving
-            ? '計算中…'
-            : controller.persistent
-              ? '自動生成'
-              : '自動生成（準備中）'}
+          {controller.solving ? '計算中…' : '自動生成'}
         </Button>
         <Button onClick={controller.exportCsv} className="text-xs">
           CSVを出力
@@ -164,11 +125,7 @@ function ScheduleTable({
                 <h3 className="font-semibold text-brand-dark">
                   {section.name} · {section.assigned}/{section.capacity}組
                 </h3>
-                <span>
-                  {controller.persistent && !section.assigned
-                    ? '—'
-                    : `${section.range}番`}
-                </span>
+                <span>{!section.assigned ? '—' : `${section.range}番`}</span>
               </div>
               {section.rows.map((row) =>
                 row.performance ? (
@@ -176,13 +133,10 @@ function ScheduleTable({
                     key={row.key}
                     row={{ ...row, performance: row.performance }}
                     capacity={
-                      controller.persistent
-                        ? schedule.assignedCount + (row.order === null ? 1 : 0)
-                        : schedule.capacity
+                      schedule.assignedCount + (row.order === null ? 1 : 0)
                     }
                     onFixed={setFixed}
                     onOrder={setOrder}
-                    onEdit={controller.persistent ? undefined : onEdit}
                   />
                 ) : (
                   <EmptyPerformanceRow key={row.key} row={row} />
@@ -203,13 +157,10 @@ function ScheduleTable({
                   key={row.key}
                   row={row}
                   capacity={
-                    controller.persistent
-                      ? schedule.assignedCount + (row.order === null ? 1 : 0)
-                      : schedule.capacity
+                    schedule.assignedCount + (row.order === null ? 1 : 0)
                   }
                   onFixed={setFixed}
                   onOrder={setOrder}
-                  onEdit={controller.persistent ? undefined : onEdit}
                 />
               ))}
               {!schedule.unassigned.length && (

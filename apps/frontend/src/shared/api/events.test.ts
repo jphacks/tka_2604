@@ -170,7 +170,7 @@ describe('events RPC adapter', () => {
           { partId: 'p2', partName: '後半', sortOrder: 1 },
           { partId: 'p1', partName: '前半', sortOrder: 0 },
         ],
-        placements: [{ bandId: 'b1', partId: 'p1', order: 0 }],
+        placements: [{ bandId: 'b1', partId: 'p1', order: 2 }],
         unassignedBandIds: [],
       }),
       json({
@@ -192,7 +192,7 @@ describe('events RPC adapter', () => {
     // Chat history has its own sequence; it does not participate in updatedAt.
     const event = await api.getEvent('event-1')
     expect(event.sections).toEqual([
-      { id: 'p1', name: '前半', slots: ['b1', null, null, null] },
+      { id: 'p1', name: '前半', slots: [null, null, 'b1', null] },
       { id: 'p2', name: '後半', slots: [null, null, null, null] },
     ])
     expect(event.performances[0]).toMatchObject({
@@ -229,7 +229,7 @@ describe('events RPC adapter', () => {
   })
 })
 
-it('saves dense parts and placements with the displayed revision, then constraints with the new revision', async () => {
+it('saves parts and placements without closing vacant slots with the displayed revision, then constraints with the new revision', async () => {
   const savedAt = '2026-10-17T00:00:00.001Z'
   const { api, fetcher } = setup([
     json({ updatedAt: savedAt }),
@@ -259,7 +259,7 @@ it('saves dense parts and placements with the displayed revision, then constrain
     ],
     placements: [
       { bandId: 'b2', partId: 'part-1', order: 0 },
-      { bandId: 'b1', partId: 'part-1', order: 1 },
+      { bandId: 'b1', partId: 'part-1', order: 2 },
     ],
     unassignedBandIds: ['b3'],
   })
@@ -323,4 +323,40 @@ it('sends displayed part capacities including empty slots to Solver API', async 
       { partId: 'part-3', bandCount: 0 },
     ],
   })
+})
+
+it('deletes only the selected band using the revision captured for confirmation', async () => {
+  const saved = {
+    eventId: 'event-1',
+    bandId: 'band-1',
+    updatedAt: '2026-10-18T00:01:00.000Z',
+  }
+  const { api, fetcher } = setup([json(saved)])
+  await expect(
+    api.deleteBand('event-1', 'band-1', details.updatedAt),
+  ).resolves.toEqual(saved)
+  expect(fetcher.mock.calls[0][0]).toBe(
+    'http://localhost/api/events/event-1/bands/band-1',
+  )
+  expect(fetcher.mock.calls[0][1]?.method).toBe('DELETE')
+  expect(JSON.parse(requestBody(fetcher.mock.calls[0][1])) as unknown).toEqual({
+    expectedUpdatedAt: details.updatedAt,
+  })
+})
+it('reports delete conflicts without presenting the deletion as successful', async () => {
+  const { api } = setup([
+    json(
+      {
+        error: {
+          code: 'event_save_conflict',
+          message: 'conflict',
+          details: [],
+        },
+      },
+      409,
+    ),
+  ])
+  await expect(
+    api.deleteBand('event-1', 'band-1', details.updatedAt),
+  ).rejects.toThrow('対象を確認してから削除')
 })

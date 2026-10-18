@@ -4,9 +4,7 @@ import { beforeEach, expect, it, vi } from 'vitest'
 import type { EventData } from '../../../shared/model/event'
 
 const api = vi.hoisted(() => ({ sendMessage: vi.fn(), getMessages: vi.fn() }))
-vi.mock('../../../shared/repositories/dataSource', () => ({
-  dataSource: 'api',
-}))
+
 vi.mock('../../../shared/api/events', () => ({
   eventsApi: { getMessages: api.getMessages },
 }))

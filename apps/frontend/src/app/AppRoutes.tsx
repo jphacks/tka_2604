@@ -48,6 +48,11 @@ function EventScopedRoute({ component: Page }: { component: ComponentType }) {
   return <Page key={eventId} />
 }
 
+function LegacyFormRedirect() {
+  const { eventId = '' } = useParams()
+  return <Navigate to={`/event/${eventId}/forms`} replace />
+}
+
 function NotFoundPage() {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-5 px-6 text-center">
@@ -72,6 +77,10 @@ export function AppRoutes() {
       <Route
         path="/event/:eventId/forms"
         element={<EventScopedRoute component={RegistrationPage} />}
+      />
+      <Route
+        path="/event/:eventId/forms/demo"
+        element={<LegacyFormRedirect />}
       />
       <Route element={<ProtectedRoutes />}>
         <Route

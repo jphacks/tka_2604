@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { mockEvent } from '../../../mock/eventData'
+import { eventFixture } from '../../../test/fixtures/event'
 import { buildConstraint, createConstraintDraft } from './constraintDraft'
 
 describe('structured manual constraint input', () => {
@@ -11,7 +11,7 @@ describe('structured manual constraint input', () => {
       bandIds: ['p2'],
       position: '1',
     }
-    expect(buildConstraint(draft, mockEvent, 'test')).toMatchObject({
+    expect(buildConstraint(draft, eventFixture, 'test')).toMatchObject({
       ok: true,
       constraint: {
         type: 'at_position',
@@ -30,7 +30,7 @@ describe('structured manual constraint input', () => {
           hardness: 'soft',
           priority: 'mid',
         },
-        mockEvent,
+        eventFixture,
         'test',
       ),
     ).toMatchObject({
@@ -40,21 +40,21 @@ describe('structured manual constraint input', () => {
   })
   it('round trips all supported parameter variants without losing IDs or enabled state', () => {
     const constraints = [
-      ...mockEvent.constraints,
+      ...eventFixture.constraints,
       {
-        ...mockEvent.constraints[0],
+        ...eventFixture.constraints[0],
         type: 'min_gap_bands' as const,
         targets: { band_ids: ['p1', 'p2'] as [string, string] },
         params: { min_diff: 2, same_part_only: true },
       },
       {
-        ...mockEvent.constraints[0],
+        ...eventFixture.constraints[0],
         type: 'before' as const,
         targets: { before_band_id: 'p1', after_band_id: 'p2' },
         params: {},
       },
       {
-        ...mockEvent.constraints[0],
+        ...eventFixture.constraints[0],
         type: 'in_range' as const,
         targets: { band_ids: ['p1'] as [string] },
         params: {
@@ -64,7 +64,7 @@ describe('structured manual constraint input', () => {
         },
       },
       {
-        ...mockEvent.constraints[0],
+        ...eventFixture.constraints[0],
         type: 'in_range' as const,
         targets: { band_ids: ['p1'] as [string] },
         params: {
@@ -73,13 +73,13 @@ describe('structured manual constraint input', () => {
         },
       },
       {
-        ...mockEvent.constraints[0],
+        ...eventFixture.constraints[0],
         type: 'count' as const,
         targets: { band_ids: ['p1'] as [string] },
         params: { scope: 'per_part' as const, min: 0, max: 1 },
       },
       {
-        ...mockEvent.constraints[0],
+        ...eventFixture.constraints[0],
         type: 'count' as const,
         targets: { band_ids: ['p1'] as [string] },
         params: {
@@ -99,7 +99,7 @@ describe('structured manual constraint input', () => {
       expect(
         buildConstraint(
           createConstraintDraft(constraint),
-          mockEvent,
+          eventFixture,
           constraint.constraint_id,
         ),
       ).toEqual({ ok: true, constraint })
@@ -107,12 +107,12 @@ describe('structured manual constraint input', () => {
   })
   it('rejects empty and fractional numeric inputs, missing targets and duplicate before targets', () => {
     const draft = createConstraintDraft()
-    expect(buildConstraint(draft, mockEvent, 'test').ok).toBe(false)
+    expect(buildConstraint(draft, eventFixture, 'test').ok).toBe(false)
     for (const between of ['', '1.5', '-1', '0']) {
       expect(
         buildConstraint(
           { ...draft, memberId: 'm1', between },
-          mockEvent,
+          eventFixture,
           'test',
         ).ok,
       ).toBe(false)
@@ -120,7 +120,7 @@ describe('structured manual constraint input', () => {
     expect(
       buildConstraint(
         { ...draft, type: 'before', beforeId: 'p1', afterId: 'p1' },
-        mockEvent,
+        eventFixture,
         'test',
       ).ok,
     ).toBe(false)

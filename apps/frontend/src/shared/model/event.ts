@@ -99,12 +99,15 @@ export function positionLimit(event: EventData) {
     : event.sections.reduce((sum, section) => sum + section.slots.length, 0)
 }
 
-/** Empty frames are view state; only band order belongs to the schedule API. */
+/** Preserve internal vacancies; trailing empty capacity remains view state. */
 export function scheduleContent(event: EventData) {
   return [
     event.sections.map((section) => ({
       ...section,
-      slots: section.slots.filter((id) => id !== null),
+      slots: section.slots.slice(
+        0,
+        section.slots.findLastIndex((id) => id !== null) + 1,
+      ),
     })),
     event.unassigned,
   ]
