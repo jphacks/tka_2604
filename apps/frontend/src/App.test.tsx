@@ -3,27 +3,50 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
-import { mockWorkspaceStore } from './mock/workspaceStore'
+import { eventRepository } from './features/event/repositories/eventRepository'
 import { workspaceRepository } from './shared/repositories/workspaceRepository'
 
-beforeEach(() => {
-  mockWorkspaceStore.signOut()
+beforeEach(async () => {
+  await workspaceRepository.signOut()
+  vi.spyOn(workspaceRepository, 'listEvents').mockResolvedValue([])
+  let createdName = ''
+  vi.spyOn(workspaceRepository, 'createEvent').mockImplementation((draft) => {
+    createdName = draft.name
+    return Promise.resolve({
+      ...draft,
+      id: 'created-event',
+      status: 'planning',
+    })
+  })
+  vi.spyOn(eventRepository, 'getEvent').mockImplementation((id) =>
+    Promise.resolve({
+      id,
+      name: createdName,
+      members: [],
+      performances: [],
+      sections: [{ id: 'part-1', slots: [null, null, null, null] }],
+      constraints: [],
+      unassigned: [],
+      messages: [],
+      scheduleMode: 'dense',
+    }),
+  )
   window.history.replaceState(null, '', '/')
 })
 
 describe('application navigation', () => {
-  it('opens the demo without asking for real credentials', async () => {
+  it('opens the workspace and signs out', async () => {
     const user = userEvent.setup()
     render(<App />)
     await user.click(
-      await screen.findByRole('button', { name: 'デモアカウントで試す' }),
+      await screen.findByRole('button', { name: 'ワークスペースを開く' }),
     )
     expect(
       await screen.findByRole('heading', { name: 'マイイベント' }),
     ).toBeVisible()
     await user.click(screen.getByRole('button', { name: 'ログアウト' }))
     expect(
-      await screen.findByRole('button', { name: 'デモアカウントで試す' }),
+      await screen.findByRole('button', { name: 'ワークスペースを開く' }),
     ).toBeVisible()
   })
   it('shows recovery links for unknown URLs', () => {
@@ -41,7 +64,7 @@ describe('application navigation', () => {
 describe('event creation entry points', () => {
   it('opens creation from the empty list and creates an event', async () => {
     vi.spyOn(workspaceRepository, 'listEvents').mockResolvedValue([])
-    mockWorkspaceStore.signIn('demo@example.com')
+    await workspaceRepository.signIn('operator@example.com')
     window.history.replaceState(null, '', '/event')
     const user = userEvent.setup()
     render(<App />)
@@ -69,7 +92,7 @@ describe('event creation entry points', () => {
     const create = vi
       .spyOn(workspaceRepository, 'createEvent')
       .mockRejectedValueOnce(new Error('DBへの保存に失敗しました。'))
-    mockWorkspaceStore.signIn('demo@example.com')
+    await workspaceRepository.signIn('operator@example.com')
     window.history.replaceState(null, '', '/event?create=1')
     const user = userEvent.setup()
     render(<App />)
@@ -92,7 +115,10 @@ describe('event creation entry points', () => {
     expect(create).toHaveBeenCalledTimes(2)
   })
   it('opens the creation form from an unavailable event and can return to the list', async () => {
-    mockWorkspaceStore.signIn('demo@example.com')
+    await workspaceRepository.signIn('operator@example.com')
+    vi.spyOn(eventRepository, 'getEvent').mockRejectedValue(
+      new Error('イベントが見つかりません。'),
+    )
     window.history.replaceState(null, '', '/event/missing-event')
     const user = userEvent.setup()
     render(<App />)
@@ -107,7 +133,9 @@ describe('event creation entry points', () => {
     await user.click(screen.getByRole('button', { name: 'キャンセル' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(window.location.search).toBe('')
-    await user.click(screen.getByRole('button', { name: 'イベントを作成' }))
+    await user.click(
+      screen.getAllByRole('button', { name: 'イベントを作成' })[0],
+    )
     expect(
       await screen.findByRole('dialog', { name: '新しいイベントを作成' }),
     ).toBeVisible()

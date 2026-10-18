@@ -23,6 +23,7 @@ export function useResource<T>(load: (signal: AbortSignal) => Promise<T>) {
   }, [load, version])
   return {
     data,
+    setData,
     error,
     loading: !data && !error,
     refresh: () => setVersion((value) => value + 1),

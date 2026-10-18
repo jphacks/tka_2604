@@ -10,12 +10,7 @@ const api = vi.hoisted(() => ({
   saveSchedule: vi.fn<EventRepository['saveSchedule']>(),
   saveConstraints: vi.fn<EventRepository['saveConstraints']>(),
 }))
-vi.mock('../../../shared/repositories/dataSource', () => ({
-  dataSource: 'api',
-}))
-vi.mock('../../../shared/repositories/workspaceRepository', () => ({
-  workspaceRepository: { rememberEvent: vi.fn() },
-}))
+
 vi.mock('../../../shared/api/events', () => ({ eventsApi: api }))
 vi.mock('../repositories/eventRepository', () => ({ eventRepository: api }))
 import { useEvent } from './useEvent'

@@ -10,7 +10,6 @@ export default defineConfig({
         root: fileURLToPath(new URL('./apps/frontend/', import.meta.url)),
         test: {
           name: 'frontend',
-          env: { VITE_DATA_SOURCE: 'mock' },
           environment: 'jsdom',
           include: ['src/**/*.{test,spec}.{ts,tsx}'],
           setupFiles: ['src/test/setup.ts'],

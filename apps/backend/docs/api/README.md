@@ -6,12 +6,12 @@ APIを変更するときは実装・OpenAPI仕様・APIの動作テストを同�
 
 イベント本体の一覧・作成・詳細取得・設定更新・論理削除は[イベントAPI](events.md)を参照。認証接続前はRoute内の仮ID定数`demo-owner`を所有者として渡し、#57で認証済みIDへ置き換える。環境変数の設定は不要。
 
+フォームの名簿取得・バンド登録・所属編集は[フォーム名簿API](forms.md)を参照。`routes/form.ts`で独立して提供し、URLを知る人が認証なしで利用できる。所属解除でもメンバーはイベント名簿に残る。新規登録は1人以上、編集は0人まで許可する。公開フォームの初回登録・更新と管理画面からの導線は接続済み。公開フォームの所属解除では名簿に残る。バンド本体の削除は[管理用バンド削除API](bands.md)を使う。メンバー本体の削除は未実装。フォーム設定・受付終了・希望変換は別Issueで扱う。
+
 表・制約・チャット履歴は、それぞれ`GET /api/events/{eventId}/schedule`・`/constraints`・`/chat`で取得する。契約・具体例・並び順は[イベントAPI](events.md)にまとめる。チャットはページング・件数上限なしで保存済み全履歴を返す。
 
 `GET /api/health`は入力なしで200と`{"status":"ok"}`を返す。DBの稼働確認は含まない。イベント本体と3種類の情報取得を実装済み。表・制約は同じパスのPOSTで個別保存する。計算は独立した`POST /api/events/{eventId}/solve`を使う。[計算API](solver.md)を参照。認証は後続Issueで扱う。
 [チャット送信](chat.md)の`POST /api/events/{eventId}/chat`は所有者・イベントを確認し、userの先行保存、LLM生成・検証、assistant本文保存の順に処理する。履歴取得GETと同じパスで、既存の`reply`形式で返す。生成Serviceの型・検証は[AIチャット入出力](../AIチャット入出力.md)を参照。
-
-`GET /api/health`は入力なしで200と`{"status":"ok"}`を返す。DBの稼働確認は含まない。イベント本体と3種類の情報取得を実装済み。認証・制約のHTTP保存・計算APIは後続Issueで扱う。
 
 BE ↔ Solverの契約案は[BE - Solver API設計](<../BE - Solver API設計.md>)を参照。リクエスト・レスポンス例と探索状態を記載している。これはbackend → Solverの契約。ブラウザ → backendの計算APIは[計算API](solver.md)と配信OpenAPIに記載する。
 
@@ -32,6 +32,16 @@ MarkdownのAPI定義書は[共通テンプレート](template.md)を使い、次
 具体例を中心に簡潔に書き、細かなフィールド表は必要な場合だけ追加する。資料の対象となる通信区間を明記し、別区間のAPIや保存フローを混在させない。
 
 制約JSONの正本は`apps/schema`を参照し、説明用の別スキーマを作らない。実装済みの契約はMarkdownと`openapi.json`へ揃え、検討資料と混同しない。
+
+## Swaggerの分類と現在の対応範囲
+
+実装済みのAPIは17操作。`Health`、`Events`、`Form`、`Schedule`、`Constraints`、`Chat`、`Solver`に分類する。チャット履歴GETと送信POSTは同じ`Chat`欄に表示する。
+
+- `Events`の`DELETE /api/events/{eventId}/bands/{bandId}`はバンド本体の削除。確認元の`expectedUpdatedAt`を渡す。制約参照があっても削除でき、生成元sourceBandIdが削除対象を指す制約は一緒に削除する。それ以外の制約JSONは保持する。
+- `Form`のPATCHは名前と所属の編集で、空配列は全員の所属解除。こちらはバンドとメンバー本体を残す。
+- `Events`の`DELETE /api/events/{eventId}`はイベント全体の論理削除。バンド1件の削除には使わない。
+- `Form`のPOST／PATCHには具体的なリクエスト例を用意する。実行時はGETで得たイベントID・バンド／メンバーID・`updatedAt`へ差し替える。`expectedUpdatedAt`が古い場合は409となる。
+- Swaggerの`Try it out`は配信先環境の実APIを呼ぶ。保存・計算・イベント削除は同じ環境のDBへ反映される。
 
 ## developで共有・試行
 

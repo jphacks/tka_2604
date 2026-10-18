@@ -7,7 +7,6 @@ interface EventSaveResult {
   constraintSources?: EventData['constraintSources']
 }
 
-// The UI depends on this contract. An API adapter can replace the mock adapter.
 export interface EventRepository {
   getEvent(eventId: string, signal?: AbortSignal): Promise<EventData>
   getMessages(eventId: string, signal?: AbortSignal): Promise<ChatMessage[]>

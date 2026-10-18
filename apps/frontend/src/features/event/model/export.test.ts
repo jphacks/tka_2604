@@ -1,10 +1,10 @@
 import { expect, it } from 'vitest'
 
-import { mockEvent } from '../../../mock/eventData'
+import { eventFixture } from '../../../test/fixtures/event'
 import { eventCsv } from './export'
 
 it('exports Japanese roster, unassigned bands and fixed positions without losing CSV quoting', () => {
-  const event = structuredClone(mockEvent)
+  const event = structuredClone(eventFixture)
   event.performances[1].name = 'テスト,"引用"\n改行'
   const csv = eventCsv(event)
   expect(csv.startsWith('\uFEFF')).toBe(true)
@@ -16,7 +16,7 @@ it('exports Japanese roster, unassigned bands and fixed positions without losing
 })
 
 it('exports spreadsheet formula input as text', () => {
-  const event = structuredClone(mockEvent)
+  const event = structuredClone(eventFixture)
   event.performances[0].name = '=1+1'
   event.members[0].name = '+formula'
   expect(eventCsv(event)).toContain('"\'=1+1"')
