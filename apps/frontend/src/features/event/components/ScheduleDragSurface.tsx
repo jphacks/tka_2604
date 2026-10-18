@@ -80,7 +80,7 @@ export function ScheduleDragSurface({
         {active ? (
           <div className="flex items-center gap-3 rounded-lg border border-brand/30 bg-white p-4 shadow-lg">
             <Icon name="grip" />
-            <span>{active.name}</span>
+            <span className="font-bold">{active.name}</span>
           </div>
         ) : null}
       </DragOverlay>

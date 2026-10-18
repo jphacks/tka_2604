@@ -73,7 +73,7 @@ export function PerformanceRow({
         onCommit={(value) => onOrder(performance.id, value)}
       />
       <span
-        className="min-w-0 truncate px-1 py-1 text-left font-medium text-brand"
+        className="min-w-0 truncate px-1 py-1 text-left font-bold text-brand"
         title={performance.name}
       >
         {performance.name}
