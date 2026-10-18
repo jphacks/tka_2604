@@ -14,7 +14,7 @@ from solver_input import SolveRequest
 from solver_output import ErrorDetail, ErrorResponse, SolveResponse
 
 # FastAPI entry point for health, deployment probe, and scheduling requests.
-app = FastAPI(title="Setlist Solver")
+app = FastAPI(title="Setly Solver")
 
 PROBE_BANDS = ["A", "B", "C"]
 

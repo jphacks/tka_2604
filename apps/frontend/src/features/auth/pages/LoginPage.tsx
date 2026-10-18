@@ -56,7 +56,7 @@ export function LoginPage() {
           </div>
         </div>
         <p className="text-[11px] text-muted">
-          セトリ — ライブの出演順づくりを支えるワークスペース
+          Setly — ライブの出演順づくりを支えるワークスペース
         </p>
       </section>
       <main className="flex items-center justify-center bg-white px-8 py-16">
