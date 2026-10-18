@@ -84,17 +84,12 @@ describe('D1 business schema with actual migrations', () => {
     ).rejects.toThrow()
   })
 
-  it('rejects missing parents, invalid order and invalid event state', async () => {
+  it('rejects missing parents, invalid order and invalid deletion flag', async () => {
     await expect(
       db.insert(bandMembers).values({ bandId: 'missing', memberId: 'm1' }),
     ).rejects.toThrow()
     await expect(
       db.insert(bandOrder).values({ bandId: 'b1', partId: 'p1', order: -1 }),
-    ).rejects.toThrow()
-    await expect(
-      local.binding
-        .prepare("UPDATE events SET status = 'invalid' WHERE event_id = 'e1'")
-        .run(),
     ).rejects.toThrow()
     await expect(
       local.binding

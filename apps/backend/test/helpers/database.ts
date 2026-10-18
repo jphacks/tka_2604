@@ -21,9 +21,12 @@ export async function applyMigrations(
       fileURLToPath(new URL(file, directory)),
       'utf8',
     )
-    for (const statement of migration.split('--> statement-breakpoint')) {
-      if (statement.trim()) await binding.prepare(statement).run()
-    }
+    // Wrangler applies each migration atomically; preserve deferred FK checks too.
+    const statements = migration
+      .split('--> statement-breakpoint')
+      .filter((statement) => statement.trim())
+      .map((statement) => binding.prepare(statement))
+    await binding.batch(statements)
   }
 }
 

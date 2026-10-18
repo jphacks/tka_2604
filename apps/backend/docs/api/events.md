@@ -62,7 +62,7 @@ Content-Type: application/json
 
 `title`だけが必須。前後の空白を除去し、空文字・空白のみ・文字列以外は拒否する。名称の長さ上限は今回追加しない。`date`は実在する`YYYY-MM-DD`、または`null`。`date`・`venue`・`description`は省略時に`null`になる。`venue`・`description`の空文字はそのまま保持する。
 
-状態は`planning`で開始し、空の第1部を同じD1 batchで作成する。状態・所有者・IDなど、定義外のフィールドは拒否する。
+空の第1部を同じD1 batchで作成する。所有者・IDなど、定義外のフィールドは拒否する。
 
 ### 設定更新
 
@@ -75,15 +75,14 @@ Content-Type: application/json
 {
   "expectedUpdatedAt": "2026-10-17T00:00:00.000Z",
   "title": "秋ライブ2026",
-  "venue": "大学ホール",
-  "status": "adjusting"
+  "venue": "大学ホール"
 }
 ```
 
 - `expectedUpdatedAt`に取得時の`updatedAt`をそのまま渡す。UTCのISO 8601文字列を必須とする。
-- 更新対象は`title`・`date`・`venue`・`description`・`status`。少なくとも1項目を指定する。
-- 省略した項目は保持し、任意項目を消去する場合は`null`。`title`・`status`は`null`不可。
-- `status`は`planning`・`adjusting`・`confirmed`。今回、状態間の遷移制限は追加しない。
+- 更新対象は`title`・`date`・`venue`・`description`。少なくとも1項目を指定する。
+- 省略した項目は保持し、任意項目を消去する場合は`null`。`title`は`null`不可。
+- イベントの進行ステータスは廃止。応答に`status`を含めず、`status`を指定した作成・更新は422で拒否する。
 - 所有者・論理削除・更新日時をSQLの更新条件で再確認する。同時保存は片方だけ成功し、古い更新は409で保存しない。更新後の日時は前回より必ず1ミリ秒以上進める。
 - 表・名簿・制約・チャットなどは変更しない。定義外の項目を拒否する。
 
@@ -107,7 +106,6 @@ DELETE /api/events/event-1
 {
   "eventId": "event-1",
   "title": "秋ライブ",
-  "status": "planning",
   "date": "2026-11-01",
   "venue": null,
   "description": null,
@@ -128,7 +126,6 @@ HTTP 200。対象がなければ`{"events":[]}`。
     {
       "eventId": "event-1",
       "title": "秋ライブ",
-      "status": "planning",
       "date": "2026-11-01",
       "venue": null,
       "description": null,
@@ -261,7 +258,7 @@ HTTP 200。1イベント1会話として`seq`昇順。履歴なしは`messages: 
 | 400  | invalid_input       | JSON構文不正                                   |
 | 404  | event_not_found     | 存在しない・削除済み・対象所有者以外のイベント |
 | 409  | event_save_conflict | 取得後に更新済み。保存せず再取得を促す         |
-| 422  | invalid_input       | 名称・日付・状態・更新日時・フィールド等の不正 |
+| 422  | invalid_input       | 名称・日付・更新日時・フィールド等の不正       |
 | 500  | internal_error      | DB・内部処理の失敗。内部例外は返さない         |
 
 不正入力例（HTTP 422）：

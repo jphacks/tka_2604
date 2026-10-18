@@ -2,11 +2,10 @@ import { useEffect } from 'react'
 import { useParams } from 'react-router'
 
 import { useEventName } from '../../../app/eventNameContext'
-import type { EventStatus } from '../../../shared/model/workspace'
 import { Button } from '../../../shared/ui/Button'
 import { ConfirmDialog } from '../../../shared/ui/ConfirmDialog'
 import { Icon } from '../../../shared/ui/Icon'
-import { Input, Select, Textarea } from '../../../shared/ui/Input'
+import { Input, Textarea } from '../../../shared/ui/Input'
 import { PageState } from '../../../shared/ui/PageState'
 import { useEventDeletion, useEventSettings } from '../hooks/useEventSettings'
 
@@ -86,24 +85,6 @@ export function EventSettingsPage() {
                     className="mt-2 w-full text-sm"
                   />
                 </label>
-                <div className="grid grid-cols-2 gap-4">
-                  <label className="block text-sm font-medium">
-                    ステータス
-                    <Select
-                      value={settings.status}
-                      onChange={(event) =>
-                        controller.change({
-                          status: event.target.value as EventStatus,
-                        })
-                      }
-                      className="mt-2 block h-9 w-full text-sm!"
-                    >
-                      <option value="planning">準備中</option>
-                      <option value="adjusting">調整中</option>
-                      <option value="confirmed">確定</option>
-                    </Select>
-                  </label>
-                </div>
               </fieldset>
               {controller.formError && (
                 <p role="alert" className="text-sm text-red-600">

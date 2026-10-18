@@ -41,7 +41,7 @@ describe('event input validation', () => {
     { title: 'Live' },
     { expectedUpdatedAt: 'invalid', title: 'Live' },
     { expectedUpdatedAt: '2026-10-17T00:00:00.000Z' },
-    { expectedUpdatedAt: '2026-10-17T00:00:00.000Z', status: 'unknown' },
+    { expectedUpdatedAt: '2026-10-17T00:00:00.000Z', status: 'confirmed' },
     { expectedUpdatedAt: '2026-10-17T00:00:00.000Z', isDeleted: true },
   ])('rejects invalid update input: %j', (input) => {
     expect(updateEventSchema.safeParse(input).success).toBe(false)

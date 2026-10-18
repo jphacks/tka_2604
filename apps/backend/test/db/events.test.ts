@@ -31,7 +31,6 @@ describe('event persistence', () => {
     const saved = await createEvent(db, 'owner', { title: 'Live' })
     expect(saved.event).toMatchObject({
       title: 'Live',
-      status: 'planning',
       date: null,
       venue: null,
       description: null,

@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 
 import type { EventSummary } from '../../../shared/model/workspace'
-import { formatDate, statusLabels } from '../../../shared/model/workspace'
+import { formatDate } from '../../../shared/model/workspace'
 import { Icon } from '../../../shared/ui/Icon'
 
 export function EventCard({ event }: { event: EventSummary }) {
@@ -10,11 +10,6 @@ export function EventCard({ event }: { event: EventSummary }) {
       <div className="flex items-center justify-between px-5 pt-5">
         <span className="flex size-10 items-center justify-center rounded-lg bg-wash text-brand">
           <Icon name="calendar" className="size-5" />
-        </span>
-        <span
-          className={`rounded-full px-2.5 py-1 text-xs font-medium ${event.status === 'confirmed' ? 'bg-emerald-50 text-emerald-700' : event.status === 'adjusting' ? 'bg-wash text-brand' : 'bg-canvas text-muted'}`}
-        >
-          {statusLabels[event.status]}
         </span>
       </div>
       <Link to={`/event/${event.id}`} className="px-5 pt-4 pb-5">

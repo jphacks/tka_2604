@@ -5,7 +5,6 @@ import { useResource } from '../../../shared/hooks/useResource'
 import {
   defaultEventName,
   type EventDraft,
-  type EventStatus,
   splitBandCounts,
 } from '../../../shared/model/workspace'
 import { workspaceRepository } from '../../../shared/repositories/workspaceRepository'
@@ -31,7 +30,6 @@ export function useEvents() {
   )
   const resource = useResource(load)
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<EventStatus | 'all'>('all')
   const [searchParams, setSearchParams] = useSearchParams()
   const creating = searchParams.get('create') === '1'
   const [draft, setDraft] = useState(emptyDraft)
@@ -96,7 +94,6 @@ export function useEvents() {
   return {
     ...resource,
     query,
-    filter,
     creating,
     draft,
     busy,
@@ -120,15 +117,12 @@ export function useEvents() {
       },
       clear: () => setRoster({ text: '', source: '' }),
     },
-    visible: events.filter(
-      (event) =>
-        (filter === 'all' || event.status === filter) &&
-        `${event.name} ${event.venue}`
-          .toLowerCase()
-          .includes(query.trim().toLowerCase()),
+    visible: events.filter((event) =>
+      `${event.name} ${event.venue}`
+        .toLowerCase()
+        .includes(query.trim().toLowerCase()),
     ),
     setQuery,
-    setFilter,
     create,
     openCreate: () => {
       setDraft(emptyDraft)

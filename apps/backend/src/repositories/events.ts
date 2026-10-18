@@ -21,7 +21,6 @@ type Database = ReturnType<typeof createDb>
 const eventFields = {
   eventId: events.eventId,
   title: events.title,
-  status: events.status,
   date: events.date,
   venue: events.venue,
   description: events.description,
@@ -30,20 +29,11 @@ const eventFields = {
 }
 
 function basicFields(event: EventDetails): EventDetails {
-  const {
-    eventId,
-    title,
-    status,
-    date,
-    venue,
-    description,
-    createdAt,
-    updatedAt,
-  } = event
+  const { eventId, title, date, venue, description, createdAt, updatedAt } =
+    event
   return {
     eventId,
     title,
-    status,
     date,
     venue,
     description,

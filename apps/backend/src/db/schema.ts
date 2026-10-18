@@ -17,7 +17,7 @@ export const users = sqliteTable('users', {
   passwordHash: text('password_hash').notNull(),
 })
 
-// イベント：所有者・開催情報・編集状態を管理する。
+// イベント：所有者・開催情報を管理する。
 export const events = sqliteTable(
   'events',
   {
@@ -29,10 +29,6 @@ export const events = sqliteTable(
       .references(() => users.userId),
     // イベント名
     title: text('title').notNull(),
-    // 編集状態：準備中／調整中／確定
-    status: text('status', { enum: ['planning', 'adjusting', 'confirmed'] })
-      .notNull()
-      .default('planning'),
     // 開催日（任意・YYYY-MM-DD）
     date: text('date'),
     // 会場（任意）
@@ -52,13 +48,7 @@ export const events = sqliteTable(
       .notNull()
       .default(false),
   },
-  (table) => [
-    check(
-      'events_status',
-      sql`${table.status} in ('planning', 'adjusting', 'confirmed')`,
-    ),
-    check('events_is_deleted', sql`${table.isDeleted} in (0, 1)`),
-  ],
+  (table) => [check('events_is_deleted', sql`${table.isDeleted} in (0, 1)`)],
 )
 
 // 出演枠：イベントに登録された出演枠。
