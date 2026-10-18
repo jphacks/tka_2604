@@ -80,9 +80,9 @@ export function useEvents() {
     } catch (cause) {
       const message =
         cause instanceof Error ? cause.message : '作成に失敗しました。'
-      // イベントは作成済み。再送で重複させず、名簿画面で取り込み直してもらう。
+      // イベントは作成済み。再送で重複させず、出演順画面で理由を伝える。
       if (eventId)
-        await navigate(`/event/${eventId}/performances`, {
+        await navigate(`/event/${eventId}`, {
           state: {
             notice: `イベントは作成しましたが、名簿の取込が途中で止まりました。${message}`,
           },

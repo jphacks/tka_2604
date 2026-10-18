@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router'
+import { useLocation, useParams } from 'react-router'
 
 import { useEventName } from '../../../app/eventNameContext'
 import { Button } from '../../../shared/ui/Button'
@@ -21,6 +21,8 @@ export function EventPage() {
 
 function EventWorkspace({ eventId }: { eventId: string }) {
   const controller = useEvent(eventId)
+  const importNotice = (useLocation().state as { notice?: string } | null)
+    ?.notice
   const setEventName = useEventName()
   const columns = useColumnResize()
   const [activePanel, setActivePanel] = useState<WorkspacePanel>('schedule')
@@ -41,6 +43,14 @@ function EventWorkspace({ eventId }: { eventId: string }) {
         />
       ) : (
         <>
+          {importNotice && (
+            <p
+              role="alert"
+              className="shrink-0 border-b border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"
+            >
+              {importNotice}
+            </p>
+          )}
           {controller.hardViolationCount > 0 && (
             <p
               role="status"
