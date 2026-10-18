@@ -1,6 +1,7 @@
 import { Button } from '../../../shared/ui/Button'
 import { Dialog } from '../../../shared/ui/Dialog'
 import { Input, Textarea } from '../../../shared/ui/Input'
+import { PartCountFields } from '../../../shared/ui/PartCountFields'
 import type { EventsController } from '../hooks/useEvents'
 
 export function CreateEventDialog({
@@ -70,6 +71,10 @@ export function CreateEventDialog({
             className="mt-2 w-full"
           />
         </label>
+        <PartCountFields
+          counts={controller.draft.bandCounts ?? [4]}
+          onChange={(bandCounts) => controller.setDraft({ bandCounts })}
+        />
         {controller.formError && (
           <p role="alert" className="text-xs text-red-500">
             {controller.formError}

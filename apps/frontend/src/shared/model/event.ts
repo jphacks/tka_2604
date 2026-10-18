@@ -99,15 +99,13 @@ export function positionLimit(event: EventData) {
     : event.sections.reduce((sum, section) => sum + section.slots.length, 0)
 }
 
-/** Preserve internal vacancies; trailing empty capacity remains view state. */
+/** Configured frame counts and vacant positions are saved together. */
 export function scheduleContent(event: EventData) {
   return [
     event.sections.map((section) => ({
       ...section,
-      slots: section.slots.slice(
-        0,
-        section.slots.findLastIndex((id) => id !== null) + 1,
-      ),
+      bandCount: section.slots.length,
+      slots: section.slots,
     })),
     event.unassigned,
   ]

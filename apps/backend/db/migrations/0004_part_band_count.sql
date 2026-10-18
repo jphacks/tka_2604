@@ -1,0 +1,1 @@
+ALTER TABLE `parts` ADD `band_count` integer DEFAULT 4 NOT NULL;

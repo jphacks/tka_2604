@@ -94,6 +94,7 @@ describe('events RPC adapter', () => {
       JSON.parse(requestBody(fetcher.mock.calls[0][1])) as unknown,
     ).toEqual({
       title: 'ライブ',
+      bandCounts: [4],
       date: null,
       venue: null,
       description: null,
@@ -167,8 +168,8 @@ describe('events RPC adapter', () => {
         ],
         memberships: [{ bandId: 'b1', memberId: 'm1' }],
         parts: [
-          { partId: 'p2', partName: '後半', sortOrder: 1 },
-          { partId: 'p1', partName: '前半', sortOrder: 0 },
+          { partId: 'p2', partName: '後半', bandCount: 4, sortOrder: 1 },
+          { partId: 'p1', partName: '前半', bandCount: 6, sortOrder: 0 },
         ],
         placements: [{ bandId: 'b1', partId: 'p1', order: 2 }],
         unassignedBandIds: [],
@@ -192,7 +193,7 @@ describe('events RPC adapter', () => {
     // Chat history has its own sequence; it does not participate in updatedAt.
     const event = await api.getEvent('event-1')
     expect(event.sections).toEqual([
-      { id: 'p1', name: '前半', slots: [null, null, 'b1', null] },
+      { id: 'p1', name: '前半', slots: [null, null, 'b1', null, null, null] },
       { id: 'p2', name: '後半', slots: [null, null, null, null] },
     ])
     expect(event.performances[0]).toMatchObject({
@@ -246,7 +247,7 @@ it('saves parts and placements without closing vacant slots with the displayed r
     constraintSources: { removed: 'band-1' },
     sections: [
       { id: 'part-1', name: '前半', slots: ['b2', null, 'b1', null] },
-      { id: 'part-2', name: null, slots: [] },
+      { id: 'part-2', name: null, slots: [null, null, null, null] },
     ],
     unassigned: ['b3'],
   }
@@ -254,8 +255,8 @@ it('saves parts and placements without closing vacant slots with the displayed r
   expect(JSON.parse(requestBody(fetcher.mock.calls[0][1])) as unknown).toEqual({
     expectedUpdatedAt: details.updatedAt,
     parts: [
-      { partId: 'part-1', partName: '前半' },
-      { partId: 'part-2', partName: null },
+      { partId: 'part-1', partName: '前半', bandCount: 4 },
+      { partId: 'part-2', partName: null, bandCount: 4 },
     ],
     placements: [
       { bandId: 'b2', partId: 'part-1', order: 0 },

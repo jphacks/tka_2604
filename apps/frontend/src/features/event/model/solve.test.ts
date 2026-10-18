@@ -36,7 +36,7 @@ it('applies a stored solution while retaining local frame capacity', () => {
       bands: [],
       members: [],
       memberships: [],
-      parts: [{ partId: 'p1', partName: '前半', sortOrder: 0 }],
+      parts: [{ partId: 'p1', partName: '前半', bandCount: 4, sortOrder: 0 }],
       placements: [
         { bandId: 'a', partId: 'p1', order: 1 },
         { bandId: 'b', partId: 'p1', order: 0 },
@@ -44,6 +44,12 @@ it('applies a stored solution while retaining local frame capacity', () => {
       unassignedBandIds: [],
     },
   }
+  expect(() =>
+    applySolverSchedule(
+      { ...event, sections: [{ id: 'p1', slots: ['a'] }] },
+      response,
+    ),
+  ).toThrow('枠数')
   expect(applySolverSchedule(event, response)).toMatchObject({
     updatedAt: 'new',
     sections: [

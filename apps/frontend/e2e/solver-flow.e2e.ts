@@ -53,8 +53,8 @@ test.beforeEach(async ({ request }) => {
     data: {
       expectedUpdatedAt: current.updatedAt,
       parts: [
-        { partId: 'demo-part-1', partName: '前半' },
-        { partId: 'demo-part-2', partName: null },
+        { partId: 'demo-part-1', partName: '前半', bandCount: 4 },
+        { partId: 'demo-part-2', partName: null, bandCount: 4 },
       ],
       placements: [
         { bandId: 'demo-band-a', partId: 'demo-part-1', order: 0 },
@@ -65,6 +65,54 @@ test.beforeEach(async ({ request }) => {
   })
   expect(response.status()).toBe(200)
 })
+
+for (const counts of [
+  [2, 1],
+  [1, 1],
+  [2, 3],
+]) {
+  test(`real Solver preserves configured counts ${counts.join('/')} through generation and reload`, async ({
+    page,
+    request,
+  }) => {
+    await open(page)
+    await page
+      .getByRole('button', { name: 'ライブ情報の編集', exact: true })
+      .click()
+    const dialog = page.getByRole('dialog', { name: 'ライブ情報の編集' })
+    for (const [index, count] of counts.entries())
+      await dialog
+        .getByRole('spinbutton', {
+          name: `第${index + 1}部の組数`,
+          exact: true,
+        })
+        .fill(String(count))
+    await dialog.getByRole('button', { name: '適用', exact: true }).click()
+    const body = await generate(page)
+    expect(body.result.status).toBe(
+      counts[0] + counts[1] < 3 ? 'partial' : 'optimal',
+    )
+    const saved = await schedule(request)
+    expect(saved.parts.map((part) => part.bandCount)).toEqual(counts)
+    expect(saved.placements).toHaveLength(Math.min(3, counts[0] + counts[1]))
+    for (const part of saved.parts)
+      expect(
+        saved.placements.filter((item) => item.partId === part.partId).length,
+      ).toBeLessThanOrEqual(part.bandCount)
+    await page.reload()
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await page
+      .getByRole('button', { name: 'ライブ情報の編集', exact: true })
+      .click()
+    for (const [index, count] of counts.entries())
+      await expect(
+        dialog.getByRole('spinbutton', {
+          name: `第${index + 1}部の組数`,
+          exact: true,
+        }),
+      ).toHaveValue(String(count))
+  })
+}
 
 test('real Solver: generate, enforce fixed/soft constraints, persist and regenerate only on request', async ({
   page,

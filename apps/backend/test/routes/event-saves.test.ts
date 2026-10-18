@@ -353,3 +353,14 @@ it('saves and reloads leading and internal vacancies without compacting placemen
   expect(response.status).toBe(200)
   expect((await snapshot())!.placements).toEqual(body.placements)
 })
+
+it('rejects a vacant placement outside the configured frames without saving', async () => {
+  const before = (await snapshot())!
+  const body = await input()
+  body.placements = body.placements.map((row) => ({
+    ...row,
+    order: before.parts.find((part) => part.partId === row.partId)!.bandCount,
+  }))
+  expect((await request('schedule', body)).status).toBe(422)
+  expect(await snapshot()).toEqual(before)
+})

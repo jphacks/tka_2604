@@ -22,7 +22,9 @@ export interface EventChanges {
   bands: Pick<typeof bands.$inferSelect, 'bandId' | 'bandName'>[]
   members: Pick<typeof members.$inferSelect, 'memberId' | 'memberName'>[]
   memberships: (typeof bandMembers.$inferSelect)[]
-  parts: Pick<typeof parts.$inferSelect, 'partId' | 'partName'>[]
+  parts: (Pick<typeof parts.$inferSelect, 'partId' | 'partName'> & {
+    bandCount?: number
+  })[]
   placements: (typeof bandOrder.$inferSelect)[]
   constraints: Pick<
     typeof constraints.$inferSelect,
@@ -172,7 +174,15 @@ export async function saveEvent(
           }),
       ),
       ...chunks(
-        input.parts.map((part, sortOrder) => ({ ...part, eventId, sortOrder })),
+        input.parts.map((part, sortOrder) => ({
+          ...part,
+          eventId,
+          sortOrder,
+          bandCount:
+            part.bandCount ??
+            current.parts.find((p) => p.partId === part.partId)?.bandCount ??
+            4,
+        })),
       ).map((rows) =>
         db
           .insert(parts)
@@ -182,6 +192,7 @@ export async function saveEvent(
             set: {
               sortOrder: sql`CASE WHEN ${parts.eventId} = ${eventId} THEN excluded.sort_order ELSE NULL END`,
               partName: sql`excluded.part_name`,
+              bandCount: sql`excluded.band_count`,
             },
           }),
       ),

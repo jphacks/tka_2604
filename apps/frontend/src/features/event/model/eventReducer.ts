@@ -22,6 +22,10 @@ export type ConstraintPatch = Partial<
   Pick<Constraint, 'hardness' | 'priority' | 'enabled'>
 >
 export type EventAction =
+  | {
+      type: 'schedule-configured'
+      event: Pick<EventData, 'sections' | 'unassigned'>
+    }
   | { type: 'loaded'; event: EventData }
   | {
       type: 'saved'
@@ -62,6 +66,8 @@ export function eventReducer(
   })
   const fail = (error: string) => ({ ...state, error, notice: '' })
   switch (action.type) {
+    case 'schedule-configured':
+      return success({ ...event, ...action.event })
     case 'saved':
       return {
         event: {

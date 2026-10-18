@@ -45,10 +45,11 @@ export function scheduleResponse(s: Snapshot): EventSchedule {
       (a, b) =>
         compareId(a.bandId, b.bandId) || compareId(a.memberId, b.memberId),
     ),
-    parts: s.parts.map(({ partId, partName, sortOrder }) => ({
+    parts: s.parts.map(({ partId, partName, sortOrder, bandCount }) => ({
       partId,
       partName,
       sortOrder,
+      bandCount,
     })),
     placements: s.placements,
     unassignedBandIds: s.bands

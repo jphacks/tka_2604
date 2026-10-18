@@ -1,5 +1,5 @@
 import { validateConstraint } from '../../../shared/model/constraints'
-import { isFixed, memberNames } from '../../../shared/model/event'
+import { isFixed, memberNames, positions } from '../../../shared/model/event'
 import type { EventData, ModelResult, MoveTarget, SectionView } from './types'
 
 export function buildSchedule(event: EventData) {
@@ -261,6 +261,68 @@ export function resizeSchedule(
         },
     )
   }
+  for (const constraint of next.constraints) {
+    const error = validateConstraint(constraint, next)
+    if (error)
+      return {
+        event,
+        error: `制約の指定範囲が使えなくなります。先に制約を編集・削除してください。${error}`,
+      }
+  }
+  return { event: next }
+}
+
+/** Validate the final layout together, so a dialog edit is all-or-nothing. */
+export function configureSchedule(
+  event: EventData,
+  counts: number[],
+): ModelResult {
+  if (
+    counts.length < 1 ||
+    counts.length > 8 ||
+    counts.some((count) => !Number.isInteger(count) || count < 1 || count > 20)
+  )
+    return {
+      event,
+      error: '部数は1〜8、各部のバンド数は1〜20の整数を入力してください。',
+    }
+  const unassigned = [...event.unassigned]
+  const sections = counts.map((count, index) => {
+    const part = event.sections[index] ?? {
+      id: `part-${crypto.randomUUID()}`,
+      slots: [],
+    }
+    unassigned.push(
+      ...part.slots.slice(count).filter((id): id is string => id !== null),
+    )
+    return {
+      ...part,
+      slots: Array.from(
+        { length: count },
+        (_, index) => part.slots[index] ?? null,
+      ),
+    }
+  })
+  unassigned.push(
+    ...event.sections
+      .slice(counts.length)
+      .flatMap((part) => part.slots.filter((id): id is string => id !== null)),
+  )
+  const next = { ...event, sections, unassigned }
+  const before = positions(event)
+  const after = positions(next)
+  if (
+    event.performances.some(
+      (band) =>
+        isFixed(event, band.id) &&
+        before.get(band.id)?.position !== after.get(band.id)?.position,
+    )
+  )
+    return {
+      event,
+      error:
+        '固定枠の位置が変わる設定です。該当する固定を解除してから変更してください。',
+    }
   for (const constraint of next.constraints) {
     const error = validateConstraint(constraint, next)
     if (error)
