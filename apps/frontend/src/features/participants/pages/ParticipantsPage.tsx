@@ -7,6 +7,7 @@ import { Icon } from '../../../shared/ui/Icon'
 import { Input, Select } from '../../../shared/ui/Input'
 import { LinkButton } from '../../../shared/ui/LinkButton'
 import { PageState } from '../../../shared/ui/PageState'
+import { RosterImportDialog } from '../components/RosterImportDialog'
 import { useParticipants } from '../hooks/useParticipants'
 
 export function ParticipantsPage() {
@@ -25,6 +26,10 @@ export function ParticipantsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button onClick={controller.openImport} disabled={!controller.data}>
+            <Icon name="list" />
+            CSVを取り込む
+          </Button>
           <LinkButton to={`/event/${eventId}/forms`}>
             <Icon name="form" />
             回答フォーム
@@ -106,6 +111,11 @@ export function ParticipantsPage() {
                   >
                     <td className="max-w-56 px-5 py-4">
                       <p className="font-medium">{row.name}</p>
+                      {row.description && (
+                        <p className="mt-1 line-clamp-2 leading-5 text-muted">
+                          {row.description}
+                        </p>
+                      )}
                     </td>
                     <td className="max-w-60 py-4 pr-5 leading-6 text-muted">
                       {row.members.join('・')}
@@ -170,6 +180,15 @@ export function ParticipantsPage() {
         >
           {controller.notice}
         </p>
+      )}
+      {controller.importOpen && controller.data && (
+        <RosterImportDialog
+          eventId={eventId}
+          registered={controller.data.members}
+          expectedUpdatedAt={controller.data.updatedAt}
+          onDone={controller.importDone}
+          onClose={controller.closeImport}
+        />
       )}
       {controller.deleteTarget && (
         <ConfirmDialog

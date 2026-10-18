@@ -21,6 +21,7 @@ export function useParticipants(eventId: string) {
   const [deleteError, setDeleteError] = useState('')
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [notice, setNotice] = useState('')
+  const [importOpen, setImportOpen] = useState(false)
   const busy = useRef(false)
   const data = resource.data
   async function confirmDelete() {
@@ -121,6 +122,21 @@ export function useParticipants(eventId: string) {
     },
     cancelDelete: () => {
       if (!busy.current) setDeleteTarget(null)
+    },
+    importOpen,
+    openImport: () => {
+      setNotice('')
+      setImportOpen(true)
+    },
+    closeImport: () => setImportOpen(false),
+    // A partial failure keeps the dialog open with its error; both cases reload
+    // so the bands registered so far appear in the list.
+    importDone: (count: number, completed: boolean) => {
+      resource.refresh()
+      if (completed) {
+        setImportOpen(false)
+        setNotice(`${count}組を取り込みました。`)
+      }
     },
     query,
     filter,
