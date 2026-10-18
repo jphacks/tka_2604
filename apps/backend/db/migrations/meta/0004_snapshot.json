@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "fbe19366-d42a-4c79-8e9c-55a111371411",
+  "id": "8dff5db0-6e19-4eee-960a-b14165ffff69",
   "prevId": "8ace42b7-d176-451f-9d89-a8c136a1a491",
   "tables": {
     "band_members": {
@@ -157,13 +157,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
           "autoincrement": false
         },
         "request_text": {
@@ -573,6 +566,14 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "band_count": {
+          "name": "band_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 4
         }
       },
       "indexes": {

@@ -21,6 +21,7 @@ export interface EventSummary extends EventDetails {
 }
 
 export interface CreateEventInput {
+  bandCounts?: number[]
   title: string
   date?: string | null
   venue?: string | null
@@ -44,7 +45,12 @@ export interface EventSchedule {
   }[]
   members: { memberId: string; memberName: string }[]
   memberships: { bandId: string; memberId: string }[]
-  parts: { partId: string; partName: string | null; sortOrder: number }[]
+  parts: {
+    partId: string
+    partName: string | null
+    sortOrder: number
+    bandCount: number
+  }[]
   placements: { bandId: string; partId: string; order: number }[]
   unassignedBandIds: string[]
 }

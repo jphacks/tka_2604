@@ -9,8 +9,8 @@ export function input(): AIChatInput {
     context: {
       event: { title: '秋ライブ' },
       parts: [
-        { partId: 'part-1', sortOrder: 0, partName: '第1部' },
-        { partId: 'part-2', sortOrder: 1, partName: '第2部' },
+        { partId: 'part-1', sortOrder: 0, partName: '第1部', bandCount: 4 },
+        { partId: 'part-2', sortOrder: 1, partName: '第2部', bandCount: 4 },
       ],
       bands: [
         { bandId: 'band-a', bandName: 'A', description: '明るいポップス' },
@@ -88,7 +88,7 @@ export function snapshot(): ChatEventSnapshot {
       })),
       members: state.members,
       memberships: state.memberships,
-      parts: state.parts,
+      parts: state.parts.map((part) => ({ ...part, bandCount: 4 })),
       placements: state.currentPlacements,
       unassignedBandIds: ['band-b'],
     },

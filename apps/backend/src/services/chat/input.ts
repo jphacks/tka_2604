@@ -62,11 +62,14 @@ export function buildAIChatInput(
   const parsed = aiChatInputSchema.safeParse({
     context: {
       event: { title: event.title },
-      parts: schedule.parts.map(({ partId, sortOrder, partName }) => ({
-        partId,
-        sortOrder,
-        partName,
-      })),
+      parts: schedule.parts.map(
+        ({ partId, sortOrder, partName, bandCount }) => ({
+          partId,
+          sortOrder,
+          partName,
+          bandCount,
+        }),
+      ),
       bands: schedule.bands.map(({ bandId, bandName, description }) => ({
         bandId,
         bandName,

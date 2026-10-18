@@ -14,7 +14,7 @@ import {
   initialState,
 } from '../model/eventReducer'
 import { exportEventCsv } from '../model/export'
-import { buildSchedule, findTarget } from '../model/schedule'
+import { buildSchedule, configureSchedule, findTarget } from '../model/schedule'
 import { applySolverSchedule, solveMessages } from '../model/solve'
 import { eventRepository } from '../repositories/eventRepository'
 import { useEventChat } from './useEventChat'
@@ -350,6 +350,20 @@ export function useEvent(eventId: string) {
       edit({ type: 'fixed', id, fixed }),
     resize: (count: number, sectionId?: string) =>
       edit({ type: 'resize', count, sectionId }),
+    configureSchedule: (counts: number[]) => {
+      if (!event || busy.current || refreshing || chat.sending)
+        return '処理が終わってから変更してください。'
+      const result = configureSchedule(event, counts)
+      if (result.error) return result.error
+      edit({
+        type: 'schedule-configured',
+        event: {
+          sections: result.event.sections,
+          unassigned: result.event.unassigned,
+        },
+      })
+      return ''
+    },
     move: (id: string, overId: string) => {
       if (!event || id === overId) return
       const target = findTarget(event, overId)

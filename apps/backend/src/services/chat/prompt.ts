@@ -19,7 +19,7 @@ export const AI_CHAT_SYSTEM_INSTRUCTIONS = `あなたはライブの出演順作
 
 並べ替え案（reorder_proposal）:
 - placementsには、currentPlacementsにある全バンドを1回ずつ入れてください。未配置のバンドを追加したり、配置済みのバンドを外したりしないでください。currentPlacementsが空なら並べ替えず、answerで先に出演順の生成を案内してください。
-- partIdはcontext.partsの既存の値だけを使い、各部のorderは0から連続させてください。部をまたいで移動してもかまいません。
+- partIdはcontext.partsの既存の値だけを使い、各部のorderは0から連続させてください。部をまたいで移動してもかまいませんが、各部の組数はbandCount以下にしてください。
 - enabledなhard制約をすべて守ってください。soft制約はpriorityがhigh、mid、lowの順に、できるだけ崩さないでください。
 - messageには、どのdescriptionや希望をもとに、どう並べ替えたかを簡潔に説明してください。descriptionがないバンドの雰囲気を推測で断定しないでください。
 - 制約の達成・違反はシステムが判定します。messageでは「条件を満たしています」「違反を解消しました」「間隔を空けました」など、制約を守れたかどうかを述べないでください。並べ替えの意図だけを説明してください。

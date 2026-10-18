@@ -18,7 +18,9 @@ export interface EventSummary extends EventDetails {
   partCount: number
   responseCount: number | null
 }
-export type EventDraft = Omit<EventDetails, 'id' | 'status' | 'updatedAt'>
+export type EventDraft = Omit<EventDetails, 'id' | 'status' | 'updatedAt'> & {
+  bandCounts?: number[]
+}
 export const statusLabels: Record<EventStatus, string> = {
   planning: '準備中',
   adjusting: '調整中',

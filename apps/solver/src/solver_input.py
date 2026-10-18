@@ -14,6 +14,7 @@ class InputModel(BaseModel):
 class Part(InputModel):
     partId: str = Field(min_length=1)
     sortOrder: int = Field(ge=0)
+    bandCount: int | None = Field(default=None, ge=0)
 
 
 class Band(InputModel):
@@ -57,6 +58,10 @@ class SolveRequest(InputModel):
         member_ids = {member.memberId for member in self.members}
         _unique([part.partId for part in self.parts], "parts[].partId")
         _unique([part.sortOrder for part in self.parts], "parts[].sortOrder")
+        band_counts = [part.bandCount for part in self.parts]
+        if any(count is not None for count in band_counts):
+            if any(count is None for count in band_counts):
+                raise ValueError("parts[].bandCountはすべての部で指定してください")
         _unique([band.bandId for band in self.bands], "bands[].bandId")
         _unique([member.memberId for member in self.members], "members[].memberId")
         _unique(

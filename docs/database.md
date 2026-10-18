@@ -73,6 +73,7 @@ erDiagram
         TEXT event_id FK "必須"
         INTEGER sort_order "必須・0始まり"
         TEXT part_name "任意・初期値NULL"
+        INTEGER band_count "必須・設定枠数・初期値4"
     }
     Band_Order {
         TEXT band_id PK, FK "必須"
@@ -113,7 +114,7 @@ erDiagram
 ## 部と制約の動作
 
 - イベント作成処理はEventと最初の空のPartを同じD1 batchで保存する。EventへのSQL INSERT単独では部の自動作成は行わない。
-- Partは空でも存在できる。枠数・空き枠は保存しない。各部のバンド数は配置の件数から求める。
+- Partは空でも存在できる。`band_count`は配置件数とは独立した設定枠数。UIでの数値編集だけで更新し、バンド移動・Solver結果では変えない。空き枠そのものは保存せず、設定枠数と配置から復元する。
 - バンド登録直後は未配置。Band_Orderに行がなければ未配置とする。
 - 部名は任意のpart_name（初期値NULL）に保存する。未入力・空欄ならsort_orderに対応する「第n部」を表示する仕様とし、frontendの対応は#32で行う。#45はbackendの定義・取得・保存のみを変更する。保存済み部名は並べ替えで変更しない。
 - 部を並べ替えても制約JSONの番号は変更しない。制約に違反する移動・固定解除前の移動を操作段階で拒否せず、違反を表示する方針。通常の配置編集ではバンドを削除せず未配置へ戻し、メンバーも名簿に残す。バンド本体削除は管理画面の専用APIへ分ける。DB上の重複や別イベント参照とは区別する。
@@ -148,7 +149,7 @@ chat_messagesはmessage_idをPK、(event_id, seq)・reply_to_message_idをそれ
 
 0002_wishes_chat_and_part_nameはDrizzle生成SQLで、commentをpart_nameへリネームし、列・履歴テーブルを追加する。0003_chat_integrityは希望状態・由来・返信の整合性を保証するカスタムトリガー。親テーブルの作り直しを避け、既存の所属・配置・名前・NULLを維持する。適用済みの0000・0001は変更していない。
 
-Band.descriptionはジャンル・雰囲気などのバンド紹介（NULL可、#71）。チャットの並べ替え案でLLMへ渡す。出演順の希望であるrequest_textとは分け、saveEventの全件保存でも保持する。0004_band_descriptionはDrizzle生成の列追加のみ。書き込み用の画面・APIは未実装。
+Band.descriptionはジャンル・雰囲気などのバンド紹介（NULL可、#71）。チャットの並べ替え案でLLMへ渡す。出演順の希望であるrequest_textとは分け、saveEventの全件保存でも保持する。0006_band_descriptionはDrizzle生成の列追加のみ。書き込み用の画面・APIは未実装。
 
 イベント本体と表・制約・チャット履歴の個別取得APIを実装済み。各DTOでpartName・希望状態・由来を返し、パスワードハッシュや所有者・論理削除等のDB管理項目を公開しない。契約は[イベントAPI](../apps/backend/docs/api/events.md)を参照。
 

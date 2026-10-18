@@ -52,6 +52,7 @@ function input(): AIChatInput {
     { bandId: 'band-c', bandName: 'C', description: 'しっとりバラード' },
     { bandId: 'band-d', bandName: 'D', description: null },
   )
+  state.context.parts[0].bandCount = 2
   state.context.constraints = [hardBefore, softGap, unplacedAt]
   state.context.currentPlacements = [
     { bandId: 'band-a', partId: 'part-1', order: 0 },
@@ -190,6 +191,10 @@ describe('reorder proposals judged by BE', () => {
       { bandId: 'band-a', memberId: 'member-1' },
       { bandId: 'band-b', memberId: 'member-1' },
     ])
+    expect(request.parts).toEqual([
+      { partId: 'part-1', sortOrder: 0, bandCount: 2 },
+      { partId: 'part-2', sortOrder: 1, bandCount: 4 },
+    ])
     expect(request.currentPlacements).toEqual(violating.placements)
     expect(request.constraints.map((c) => c.constraint_id)).toEqual([
       'c-before',
@@ -294,6 +299,10 @@ describe('reorder proposals judged by BE', () => {
       fixed.placements.map((p) =>
         p.bandId === 'band-c' ? { ...p, order: 0 } : p,
       ),
+    ],
+    [
+      "more bands than a part's bandCount",
+      fixed.placements.map((p, order) => ({ ...p, partId: 'part-1', order })),
     ],
   ])('rejects a reorder with %s', async (_, placements) => {
     await expect(

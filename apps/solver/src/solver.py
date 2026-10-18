@@ -65,6 +65,8 @@ def _build_model(request: SolveRequest, allow_partial: bool) -> ModelVariables:
                 assignment[band_index, part_index] for band_index in range(band_count)
             )
         )
+        if parts[part_index].bandCount is not None:
+            model.add(part_sizes[part_index] <= parts[part_index].bandCount)
         for band_index in range(band_count):
             selected = assignment[band_index, part_index]
             model.add(local_order[band_index] < part_sizes[part_index]).only_enforce_if(
@@ -110,10 +112,15 @@ def _build_model(request: SolveRequest, allow_partial: bool) -> ModelVariables:
         global_position,
         parts,
     )
-    if soft_penalties:
-        model.minimize(
-            sum(penalty.weight * penalty.violated for penalty in soft_penalties)
+    penalty = sum(item.weight * item.violated for item in soft_penalties)
+    if allow_partial:
+        # Fill as many configured slots as possible before optimizing soft wishes.
+        model.maximize(
+            sum(present.values()) * (sum(item.weight for item in soft_penalties) + 1)
+            - penalty
         )
+    elif soft_penalties:
+        model.minimize(penalty)
 
     return ModelVariables(model, assignment, present, local_order, global_position)
 

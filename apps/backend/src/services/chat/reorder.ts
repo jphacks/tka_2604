@@ -10,14 +10,15 @@ import { AIChatError } from './errors.ts'
 import type { AIChatInput, Placement, ReorderResult } from './types.ts'
 
 // A reorder may move placed bands between existing parts, but must keep the
-// same set of placed bands and contiguous 0-based orders in every part.
+// same set of placed bands, each part's bandCount, and contiguous 0-based
+// orders in every part.
 export function validateReorder(
   placements: Placement[],
   { context }: AIChatInput,
 ) {
   const placed = new Set(context.currentPlacements.map((p) => p.bandId))
   const bandIds = new Set(placements.map((p) => p.bandId))
-  const partIds = new Set(context.parts.map((p) => p.partId))
+  const capacity = new Map(context.parts.map((p) => [p.partId, p.bandCount]))
   const orders = new Map<string, number[]>()
   for (const p of placements)
     orders.set(p.partId, [...(orders.get(p.partId) ?? []), p.order])
@@ -25,7 +26,7 @@ export function validateReorder(
     bandIds.size !== placements.length ||
     bandIds.size !== placed.size ||
     [...bandIds].some((id) => !placed.has(id)) ||
-    [...orders.keys()].some((id) => !partIds.has(id)) ||
+    [...orders].some(([id, list]) => list.length > (capacity.get(id) ?? -1)) ||
     [...orders.values()].some((list) =>
       list.toSorted((a, b) => a - b).some((order, index) => order !== index),
     )
@@ -117,9 +118,10 @@ export async function repairWithSolver(
     bands: order.map((bandId) => ({ bandId })),
     members: context.members.map(({ memberId }) => ({ memberId })),
     memberships,
-    parts: context.parts.map(({ partId, sortOrder }) => ({
+    parts: context.parts.map(({ partId, sortOrder, bandCount }) => ({
       partId,
       sortOrder,
+      bandCount,
     })),
     constraints: [...context.constraints.filter(targetsPlaced), ...anchors],
     currentPlacements: placements,

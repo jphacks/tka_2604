@@ -2,6 +2,91 @@ import type { Locator, Page } from '@playwright/test'
 
 import { expect, test } from './fixtures'
 
+test('configured part counts survive creation, cancellation, explicit saving and reload', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/login')
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await page
+    .getByRole('button', { name: 'イベントを作成', exact: true })
+    .click()
+  let dialog = page.getByRole('dialog', { name: '新しいイベントを作成' })
+  await dialog
+    .getByRole('textbox', { name: 'イベント名' })
+    .fill('部構成の保存確認')
+  await dialog.getByRole('spinbutton', { name: '部数', exact: true }).fill('2')
+  await dialog
+    .getByRole('spinbutton', { name: '第1部の組数', exact: true })
+    .fill('2')
+  await dialog
+    .getByRole('spinbutton', { name: '第2部の組数', exact: true })
+    .fill('3')
+  await dialog
+    .getByRole('button', { name: 'イベントを作成', exact: true })
+    .click()
+  await expect(
+    page.getByRole('heading', { name: '部構成の保存確認', exact: true }),
+  ).toBeVisible()
+  const id = new URL(page.url()).pathname.split('/').at(-1)!
+  const path = `/api/events/${id}`
+  const counts = async () =>
+    (
+      (await (await request.get(`${path}/schedule`)).json()) as {
+        parts: { bandCount: number }[]
+      }
+    ).parts.map((part) => part.bandCount)
+  try {
+    expect(await counts()).toEqual([2, 3])
+    await page
+      .getByRole('button', { name: 'ライブ情報の編集', exact: true })
+      .click()
+    dialog = page.getByRole('dialog', { name: 'ライブ情報の編集' })
+    await dialog
+      .getByRole('spinbutton', { name: '第2部の組数', exact: true })
+      .fill('6')
+    await dialog
+      .getByRole('button', { name: 'キャンセル', exact: true })
+      .click()
+    await expect(
+      page.getByRole('heading', { name: '第2部 · 0/3組', exact: true }),
+    ).toBeVisible()
+    await page
+      .getByRole('button', { name: 'ライブ情報の編集', exact: true })
+      .click()
+    await expect(
+      dialog.getByRole('spinbutton', { name: '第2部の組数', exact: true }),
+    ).toHaveValue('3')
+    await dialog
+      .getByRole('spinbutton', { name: '第2部の組数', exact: true })
+      .fill('6')
+    await dialog.getByRole('button', { name: '適用', exact: true }).click()
+    expect(await counts()).toEqual([2, 3])
+    await page
+      .getByRole('button', { name: '出演順を保存', exact: true })
+      .click()
+    await expect(
+      page.getByRole('button', { name: '出演順を保存', exact: true }),
+    ).toBeDisabled()
+    expect(await counts()).toEqual([2, 6])
+    await page.reload()
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await expect(
+      page.getByRole('heading', { name: '第2部 · 0/6組', exact: true }),
+    ).toBeVisible()
+    await page.setViewportSize({ width: 390, height: 844 })
+    await expect(
+      page.getByRole('button', { name: 'ライブ情報の編集', exact: true }),
+    ).toBeVisible()
+    await page.screenshot({
+      path: test.info().outputPath('live-info-mobile.png'),
+      fullPage: true,
+    })
+  } finally {
+    await request.delete(path)
+  }
+})
+
 async function autoSave(
   page: Page,
   path: string,
@@ -16,7 +101,7 @@ async function autoSave(
   await action()
   expect((await saved).status()).toBe(status)
   await expect(
-    page.getByRole('textbox', { name: '部数', exact: true }),
+    page.getByRole('button', { name: 'ライブ情報の編集', exact: true }),
   ).toBeEnabled()
 }
 async function dragTo(page: Page, handle: Locator, target: Locator) {
@@ -255,7 +340,10 @@ test('real API: schedule and constraints survive reload, failures and concurrent
         .getByRole('button', { name: '出演順を保存', exact: true })
         .click()
     })
-    const parts = page.getByRole('textbox', { name: '部数', exact: true })
+    await page
+      .getByRole('button', { name: 'ライブ情報の編集', exact: true })
+      .click()
+    const parts = page.getByRole('spinbutton', { name: '部数', exact: true })
     await parts.fill('3')
     await autoSave(page, `${path}/schedule`, async () => {
       await parts.press('Enter')
@@ -269,13 +357,21 @@ test('real API: schedule and constraints survive reload, failures and concurrent
     }
     expect(schedule.parts).toHaveLength(3)
     expect(schedule.unassignedBandIds).toEqual(['demo-band-c'])
-    const capacity = page.getByRole('textbox', {
+    await page
+      .getByRole('button', { name: 'ライブ情報の編集', exact: true })
+      .click()
+    const capacity = page.getByRole('spinbutton', {
       name: '第2部の組数',
       exact: true,
     })
     await capacity.fill('6')
     await capacity.press('Enter')
-    await expect(capacity).toHaveValue('6')
+    await expect(
+      page.getByRole('dialog', { name: 'ライブ情報の編集' }),
+    ).toHaveCount(0)
+    await expect(
+      page.getByRole('button', { name: '出演順を保存', exact: true }),
+    ).toBeEnabled()
     await page.getByRole('button', { name: '手動追加' }).click()
     const dialog = page.getByRole('dialog', { name: '制約を手動追加' })
     await dialog.getByRole('button', { name: /出演位置を指定する/ }).click()
@@ -307,7 +403,11 @@ test('real API: schedule and constraints survive reload, failures and concurrent
     await expect(
       part.getByRole('textbox', { name: 'バンドBの出演順', exact: true }),
     ).toHaveValue('2')
+    await page
+      .getByRole('button', { name: 'ライブ情報の編集', exact: true })
+      .click()
     await expect(capacity).toHaveValue('4')
+    await page.getByRole('button', { name: 'キャンセル', exact: true }).click()
     await expect(
       page.getByRole('heading', {
         name: '未配置バンドを3番にする',
@@ -528,10 +628,7 @@ for (const width of [1280, 1600]) {
     await expect(schedule).toBeVisible()
     await expect(constraints).toHaveCSS('border-right-width', '1px')
     await expect(
-      schedule.getByRole('textbox', { name: '第1部の組数', exact: true }),
-    ).toBeVisible()
-    await expect(
-      schedule.getByRole('textbox', { name: '第2部の組数', exact: true }),
+      schedule.getByRole('button', { name: 'ライブ情報の編集', exact: true }),
     ).toBeVisible()
     await expect(
       page.getByRole('combobox', { name: 'バンドBの部', exact: true }),
@@ -732,7 +829,7 @@ test('generation saves the displayed schedule and constraints before calling sol
 }) => {
   const path = '/api/events/demo-event'
   const schedule = (await (await request.get(`${path}/schedule`)).json()) as {
-    parts: { partId: string; partName: string | null }[]
+    parts: { partId: string; partName: string | null; bandCount: number }[]
     placements: unknown[]
     unassignedBandIds: string[]
   }
@@ -762,6 +859,10 @@ test('generation saves the displayed schedule and constraints before calling sol
     }
     expect(route.request().postDataJSON()).toEqual({
       expectedUpdatedAt: savedConstraints.updatedAt,
+      parts: [
+        { partId: 'demo-part-1', bandCount: 5 },
+        { partId: 'demo-part-2', bandCount: 7 },
+      ],
     })
     expect(savedSchedule.updatedAt).toBe(savedConstraints.updatedAt)
     expect(savedSchedule.unassignedBandIds).toContain('demo-band-b')
@@ -790,6 +891,23 @@ test('generation saves the displayed schedule and constraints before calling sol
     })
     await order.fill('')
     await order.press('Enter')
+    await page
+      .getByRole('button', { name: 'ライブ情報の編集', exact: true })
+      .click()
+    const dialog = page.getByRole('dialog', { name: 'ライブ情報の編集' })
+    for (const [part, count] of [
+      [1, 5],
+      [2, 7],
+    ]) {
+      const capacity = dialog.getByRole('spinbutton', {
+        name: `第${part}部の組数`,
+        exact: true,
+      })
+      await capacity.fill(String(count))
+      await expect(capacity).toHaveValue(String(count))
+    }
+    await dialog.getByRole('button', { name: '適用', exact: true }).click()
+    await expect(dialog).toHaveCount(0)
     expect(
       (
         (await (await request.get(`${path}/schedule`)).json()) as {
@@ -846,9 +964,10 @@ test('generation saves the displayed schedule and constraints before calling sol
         await request.post(`${path}/schedule`, {
           data: {
             expectedUpdatedAt: revision.updatedAt,
-            parts: schedule.parts.map(({ partId, partName }) => ({
+            parts: schedule.parts.map(({ partId, partName, bandCount }) => ({
               partId,
               partName,
+              bandCount,
             })),
             placements: schedule.placements,
             unassignedBandIds: schedule.unassignedBandIds,

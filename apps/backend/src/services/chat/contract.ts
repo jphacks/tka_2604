@@ -97,6 +97,7 @@ export const aiChatInputSchema: z.ZodType<AIChatInput> = z.strictObject({
         partId: id,
         sortOrder: order,
         partName: z.string().nullable(),
+        bandCount: z.number().int().min(0),
       }),
     ),
     bands: z.array(

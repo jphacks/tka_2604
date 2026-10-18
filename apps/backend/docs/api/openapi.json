@@ -470,6 +470,17 @@
                   },
                   "description": {
                     "type": ["string", "null"]
+                  },
+                  "bandCounts": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 8,
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 20
+                    },
+                    "description": "部順の設定バンド数。配列の長さが部数。省略時は1部4組。"
                   }
                 },
                 "required": ["title"],
@@ -479,7 +490,8 @@
                 "title": "秋ライブ",
                 "date": "2026-11-01",
                 "venue": null,
-                "description": null
+                "description": null,
+                "bandCounts": [4, 5, 4]
               }
             }
           }
@@ -1175,7 +1187,7 @@
       "get": {
         "operationId": "getEventSchedule",
         "summary": "表情報を取得する",
-        "description": "認証は#57で追加する。現在はdemo-ownerの所有する未削除イベントに限定し、クライアントから所有者IDを受け取らない。取得でデータ保存・LLM・Solverの呼出しを行わない。 バンド・メンバー・所属・部・配置・未配置を返す。バンドと未配置はbandId昇順、メンバーはmemberId昇順、所属はbandId・memberId昇順、部はsortOrder昇順、配置は部の順・order昇順。sortOrder・orderは0始まり。枠数は保存しない。orderの欠番は未設定の位置として保持する。",
+        "description": "認証は#57で追加する。現在はdemo-ownerの所有する未削除イベントに限定し、クライアントから所有者IDを受け取らない。取得でデータ保存・LLM・Solverの呼出しを行わない。 バンド・メンバー・所属・部・配置・未配置を返す。バンドと未配置はbandId昇順、メンバーはmemberId昇順、所属はbandId・memberId昇順、部はsortOrder昇順、配置は部の順・order昇順。sortOrder・orderは0始まり。各部の設定枠数はbandCountとして保存・取得する。orderの欠番は未設定の位置として保持し、空き枠は設定枠数と配置位置から画面で組み立てる。",
         "tags": ["Schedule"],
         "security": [],
         "parameters": [
@@ -1408,9 +1420,15 @@
                         "partName": {
                           "type": ["string", "null"],
                           "default": null
+                        },
+                        "bandCount": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "設定枠数。変更・新規は20以下。既存の20超は同じ値のみ保持可。省略時は既存値、新規部は4。配置数以上であり、各配置のorderが設定枠数未満であること。"
                         }
                       }
-                    }
+                    },
+                    "maxItems": 8
                   },
                   "placements": {
                     "type": "array",
@@ -1452,7 +1470,8 @@
                 "parts": [
                   {
                     "partId": "part-1",
-                    "partName": "前半"
+                    "partName": "前半",
+                    "bandCount": 4
                   }
                 ],
                 "placements": [
@@ -3071,7 +3090,7 @@
       "post": {
         "operationId": "solveEvent",
         "summary": "保存済みデータから出演順を計算して保存する",
-        "description": "表・制約のPOSTとは独立したAPI。呼出し順序はフロント側が制御する。リクエストはexpectedUpdatedAtのみ。DBから同じ時点の部・配置・名簿・所属・制約を取得しSolverへ渡す。応答を再検証し、更新競合がなければ結果配置を保存する。解なし・探索未完了・失敗時は現在配置を保持する。",
+        "description": "表・制約のPOSTとは独立したAPI。呼出し順序はフロント側が制御する。リクエストはexpectedUpdatedAtとparts（各部のpartId・bandCount）。bandCountは画面の組数（空き枠を含む0以上の整数）で、このAPIでは永続化せず、出演順の保存APIで保存する。結果は保存済みの枠数に対しても検証する。保存済みの全部の部IDを重複なく指定する。DBから同じ時点の部・配置・名簿・所属・制約を取得しSolverへ渡す。応答を再検証し、更新競合がなければ結果配置を保存する。解なし・探索未完了・失敗時は現在配置を保持する。",
         "tags": ["Solver"],
         "security": [],
         "parameters": [
@@ -3093,16 +3112,45 @@
               "schema": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["expectedUpdatedAt"],
+                "required": ["expectedUpdatedAt", "parts"],
                 "properties": {
                   "expectedUpdatedAt": {
                     "type": "string",
                     "description": "UTCのISO 8601日時"
+                  },
+                  "parts": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["partId", "bandCount"],
+                      "properties": {
+                        "partId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "bandCount": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      }
+                    }
                   }
                 }
               },
               "example": {
-                "expectedUpdatedAt": "2026-10-17T00:00:00.000Z"
+                "expectedUpdatedAt": "2026-10-17T00:00:00.000Z",
+                "parts": [
+                  {
+                    "partId": "part-1",
+                    "bandCount": 5
+                  },
+                  {
+                    "partId": "part-2",
+                    "bandCount": 5
+                  }
+                ]
               }
             }
           }
@@ -4810,9 +4858,14 @@
                 "sortOrder": {
                   "type": "integer",
                   "minimum": 0
+                },
+                "bandCount": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "配置数から独立した設定枠数。移動・計算では変更しない。"
                 }
               },
-              "required": ["partId", "partName", "sortOrder"]
+              "required": ["partId", "partName", "sortOrder", "bandCount"]
             }
           },
           "placements": {

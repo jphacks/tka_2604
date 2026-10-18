@@ -5,6 +5,14 @@ import { placementSchema } from '../scheduling/validation'
 
 export const solveInputSchema = z.strictObject({
   expectedUpdatedAt: z.iso.datetime(),
+  parts: z
+    .array(
+      z.strictObject({
+        partId: z.string().min(1),
+        bandCount: z.number().int().nonnegative(),
+      }),
+    )
+    .min(1),
 })
 const diagnostics = z
   .array(
@@ -43,7 +51,7 @@ export interface SolverRequest {
   bands: { bandId: string }[]
   members: { memberId: string }[]
   memberships: { bandId: string; memberId: string }[]
-  parts: { partId: string; sortOrder: number }[]
+  parts: { partId: string; sortOrder: number; bandCount: number }[]
   constraints: Constraint[]
   currentPlacements: z.infer<typeof placementSchema>[]
 }

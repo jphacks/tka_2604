@@ -10,6 +10,7 @@ const emptyDraft: EventDraft = {
   date: '',
   venue: '',
   description: '',
+  bandCounts: [4],
 }
 export function useEvents() {
   const navigate = useNavigate()
