@@ -75,6 +75,14 @@ export function ChatPanel({
           )}
         </div>
         <ChatProposal controller={controller} />
+        {controller.pendingDecision && (
+          <Button
+            className="mt-2 text-xs"
+            onClick={() => void controller.retryDecision()}
+          >
+            選択の記録を再試行
+          </Button>
+        )}
         <ReorderDialog controller={controller} />
         <div className="mt-3 rounded-lg border border-line p-3">
           <h3 className="mb-2 text-xs font-semibold">現在の配置</h3>

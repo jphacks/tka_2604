@@ -3,7 +3,11 @@ import { beforeEach, expect, it, vi } from 'vitest'
 
 import type { EventData } from '../../../shared/model/event'
 
-const api = vi.hoisted(() => ({ sendMessage: vi.fn(), getMessages: vi.fn() }))
+const api = vi.hoisted(() => ({
+  sendMessage: vi.fn(),
+  getMessages: vi.fn(),
+  recordDecision: vi.fn(),
+}))
 
 vi.mock('../../../shared/api/events', () => ({
   eventsApi: { getMessages: api.getMessages },
@@ -58,6 +62,40 @@ it('retries an unanswered persisted message using its original ID after reopenin
   expect(result.current.unanswered).toEqual([user])
   await act(() => result.current.retryMessage(user))
   expect(api.sendMessage.mock.calls[0][3]).toBe('existing')
+})
+
+it('keeps decision logs in history without offering an AI retry', () => {
+  const decision = {
+    id: 'decision-123e4567-e89b-42d3-a456-426614174000',
+    role: 'user' as const,
+    text: '制約の変更案を破棄しました。',
+    replyToMessageId: null,
+  }
+  const ordinary = { ...decision, id: 'decision-old', text: '通常の発言' }
+  const { result } = renderHook(() =>
+    useEventChat(
+      'a',
+      vi.fn(),
+      { ...event, messages: [decision, ordinary] },
+      false,
+    ),
+  )
+  expect(result.current.unanswered).toEqual([ordinary])
+})
+
+it('retries a failed decision log with the same ID without asking the model', async () => {
+  api.recordDecision.mockRejectedValueOnce(new Error('通信失敗'))
+  api.recordDecision.mockResolvedValueOnce(undefined)
+  api.getMessages.mockResolvedValue([])
+  const { result } = renderHook(() => useEventChat('a', vi.fn(), event, false))
+  await act(() => result.current.recordDecision('discarded'))
+  expect(result.current.pendingDecision?.decision).toBe('discarded')
+  await act(() => result.current.retryDecision())
+  expect(api.recordDecision.mock.calls[1][2]).toBe(
+    api.recordDecision.mock.calls[0][2],
+  )
+  expect(result.current.pendingDecision).toBeNull()
+  expect(api.sendMessage).not.toHaveBeenCalled()
 })
 
 it('blocks chat while business edits are unsaved and ignores replies after leaving', async () => {

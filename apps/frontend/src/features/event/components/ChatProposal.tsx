@@ -124,13 +124,20 @@ export function ChatProposal({ controller }: { controller: EventController }) {
           className="text-xs"
           variant="primary"
           disabled={
-            Boolean(error) || controller.chatBlocked || controller.sending
+            Boolean(error) ||
+            controller.chatBlocked ||
+            controller.sending ||
+            Boolean(controller.pendingDecision)
           }
-          onClick={controller.applyProposal}
+          onClick={() => void controller.applyProposal()}
         >
           確認して反映
         </Button>
-        <Button className="text-xs" onClick={controller.dismissProposal}>
+        <Button
+          className="text-xs"
+          disabled={Boolean(controller.pendingDecision)}
+          onClick={controller.dismissProposal}
+        >
           取り消す
         </Button>
       </div>

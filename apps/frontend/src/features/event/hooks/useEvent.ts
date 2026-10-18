@@ -240,10 +240,11 @@ export function useEvent(eventId: string) {
     saveSchedule: () => save('schedule'),
     generate,
     solving,
-    applyProposal: () => {
+    applyProposal: async () => {
       if (
         !event ||
         !chat.chatProposal ||
+        chat.pendingDecision ||
         chat.chatBlocked ||
         busy.current ||
         refreshing ||
@@ -252,8 +253,11 @@ export function useEvent(eventId: string) {
         return
       try {
         const constraints = applyChatProposal(event, chat.chatProposal)
-        dispatch({ type: 'constraints-replaced', constraints })
-        chat.dismissProposal()
+        if (await save('constraints', { ...event, constraints })) {
+          dispatch({ type: 'constraints-replaced', constraints })
+          chat.dismissProposal()
+          await chat.recordDecision('applied')
+        }
       } catch (error) {
         dispatch({
           type: 'notice',
@@ -264,6 +268,17 @@ export function useEvent(eventId: string) {
               : '提案を反映できませんでした。',
         })
       }
+    },
+    dismissProposal: () => {
+      if (
+        !chat.chatProposal ||
+        chat.pendingDecision ||
+        chat.chatBlocked ||
+        busy.current
+      )
+        return
+      chat.dismissProposal()
+      void chat.recordDecision('discarded')
     },
     // Approving a reorder replaces the schedule and saves it at once; on a
     // save failure the edit stays local with the usual retry notice.

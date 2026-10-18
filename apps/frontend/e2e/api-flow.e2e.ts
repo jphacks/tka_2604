@@ -780,11 +780,18 @@ test('chat proposals require confirmation and auto-save only constraints', async
       503,
     )
     await expect(page.getByRole('alert')).toContainText('503')
-    await expect(proposal).toHaveCount(0)
+    await expect(proposal).toBeVisible()
     await page.unroute(`**${path}/constraints`)
     await autoSave(page, `${path}/constraints`, () =>
-      page.getByRole('button', { name: '保存を再試行' }).click(),
+      proposal.getByRole('button', { name: '確認して反映' }).click(),
     )
+    await expect(proposal).toHaveCount(0)
+    await expect(page.getByRole('log', { name: 'チャット履歴' })).toContainText(
+      '制約の変更案を適用しました。',
+    )
+    await expect(
+      page.getByRole('button', { name: 'この発言を再試行' }),
+    ).toHaveCount(0)
     const saved = (await (
       await request.get(`${path}/constraints`)
     ).json()) as typeof before
