@@ -1,8 +1,8 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 
+import { useEventName } from '../../../app/eventNameContext'
 import { useResource } from '../../../shared/hooks/useResource'
-import { AppFrame } from '../../../shared/ui/AppFrame'
 import { Button } from '../../../shared/ui/Button'
 import { Icon } from '../../../shared/ui/Icon'
 import { Input } from '../../../shared/ui/Input'
@@ -17,7 +17,11 @@ export function FormEditorPage() {
     [eventId],
   )
   const resource = useResource(load)
+  const setEventName = useEventName()
   const [notice, setNotice] = useState('')
+  useEffect(() => {
+    if (resource.data?.eventTitle) setEventName?.(resource.data.eventTitle)
+  }, [resource.data?.eventTitle, setEventName])
   const formUrl = `${window.location.origin}/event/${eventId}/forms`
   async function copyLink() {
     try {
@@ -28,7 +32,7 @@ export function FormEditorPage() {
     }
   }
   return (
-    <AppFrame eventId={eventId} eventName={resource.data?.eventTitle}>
+    <div className="mx-auto max-w-3xl">
       <h1 className="mb-3 text-2xl font-semibold">出演者フォーム</h1>
       <p className="mb-7 text-sm text-muted">
         回答フォームから出演枠とメンバーを登録・更新できます。
@@ -37,7 +41,7 @@ export function FormEditorPage() {
         <PageState error={resource.error} onRetry={resource.refresh} />
       ) : (
         resource.data && (
-          <section className="max-w-3xl space-y-6 rounded-xl border border-line bg-white p-6">
+          <section className="space-y-6 rounded-xl border border-line bg-white p-6">
             <div>
               <h2 className="text-lg font-semibold">
                 {resource.data.eventTitle} 出演登録
@@ -68,9 +72,6 @@ export function FormEditorPage() {
                 回答フォームを開く
                 <Icon name="chevron" />
               </LinkButton>
-              <LinkButton to={`/event/${eventId}/performances`}>
-                回答・出演枠を確認
-              </LinkButton>
             </div>
             {notice && (
               <p role="status" className="text-sm text-brand">
@@ -80,6 +81,6 @@ export function FormEditorPage() {
           </section>
         )
       )}
-    </AppFrame>
+    </div>
   )
 }

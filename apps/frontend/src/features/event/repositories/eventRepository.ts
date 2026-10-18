@@ -7,6 +7,8 @@ export const eventRepository: EventRepository = {
   getMessages: eventsApi.getMessages,
   solve: (event) => eventsApi.solve(event),
   saveSchedule: (event) => eventsApi.saveSchedule(event),
+  deleteBand: (eventId, bandId, expectedUpdatedAt) =>
+    eventsApi.deleteBand(eventId, bandId, expectedUpdatedAt),
   async saveConstraints(event) {
     const saved = await eventsApi.saveConstraints(event)
     return {

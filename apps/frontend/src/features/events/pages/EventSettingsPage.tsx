@@ -1,7 +1,8 @@
+import { useEffect } from 'react'
 import { useParams } from 'react-router'
 
+import { useEventName } from '../../../app/eventNameContext'
 import type { EventStatus } from '../../../shared/model/workspace'
-import { AppFrame } from '../../../shared/ui/AppFrame'
 import { Button } from '../../../shared/ui/Button'
 import { ConfirmDialog } from '../../../shared/ui/ConfirmDialog'
 import { Icon } from '../../../shared/ui/Icon'
@@ -14,32 +15,31 @@ export function EventSettingsPage() {
   const controller = useEventSettings(eventId)
   const deletion = useEventDeletion(eventId)
   const settings = controller.settings
+  const setEventName = useEventName()
+  useEffect(() => {
+    if (controller.data?.name) setEventName?.(controller.data.name)
+  }, [controller.data?.name, setEventName])
   return (
-    <AppFrame eventId={eventId} eventName={controller.data?.name}>
-      <div className="mb-7">
-        <p className="mb-2 text-[11px] font-semibold tracking-[0.16em] text-muted">
-          EVENT SETTINGS
-        </p>
-        <h1 className="text-2xl font-semibold">イベント設定</h1>
-        <p className="mt-2 text-xs text-muted">
-          イベントの基本情報を管理します。
-        </p>
-      </div>
+    <div className="mx-auto max-w-3xl">
+      <h1 className="mb-3 text-2xl font-semibold">イベント設定</h1>
+      <p className="mb-7 text-sm text-muted">
+        イベントの基本情報を管理します。
+      </p>
       {controller.loading || controller.error ? (
         <PageState error={controller.error} onRetry={controller.refresh} />
       ) : (
         settings && (
-          <div className="max-w-[720px]">
+          <div>
             <form
               onSubmit={(event) => {
                 event.preventDefault()
                 void controller.save()
               }}
-              className="space-y-5 rounded-xl border border-line bg-white p-6"
+              className="space-y-6 rounded-xl border border-line bg-white p-6"
             >
-              <h2 className="mb-5 text-sm font-semibold">基本情報</h2>
-              <fieldset disabled={controller.busy} className="space-y-5">
-                <label className="block text-xs font-medium">
+              <h2 className="text-lg font-semibold">基本情報</h2>
+              <fieldset disabled={controller.busy} className="space-y-6">
+                <label className="block text-sm font-medium">
                   イベント名
                   <Input
                     value={settings.name}
@@ -47,11 +47,11 @@ export function EventSettingsPage() {
                       controller.change({ name: event.target.value })
                     }
                     maxLength={80}
-                    className="mt-2 w-full"
+                    className="mt-2 w-full text-sm"
                   />
                 </label>
                 <div className="grid grid-cols-2 gap-4">
-                  <label className="block text-xs font-medium">
+                  <label className="block text-sm font-medium">
                     開催日
                     <Input
                       type="date"
@@ -59,10 +59,10 @@ export function EventSettingsPage() {
                       onChange={(event) =>
                         controller.change({ date: event.target.value })
                       }
-                      className="mt-2 w-full"
+                      className="mt-2 w-full text-sm"
                     />
                   </label>
-                  <label className="block text-xs font-medium">
+                  <label className="block text-sm font-medium">
                     会場
                     <Input
                       value={settings.venue}
@@ -70,11 +70,11 @@ export function EventSettingsPage() {
                         controller.change({ venue: event.target.value })
                       }
                       maxLength={80}
-                      className="mt-2 w-full"
+                      className="mt-2 w-full text-sm"
                     />
                   </label>
                 </div>
-                <label className="block text-xs font-medium">
+                <label className="block text-sm font-medium">
                   イベントについて
                   <Textarea
                     value={settings.description}
@@ -83,28 +83,30 @@ export function EventSettingsPage() {
                     }
                     maxLength={500}
                     rows={3}
-                    className="mt-2 w-full"
+                    className="mt-2 w-full text-sm"
                   />
                 </label>
-                <label className="block text-xs font-medium">
-                  ステータス
-                  <Select
-                    value={settings.status}
-                    onChange={(event) =>
-                      controller.change({
-                        status: event.target.value as EventStatus,
-                      })
-                    }
-                    className="mt-2 block w-full"
-                  >
-                    <option value="planning">準備中</option>
-                    <option value="adjusting">調整中</option>
-                    <option value="confirmed">確定</option>
-                  </Select>
-                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <label className="block text-sm font-medium">
+                    ステータス
+                    <Select
+                      value={settings.status}
+                      onChange={(event) =>
+                        controller.change({
+                          status: event.target.value as EventStatus,
+                        })
+                      }
+                      className="mt-2 block h-9 w-full text-sm!"
+                    >
+                      <option value="planning">準備中</option>
+                      <option value="adjusting">調整中</option>
+                      <option value="confirmed">確定</option>
+                    </Select>
+                  </label>
+                </div>
               </fieldset>
               {controller.formError && (
-                <p role="alert" className="text-xs text-red-600">
+                <p role="alert" className="text-sm text-red-600">
                   {controller.formError}
                 </p>
               )}
@@ -121,15 +123,15 @@ export function EventSettingsPage() {
             {controller.notice && (
               <p
                 role="status"
-                className="mt-4 rounded-lg bg-wash p-4 text-xs text-brand"
+                className="mt-4 rounded-lg bg-wash p-4 text-sm text-brand"
               >
                 {controller.notice}
               </p>
             )}
             <section className="mt-7 flex flex-wrap items-center justify-between gap-6 rounded-xl border border-red-100 bg-white p-6">
               <div>
-                <h2 className="text-sm font-semibold">イベントの削除</h2>
-                <p className="mt-2 text-xs leading-6 text-muted">
+                <h2 className="text-lg font-semibold">イベントの削除</h2>
+                <p className="mt-2 text-sm leading-7 text-muted">
                   出演枠、制約、フォームの回答を含めて削除します。
                 </p>
               </div>
@@ -151,6 +153,6 @@ export function EventSettingsPage() {
           onConfirm={() => void deletion.remove()}
         />
       )}
-    </AppFrame>
+    </div>
   )
 }

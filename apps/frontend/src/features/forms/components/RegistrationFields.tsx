@@ -10,8 +10,10 @@ import {
 
 export function RegistrationFields({
   controller,
+  fixedBand = false,
 }: {
   controller: PublicRegistrationController
+  fixedBand?: boolean
 }) {
   const { data, draft, mode } = controller
   const change = (patch: Parameters<typeof controller.change>[0]) =>
@@ -25,7 +27,7 @@ export function RegistrationFields({
     })
   return (
     <>
-      {mode === 'update' && (
+      {mode === 'update' && !fixedBand && (
         <div className="mb-7 rounded-lg bg-wash p-4">
           <label className="block text-sm font-medium">
             更新する出演枠
@@ -112,7 +114,7 @@ export function RegistrationFields({
             <p className="mb-4 text-xs leading-6 text-muted">
               {mode === 'create'
                 ? '1人につき1行、人数分の行を追加してください。掛け持ちの人は名簿から選べます。'
-                : '追加・差し替え・削除した内容は「変更を保存」で反映されます。全員を外すこともできます。'}
+                : '追加・差し替え・削除した内容は「変更を保存」で反映されます。'}
             </p>
             <div className="space-y-3">
               {draft.rows.map((row, index) => (
@@ -216,11 +218,6 @@ export function RegistrationFields({
               <Icon name="plus" />
               メンバーの行を追加
             </Button>
-            <p className="mt-3 text-xs leading-5 text-muted">
-              {mode === 'update'
-                ? '削除はこの出演枠から外す操作です。名前の欄を差し替えても、元の人の名前や他の出演枠の所属は変わりません。'
-                : '同じ名前でも、新しく入力した人は別のメンバーとして登録します。'}
-            </p>
           </section>
         </div>
       )}

@@ -12,6 +12,7 @@ import {
   type ConstraintPatch,
   eventReducer,
   initialState,
+  removeBandFromEvent,
 } from '../model/eventReducer'
 import { exportEventCsv } from '../model/export'
 import { buildSchedule, configureSchedule, findTarget } from '../model/schedule'
@@ -26,6 +27,7 @@ export function useEvent(eventId: string) {
     'schedule' | 'constraints' | null
   >(null)
   const saving = savingKind !== null
+  const [deletingBand, setDeletingBand] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [failedKind, setFailedKind] = useState<'schedule' | 'constraints'>(
     'constraints',
@@ -49,7 +51,7 @@ export function useEvent(eventId: string) {
     eventId,
     dispatch,
     event,
-    dirty || saving || solving || refreshing,
+    dirty || saving || solving || refreshing || deletingBand,
   )
   const [loadError, setLoadError] = useState('')
   const [retry, setRetry] = useState(0)
@@ -130,7 +132,14 @@ export function useEvent(eventId: string) {
 
   const save = useCallback(
     async (kind: 'schedule' | 'constraints', snapshot = event) => {
-      if (!snapshot || busy.current || refreshing || chat.sending) return false
+      if (
+        !snapshot ||
+        busy.current ||
+        refreshing ||
+        chat.sending ||
+        deletingBand
+      )
+        return false
       busy.current = true
       setSavingKind(kind)
       setSaveError('')
@@ -152,7 +161,7 @@ export function useEvent(eventId: string) {
       }
       return false
     },
-    [event, refreshing, chat.sending, persist],
+    [event, refreshing, chat.sending, deletingBand, persist],
   )
 
   useEffect(() => {
@@ -162,6 +171,7 @@ export function useEvent(eventId: string) {
       solving ||
       refreshing ||
       chat.sending ||
+      deletingBand ||
       saveError
     )
       return
@@ -178,12 +188,14 @@ export function useEvent(eventId: string) {
     solving,
     refreshing,
     chat.sending,
+    deletingBand,
     saveError,
     save,
   ])
 
   async function generate() {
-    if (!event || busy.current || refreshing || chat.sending) return
+    if (!event || busy.current || refreshing || chat.sending || deletingBand)
+      return
     busy.current = true
     setSolving(true)
     setSaveError('')
@@ -228,8 +240,45 @@ export function useEvent(eventId: string) {
       }))
     : []
   const edit: typeof dispatch = (action) => {
-    if (busy.current || refreshing || chat.sending) return
+    if (busy.current || refreshing || chat.sending || deletingBand) return
     dispatch(action)
+  }
+  async function deleteBand(bandId: string) {
+    const snapshot = event
+    if (
+      !snapshot?.updatedAt ||
+      dirty ||
+      busy.current ||
+      refreshing ||
+      chat.sending ||
+      deletingBand
+    )
+      return false
+    busy.current = true
+    setDeletingBand(true)
+    dispatch({ type: 'notice', message: '' })
+    try {
+      const saved = await eventRepository.deleteBand(
+        eventId,
+        bandId,
+        snapshot.updatedAt,
+      )
+      const next = removeBandFromEvent(snapshot, bandId, saved.updatedAt)
+      dispatch({ type: 'band-deleted', id: bandId, updatedAt: saved.updatedAt })
+      setBaseline(next)
+      return true
+    } catch (error) {
+      dispatch({
+        type: 'notice',
+        error: true,
+        message:
+          error instanceof Error ? error.message : '削除に失敗しました。',
+      })
+      return false
+    } finally {
+      busy.current = false
+      setDeletingBand(false)
+    }
   }
   return {
     ...state,
@@ -240,6 +289,8 @@ export function useEvent(eventId: string) {
     saveSchedule: () => save('schedule'),
     generate,
     solving,
+    deletingBand,
+    deleteBand,
     applyProposal: () => {
       if (
         !event ||

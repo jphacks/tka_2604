@@ -192,41 +192,6 @@ test('real API: create, failed save, retry, reload, conflict and delete', async 
   }
 })
 
-test('real API: roster, part names, saved history and roster registration links', async ({
-  page,
-}) => {
-  await page.goto('/event/demo-event')
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
-  await expect(
-    page.getByRole('heading', { name: 'デモライブ', exact: true }),
-  ).toBeVisible()
-  await expect(
-    page.getByRole('heading', { name: /前半 · 2\/4組/ }),
-  ).toBeVisible()
-  await expect(
-    page.getByRole('textbox', { name: 'バンドBの出演順', exact: true }),
-  ).toBeEnabled()
-  await expect(
-    page.getByText('保存確認用の発言', { exact: true }),
-  ).toBeVisible()
-  await page
-    .getByRole('link', { name: '出演枠・メンバー', exact: true })
-    .click()
-  await expect(
-    page.getByRole('cell', { name: 'バンドA', exact: true }),
-  ).toBeVisible()
-  await expect(
-    page.getByRole('cell', { name: '必須で先頭にする', exact: true }),
-  ).toBeVisible()
-  await expect(
-    page.getByRole('link', { name: '出演枠を追加', exact: true }),
-  ).toHaveAttribute('href', '/event/demo-event/forms')
-  await page.screenshot({
-    path: test.info().outputPath('api-roster.png'),
-    fullPage: true,
-  })
-})
-
 test('real API: schedule and constraints survive reload, failures and concurrent changes', async ({
   page,
   request,

@@ -218,30 +218,31 @@ test('production flow: create an event, open its form, register and update DB me
       page.getByRole('heading', { name: '出演登録を受け付けました' }),
     ).toBeVisible()
     await page.getByRole('link', { name: 'フォーム管理へ' }).click()
-    await page.getByRole('link', { name: '回答・出演枠を確認' }).click()
-    await expect(
-      page.getByText('保存する出演枠', { exact: true }),
-    ).toBeVisible()
+    await page.getByRole('link', { name: '出演順', exact: true }).click()
     await page
-      .getByRole('link', { name: '保存する出演枠を編集', exact: true })
+      .getByRole('button', { name: '保存する出演枠の詳細', exact: true })
       .click()
-    await expect(
-      page.getByRole('radio', { name: /登録内容の更新/ }),
-    ).toBeChecked()
-    await expect(
-      page.getByRole('textbox', { name: '出演名 必須' }),
-    ).toHaveValue('保存する出演枠')
     await page
+      .getByRole('dialog', { name: '保存する出演枠', exact: true })
+      .getByRole('button', { name: '編集', exact: true })
+      .click()
+    const editDialog = page.getByRole('dialog', { name: '出演枠を編集' })
+    await expect(
+      editDialog.getByRole('textbox', { name: '出演名 必須' }),
+    ).toHaveValue('保存する出演枠')
+    await editDialog
       .getByRole('textbox', { name: '出演名 必須' })
       .fill('更新を保存する出演枠')
-    await page.getByRole('button', { name: '変更を保存' }).click()
-    await expect(
-      page.getByRole('heading', { name: '登録内容を更新しました' }),
-    ).toBeVisible()
+    await editDialog.getByRole('button', { name: '変更を保存' }).click()
+    await expect(editDialog).toHaveCount(0)
     await page.reload()
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
     await expect(
-      page.getByRole('textbox', { name: '出演名 必須' }),
-    ).toHaveValue('更新を保存する出演枠')
+      page.getByRole('button', {
+        name: '更新を保存する出演枠の詳細',
+        exact: true,
+      }),
+    ).toBeVisible()
     await expect(page.locator('body')).not.toContainText('デモ')
     const roster = (await (
       await request.get(`/api/events/${eventId}/form`)

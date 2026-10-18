@@ -74,10 +74,6 @@ export function AppFrame({
             </Link>
             {[
               { path: `/event/${eventId}`, label: '出演順' },
-              {
-                path: `/event/${eventId}/performances`,
-                label: '出演枠・メンバー',
-              },
               { path: `/event/${eventId}/forms/edit`, label: 'フォーム管理' },
               { path: `/event/${eventId}/settings`, label: '設定' },
             ].map((item) => (
