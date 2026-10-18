@@ -148,15 +148,24 @@ test('keyboard movement refuses changes that would shift a hard fixed position',
   }
   await page.goto(`/event/${databaseEvent.eventId}`)
   await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  const fixedSaved = page.waitForResponse(
+    (response) =>
+      response
+        .url()
+        .endsWith(`/api/events/${databaseEvent.eventId}/constraints`) &&
+      response.request().method() === 'POST',
+  )
   await page.getByRole('checkbox', { name: 'VPSを固定', exact: true }).check()
+  expect((await fixedSaved).status()).toBe(200)
   await expect(
-    page.getByRole('textbox', { name: '部数', exact: true }),
-  ).toBeEnabled()
+    page.getByRole('region', { name: '出演順', exact: true }),
+  ).toHaveJSProperty('inert', false)
   const handle = page.getByRole('button', {
     name: 'Pretenderを並べ替え',
     exact: true,
   })
   await handle.focus()
+  await expect(handle).toBeFocused()
   await page.keyboard.press('Space', { delay: 50 })
   await expect(page.getByText('移動先：Pretender（2番）')).toHaveCount(1)
   await page.keyboard.press('ArrowDown')
