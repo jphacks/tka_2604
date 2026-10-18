@@ -23,7 +23,7 @@ test('reuses a selected person and keeps a newly entered person with the same na
   await expect(
     page.getByRole('heading', { name: '出演登録を受け付けました' }),
   ).toBeVisible()
-  await page.getByRole('link', { name: 'セトリ ホーム' }).click()
+  await page.getByRole('link', { name: 'Setly ホーム' }).click()
   await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
   await page.getByRole('link', { name: '春ライブ 2026', exact: true }).click()
   await page.getByRole('button', { name: '手動追加' }).click()
