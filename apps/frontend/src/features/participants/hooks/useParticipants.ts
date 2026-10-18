@@ -5,7 +5,7 @@ import { memberNames } from '../../../shared/model/event'
 import { workspaceRepository } from '../../../shared/repositories/workspaceRepository'
 import { buildSchedule } from '../../event/model/schedule'
 
-export function useParticipants(eventId: string) {
+export function useParticipants(eventId: string, initialNotice = '') {
   const load = useCallback(
     (signal: AbortSignal) => workspaceRepository.getRoster(eventId, signal),
     [eventId],
@@ -20,7 +20,7 @@ export function useParticipants(eventId: string) {
   } | null>(null)
   const [deleteError, setDeleteError] = useState('')
   const [deleteBusy, setDeleteBusy] = useState(false)
-  const [notice, setNotice] = useState('')
+  const [notice, setNotice] = useState(initialNotice)
   const [importOpen, setImportOpen] = useState(false)
   const busy = useRef(false)
   const data = resource.data

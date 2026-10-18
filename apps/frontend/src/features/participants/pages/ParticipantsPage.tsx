@@ -1,4 +1,4 @@
-import { useParams } from 'react-router'
+import { useLocation, useParams } from 'react-router'
 
 import { AppFrame } from '../../../shared/ui/AppFrame'
 import { Button } from '../../../shared/ui/Button'
@@ -12,7 +12,8 @@ import { useParticipants } from '../hooks/useParticipants'
 
 export function ParticipantsPage() {
   const { eventId = '' } = useParams()
-  const controller = useParticipants(eventId)
+  const { state } = useLocation() as { state: { notice?: string } | null }
+  const controller = useParticipants(eventId, state?.notice)
   return (
     <AppFrame eventId={eventId} eventName={controller.data?.name}>
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">

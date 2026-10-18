@@ -98,3 +98,46 @@ test('downloads a template that can be imported as is', async ({
     await request.delete(`/api/events/${eventId}`)
   }
 })
+
+test('creates an untitled event from a sample roster in one step', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/login')
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await page
+    .getByRole('button', { name: 'イベントを作成', exact: true })
+    .first()
+    .click()
+  const dialog = page.getByRole('dialog', { name: '新しいイベントを作成' })
+  const samples = dialog.getByRole('combobox', { name: 'サンプル名簿' })
+  await samples.selectOption({ label: '学祭ステージ（ジャンル混在・20組）' })
+  await expect(dialog).toContainText('20組・50人（掛け持ち14人）を登録します')
+  await expect(samples).toHaveValue('/samples/roster-festival-20.csv')
+  await expect(
+    dialog.getByRole('spinbutton', { name: '第1部の組数', exact: true }),
+  ).toHaveValue('20')
+  await dialog.getByRole('button', { name: '部数を増やす' }).click()
+  for (const part of ['第1部の組数', '第2部の組数'])
+    await expect(
+      dialog.getByRole('spinbutton', { name: part, exact: true }),
+    ).toHaveValue('10')
+  await dialog
+    .getByRole('button', { name: 'イベントを作成', exact: true })
+    .click()
+  await expect(
+    page.getByRole('heading', {
+      name: /^イベント \d{4}\/\d{2}\/\d{2} \d{2}:\d{2}$/,
+    }),
+  ).toBeVisible()
+  const eventId = new URL(page.url()).pathname.split('/')[2]
+  try {
+    const saved = (await (
+      await request.get(`/api/events/${eventId}/form`)
+    ).json()) as FormRoster
+    expect(saved.bands).toHaveLength(20)
+    expect(saved.members).toHaveLength(50)
+  } finally {
+    await request.delete(`/api/events/${eventId}`)
+  }
+})

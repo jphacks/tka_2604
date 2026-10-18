@@ -7,6 +7,20 @@
 Setly は、ライブの「出演順」をつくるためのアプリです。
 曲順ではなく、バンドの出演順。30〜40 組が出るようなライブで、運営がいちばん頭を抱えるところを手伝います。
 
+## 試してみる
+
+[Setly](https://setly.jphack-2026.workers.dev)の「イベントを作成」で「サンプルから選ぶ」を選ぶと、名簿の登録と部のバンド数の設定まで済んだ状態ですぐに出演順づくりを試せます。イベント名は空欄でも作成でき、作成日時の名前になります。手元のCSVも同じ欄から取り込めます。
+
+| サンプル名簿                                                                                   | バンド数 | 特徴                                         |
+| ---------------------------------------------------------------------------------------------- | -------- | -------------------------------------------- |
+| [定期ライブ（邦ロック）](https://setly.jphack-2026.workers.dev/samples/roster-regular-16.csv)  | 16       | 標準的な掛け持ち                             |
+| [卒業ライブ](https://setly.jphack-2026.workers.dev/samples/roster-graduation-18.csv)           | 18       | 掛け持ちが多い（1人で最大7バンド）           |
+| [アニソン・ボカロ](https://setly.jphack-2026.workers.dev/samples/roster-anime-vocaloid-14.csv) | 14       | 中心メンバー2人が5バンドずつ                 |
+| [洋楽コピー](https://setly.jphack-2026.workers.dev/samples/roster-western-12.csv)              | 12       | 掛け持ちがほぼない                           |
+| [学祭ステージ](https://setly.jphack-2026.workers.dev/samples/roster-festival-20.csv)           | 20       | ソロ・デュオ・ヒップホップなどジャンルが混在 |
+
+曲は実在の曲、メンバー名はすべて架空です。ファイルは[apps/frontend/public/samples](apps/frontend/public/samples)にあります。
+
 ## 開発用リンク
 
 - [develop環境のAPIドキュメント（Swagger UI）](https://dev.jphack-2026.workers.dev/api/docs)：API仕様の閲覧と`Try it out`による動作確認。
