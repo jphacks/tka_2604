@@ -7,8 +7,10 @@ import { ConfirmDialog } from '../../../shared/ui/ConfirmDialog'
 import { Icon } from '../../../shared/ui/Icon'
 import { Panel } from '../../../shared/ui/Panel'
 import type { EventController } from '../hooks/useEvent'
+import { constraintTone, groupConstraintViews } from '../model/constraintGroups'
 import { ConstraintControls } from './ConstraintControls'
 import { ConstraintForm } from './ConstraintForm'
+import { ConstraintGroupCard } from './ConstraintGroupCard'
 
 export function ConstraintsPanel({
   controller,
@@ -18,7 +20,7 @@ export function ConstraintsPanel({
   const [editing, setEditing] = useState<Constraint | null | undefined>(
     undefined,
   )
-  const [deleting, setDeleting] = useState<Constraint | null>(null)
+  const [deleting, setDeleting] = useState<Constraint[] | null>(null)
   const event = controller.event
   if (!event) return null
   return (
@@ -51,11 +53,29 @@ export function ConstraintsPanel({
         </Button>
       </div>
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2 wrap-anywhere">
-        {controller.constraintViews.map(
-          ({ constraint, text, status, detail }) => (
+        {groupConstraintViews(controller.constraintViews).map(({ views }) => {
+          if (views.length > 1)
+            return (
+              <ConstraintGroupCard
+                key={views[0].constraint.constraint_id}
+                event={event}
+                views={views}
+                onUpdate={(patch) => {
+                  for (const view of views)
+                    controller.updateConstraint(
+                      view.constraint.constraint_id,
+                      patch,
+                    )
+                }}
+                onEdit={setEditing}
+                onDelete={setDeleting}
+              />
+            )
+          const [{ constraint, text, status, detail }] = views
+          return (
             <article
               key={constraint.constraint_id}
-              className={`rounded-lg border p-3 ${!constraint.enabled ? 'border-slate-200 bg-slate-50/70' : (status === 'unmet' || status === 'invalid') && constraint.hardness === 'hard' ? 'border-red-200 bg-red-50/30' : constraint.hardness === 'hard' || status === 'met' ? 'border-sky-200 bg-sky-50/40' : status === 'unmet' || status === 'invalid' ? 'border-amber-200 bg-amber-50/40' : 'border-slate-200 bg-slate-50/70'}`}
+              className={`rounded-lg border p-3 ${constraintTone(constraint.enabled, constraint.hardness, status)}`}
             >
               <div className="mb-3 flex items-start gap-2">
                 <input
@@ -110,15 +130,15 @@ export function ConstraintsPanel({
                   variant="ghost"
                   className="px-2 hover:text-red-600"
                   aria-label={`${text}を削除`}
-                  onClick={() => setDeleting(constraint)}
+                  onClick={() => setDeleting([constraint])}
                 >
                   <Icon name="trash" />
                   削除
                 </Button>
               </div>
             </article>
-          ),
-        )}
+          )
+        })}
         {!controller.constraintViews.length && (
           <p className="py-8 text-center text-sm leading-7 text-muted">
             {controller.showUnmet
@@ -138,10 +158,15 @@ export function ConstraintsPanel({
       {deleting && (
         <ConfirmDialog
           title="制約を削除"
-          message={`「${describeConstraint(deleting, event)}」を削除します。位置固定の条件を削除すると固定も解除されます。`}
+          message={
+            deleting.length === 1
+              ? `「${describeConstraint(deleting[0], event)}」を削除します。位置固定の条件を削除すると固定も解除されます。`
+              : `${deleting.length}件の制約をまとめて削除します。`
+          }
           onCancel={() => setDeleting(null)}
           onConfirm={() => {
-            controller.deleteConstraint(deleting.constraint_id)
+            for (const constraint of deleting)
+              controller.deleteConstraint(constraint.constraint_id)
             setDeleting(null)
           }}
         />

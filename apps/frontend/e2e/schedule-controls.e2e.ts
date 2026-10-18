@@ -1,5 +1,38 @@
 import { expect, test } from './database-fixture'
 
+test('exports CSV only after confirmation', async ({ page, databaseEvent }) => {
+  await page.goto(`/event/${databaseEvent.eventId}`)
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  const exportButton = page.getByRole('button', {
+    name: 'CSVを出力',
+    exact: true,
+  })
+  const downloads: string[] = []
+  page.on('download', (download) =>
+    downloads.push(download.suggestedFilename()),
+  )
+  page.once('dialog', async (dialog) => {
+    expect(dialog.type()).toBe('confirm')
+    expect(dialog.message()).toBe('出演順をCSVでエクスポートしますか？')
+    await dialog.dismiss()
+  })
+  await exportButton.click()
+  await expect(
+    page.getByText('出演順をCSVでエクスポートしました。'),
+  ).toHaveCount(0)
+  expect(downloads).toEqual([])
+
+  page.once('dialog', (dialog) => dialog.accept())
+  const downloadPromise = page.waitForEvent('download')
+  await exportButton.click()
+  const download = await downloadPromise
+  expect(download.suggestedFilename()).toMatch(/-出演順\.csv$/)
+  await expect(
+    page.getByText('出演順をCSVでエクスポートしました。'),
+  ).toBeVisible()
+  expect(downloads).toHaveLength(1)
+})
+
 test('pointer drag previews, commits and persists a reorder while preserving fixed positions', async ({
   page,
   databaseEvent,

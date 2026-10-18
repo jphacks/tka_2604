@@ -71,10 +71,16 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
           aria-label="出演順の操作"
           className="flex w-full max-w-full min-w-0 items-center gap-2 overflow-x-auto pb-1 xl:w-auto xl:pb-0"
         >
+          <Button onClick={() => setEditingLive(true)} className="text-xs">
+            ライブ情報の編集
+          </Button>
+          <Button onClick={controller.exportCsv} className="text-xs">
+            CSVを出力
+          </Button>
           <Button
             aria-label="出演順を保存"
-            className="text-xs"
-            variant={controller.scheduleDirty ? 'primary' : 'secondary'}
+            className={`text-xs ${controller.scheduleDirty ? 'font-semibold' : ''}`}
+            variant={controller.scheduleDirty ? 'subtle' : 'secondary'}
             disabled={
               !controller.scheduleDirty ||
               controller.saving ||
@@ -96,16 +102,11 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
               controller.sending
             }
             title="出演順・制約を保存してから計算します"
-            className="text-xs"
+            variant="primary"
+            className="text-xs font-semibold"
             onClick={() => void controller.generate()}
           >
             {controller.solving ? '計算中…' : '自動生成'}
-          </Button>
-          <Button onClick={controller.exportCsv} className="text-xs">
-            共有
-          </Button>
-          <Button onClick={() => setEditingLive(true)} className="text-xs">
-            ライブ情報の編集
           </Button>
         </div>
       }

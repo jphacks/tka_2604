@@ -6,6 +6,9 @@ import type { ChatReorder } from '../model/chatReorder'
 import type { EventAction } from '../model/eventReducer'
 import { eventRepository } from '../repositories/eventRepository'
 
+const decisionMessageId =
+  /^decision-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+
 export function useEventChat(
   eventId: string,
   dispatch: Dispatch<EventAction>,
@@ -16,9 +19,14 @@ export function useEventChat(
   const [sending, setSending] = useState(false)
   const [chatProposal, setChatProposal] = useState<ChatProposal | null>(null)
   const [chatReorder, setChatReorder] = useState<ChatReorder | null>(null)
+  const [pendingDecision, setPendingDecision] = useState<{
+    decision: 'applied' | 'discarded'
+    messageId: string
+  } | null>(null)
   const pending = useRef<ChatMessage | null>(null)
   const busy = useRef(false)
   const lifetime = useRef<AbortController | null>(null)
+  const recording = useRef(false)
   useEffect(() => {
     const controller = new AbortController()
     lifetime.current = controller
@@ -73,10 +81,50 @@ export function useEventChat(
       if (!signal?.aborted) setSending(false)
     }
   }
+  async function recordDecision(
+    decision: 'applied' | 'discarded',
+    retry: typeof pendingDecision = null,
+  ) {
+    if (recording.current) return
+    const entry =
+      retry?.decision === decision
+        ? retry
+        : { decision, messageId: `decision-${crypto.randomUUID()}` }
+    setPendingDecision(entry)
+    recording.current = true
+    const signal = lifetime.current?.signal
+    try {
+      await eventRepository.recordDecision(
+        eventId,
+        entry.decision,
+        entry.messageId,
+        signal,
+      )
+      if (signal?.aborted) return
+      const messages = await eventRepository.getMessages(eventId, signal)
+      if (!signal?.aborted) {
+        dispatch({ type: 'messages', messages })
+        setPendingDecision(null)
+      }
+    } catch (error) {
+      if (!signal?.aborted)
+        dispatch({
+          type: 'notice',
+          error: true,
+          message:
+            error instanceof Error
+              ? error.message
+              : '履歴の記録に失敗しました。',
+        })
+    } finally {
+      recording.current = false
+    }
+  }
   const unanswered =
     event?.messages.filter(
       (message) =>
         message.role === 'user' &&
+        !decisionMessageId.test(message.id) &&
         !event.messages.some((reply) => reply.replyToMessageId === message.id),
     ) ?? []
   return {
@@ -85,6 +133,12 @@ export function useEventChat(
     chatProposal,
     dismissProposal: () => setChatProposal(null),
     chatReorder,
+    pendingDecision,
+    recordDecision,
+    retryDecision: () => {
+      if (pendingDecision)
+        return recordDecision(pendingDecision.decision, pendingDecision)
+    },
     dismissReorder: () => setChatReorder(null),
     changeProposal: (
       index: number,

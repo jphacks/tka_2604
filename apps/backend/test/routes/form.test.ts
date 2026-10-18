@@ -221,6 +221,7 @@ describe('form HTTP API', () => {
   })
 
   it('returns documented internal errors without exposing DB details or saving partial data', async () => {
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
     await local.binding
       .prepare(
         "CREATE TRIGGER fail_form_member BEFORE INSERT ON members WHEN NEW.member_name = '失敗' BEGIN SELECT RAISE(ABORT, 'private SQL details'); END",
@@ -250,6 +251,7 @@ describe('form HTTP API', () => {
     const get = await request()
     expect(get.status).toBe(500)
     expect(await get.text()).not.toContain('private DB')
+    errorLog.mockRestore()
   })
 
   it('shares form request and response types through AppType and supports the standalone form router', async () => {

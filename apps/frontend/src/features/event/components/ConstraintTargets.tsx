@@ -1,8 +1,6 @@
-import { useState } from 'react'
-
 import type { EventData } from '../../../shared/model/event'
+import { AutoComplete } from '../../../shared/ui/AutoComplete'
 import { Button } from '../../../shared/ui/Button'
-import { Input, Select } from '../../../shared/ui/Input'
 
 export function BandSelect({
   event,
@@ -16,21 +14,21 @@ export function BandSelect({
   onChange: (value: string) => void
 }) {
   return (
-    <label className="block space-y-2 text-sm font-medium">
-      {label}
-      <Select
-        className="block h-10 w-full"
+    <div className="space-y-2 text-sm font-medium">
+      <p>{label}</p>
+      <AutoComplete
+        label={label}
         value={value}
-        onChange={(change) => onChange(change.target.value)}
-      >
-        <option value="">出演枠を選んでください</option>
-        {event.performances.map((band) => (
-          <option key={band.id} value={band.id}>
-            {band.name}
-          </option>
-        ))}
-      </Select>
-    </label>
+        allowCustomValue={false}
+        options={event.performances.map((band) => ({
+          value: band.id,
+          label: band.name,
+        }))}
+        placeholder="出演名で検索"
+        onValueChange={onChange}
+        onSelect={onChange}
+      />
+    </div>
   )
 }
 
@@ -43,10 +41,6 @@ export function BandPicker({
   selected: string[]
   onChange: (ids: string[]) => void
 }) {
-  const [query, setQuery] = useState('')
-  const bands = event.performances.filter((band) =>
-    band.name.toLowerCase().includes(query.trim().toLowerCase()),
-  )
   return (
     <fieldset className="rounded-lg border border-line p-3">
       <legend className="px-1 text-sm font-medium">
@@ -55,14 +49,27 @@ export function BandPicker({
           {selected.length}組選択中
         </span>
       </legend>
-      <Input
-        aria-label="対象の出演枠を検索"
-        className="mb-2 w-full"
-        value={query}
-        onChange={(change) => setQuery(change.target.value)}
-        placeholder="出演名で検索"
+      <AutoComplete
+        label="対象の出演枠を検索"
+        multiple={{
+          selected: selected.map((id) => ({
+            value: id,
+            label:
+              event.performances.find((band) => band.id === id)?.name ??
+              '不明な出演枠',
+          })),
+          onRemove: (id) => onChange(selected.filter((value) => value !== id)),
+        }}
+        value=""
+        allowCustomValue={false}
+        options={event.performances
+          .filter((band) => !selected.includes(band.id))
+          .map((band) => ({ value: band.id, label: band.name }))}
+        placeholder="出演名で検索して追加"
+        onValueChange={() => {}}
+        onSelect={(id) => onChange([...selected, id])}
       />
-      <div className="mb-2 flex flex-wrap gap-2">
+      <div className="mt-2 flex flex-wrap gap-2">
         <Button
           className="text-xs"
           onClick={() => onChange(event.performances.map((band) => band.id))}
@@ -77,34 +84,6 @@ export function BandPicker({
           選択を解除
         </Button>
       </div>
-      <div className="max-h-40 space-y-1 overflow-y-auto">
-        {bands.map((band) => (
-          <label
-            key={band.id}
-            className="flex min-h-9 items-center gap-2 rounded px-2 text-sm hover:bg-wash"
-          >
-            <input
-              type="checkbox"
-              checked={selected.includes(band.id)}
-              onChange={(change) =>
-                onChange(
-                  change.target.checked
-                    ? [...selected, band.id]
-                    : selected.filter((id) => id !== band.id),
-                )
-              }
-            />
-            {band.name}
-          </label>
-        ))}
-      </div>
-      {!bands.length && (
-        <p className="py-3 text-sm text-muted">
-          {event.performances.length
-            ? '一致する出演枠がありません。'
-            : '先に出演枠を登録してください。'}
-        </p>
-      )}
     </fieldset>
   )
 }

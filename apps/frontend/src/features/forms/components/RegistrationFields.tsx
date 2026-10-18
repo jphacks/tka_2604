@@ -1,12 +1,11 @@
+import { useEffect, useRef } from 'react'
+
 import { Button } from '../../../shared/ui/Button'
 import { Icon } from '../../../shared/ui/Icon'
 import { Input, Select, Textarea } from '../../../shared/ui/Input'
 import type { PublicRegistrationController } from '../hooks/usePublicRegistration'
-import {
-  memberOptionLabel,
-  type MemberRow,
-  newMemberRow,
-} from '../model/registration'
+import { type MemberRow, newMemberRow } from '../model/registration'
+import { MemberNameInput } from './MemberNameInput'
 
 export function RegistrationFields({
   controller,
@@ -16,6 +15,13 @@ export function RegistrationFields({
   fixedBand?: boolean
 }) {
   const { data, draft, mode } = controller
+  const selectRefs = useRef(new Map<string, HTMLSelectElement>())
+  const focusAfterSelect = useRef<string | null>(null)
+  useEffect(() => {
+    if (!focusAfterSelect.current) return
+    selectRefs.current.get(focusAfterSelect.current)?.focus()
+    focusAfterSelect.current = null
+  }, [draft.rows])
   const change = (patch: Parameters<typeof controller.change>[0]) =>
     controller.change(patch)
   if (!data) return null
@@ -124,10 +130,7 @@ export function RegistrationFields({
                 >
                   <div className="mb-2.5 flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-muted">
-                      メンバー {index + 1}{' '}
-                      <span className="ml-2 font-normal">
-                        {row.kind === 'new' ? '新しく登録' : '登録済み'}
-                      </span>
+                      メンバー {index + 1}
                     </span>
                     <Button
                       variant="ghost"
@@ -145,59 +148,22 @@ export function RegistrationFields({
                       削除
                     </Button>
                   </div>
-                  {row.kind === 'new' ? (
-                    <Input
-                      aria-label={`メンバー${index + 1}の名前`}
-                      placeholder="名前を入力"
-                      maxLength={40}
-                      value={row.value}
-                      onChange={(event) =>
-                        updateRow(row.key, { value: event.target.value })
-                      }
-                      className="h-10 w-full text-sm"
-                      autoComplete="off"
-                    />
-                  ) : (
-                    <Select
-                      aria-label={`メンバー${index + 1}を名簿から選択`}
-                      value={row.value}
-                      onChange={(event) =>
-                        updateRow(row.key, { value: event.target.value })
-                      }
-                      className="h-10 w-full"
-                    >
-                      <option value="">登録済みのメンバーを選択</option>
-                      {data.members.map((member) => (
-                        <option
-                          key={member.memberId}
-                          value={member.memberId}
-                          disabled={draft.rows.some(
-                            (item) =>
-                              item.key !== row.key &&
-                              item.kind === 'existing' &&
-                              item.value === member.memberId,
-                          )}
-                        >
-                          {memberOptionLabel(data, member.memberId)}
-                        </option>
-                      ))}
-                    </Select>
-                  )}
-                  <button
-                    type="button"
-                    className="mt-2.5 text-xs font-medium text-brand hover:underline disabled:opacity-45"
-                    disabled={row.kind === 'new' && !data.members.length}
-                    onClick={() =>
+                  <MemberNameInput
+                    roster={data}
+                    value={row.value}
+                    label={`メンバー${index + 1}の名前`}
+                    excludedIds={draft.rows
+                      .filter((item) => item.key !== row.key)
+                      .map((item) => item.value)}
+                    disabled={controller.busy || controller.refreshing}
+                    onValueChange={(value) => updateRow(row.key, { value })}
+                    onSelect={(memberId, fromKeyboard) => {
+                      if (fromKeyboard) focusAfterSelect.current = row.key
                       updateRow(row.key, {
-                        kind: row.kind === 'new' ? 'existing' : 'new',
-                        value: '',
+                        value: memberId,
                       })
-                    }
-                  >
-                    {row.kind === 'new'
-                      ? '名簿から選ぶ'
-                      : '新しい人を入力して差し替え'}
-                  </button>
+                    }}
+                  />
                 </div>
               ))}
             </div>

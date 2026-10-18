@@ -1,5 +1,5 @@
 import { eventsApi } from '../../../shared/api/events'
-import { sendChatMessage } from './chatRepository'
+import { recordChatDecision, sendChatMessage } from './chatRepository'
 import type { EventRepository } from './types'
 
 export const eventRepository: EventRepository = {
@@ -22,4 +22,5 @@ export const eventRepository: EventRepository = {
     }
   },
   sendMessage: sendChatMessage,
+  recordDecision: recordChatDecision,
 }

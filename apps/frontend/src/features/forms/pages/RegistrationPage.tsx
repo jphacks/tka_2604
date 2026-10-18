@@ -198,13 +198,6 @@ export function RegistrationPage() {
                               : '出演登録を送信'}
                           <Icon name={updating ? 'check' : 'chevron'} />
                         </Button>
-                        <p className="mt-3 text-center text-xs leading-5 text-muted">
-                          {updating
-                            ? controller.draft.bandId
-                              ? `「${controller.data.bands.find((band) => band.bandId === controller.draft.bandId)?.bandName ?? '選択中の出演枠'}」を更新します。`
-                              : '更新する出演枠を選んでください。'
-                            : '新しい出演枠として登録します。'}
-                        </p>
                       </fieldset>
                     </form>
                   </section>
