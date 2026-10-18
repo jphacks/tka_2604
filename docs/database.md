@@ -148,3 +148,11 @@ chat_messagesはmessage_idをPK、(event_id, seq)・reply_to_message_idをそれ
 0002_wishes_chat_and_part_nameはDrizzle生成SQLで、commentをpart_nameへリネームし、列・履歴テーブルを追加する。0003_chat_integrityは希望状態・由来・返信の整合性を保証するカスタムトリガー。親テーブルの作り直しを避け、既存の所属・配置・名前・NULLを維持する。適用済みの0000・0001は変更していない。
 
 イベント本体と表・制約・チャット履歴の個別取得APIを実装済み。各DTOでpartName・希望状態・由来を返し、パスワードハッシュや所有者・論理削除等のDB管理項目を公開しない。契約は[イベントAPI](../apps/backend/docs/api/events.md)を参照。
+
+## フォームからの名簿登録・所属編集
+
+`routes/form.ts` → `services/form` → `repositories/form.ts`で、イベント内のBand・Member・所属を登録・更新する。既存テーブルを使い、migrationや回答履歴テーブルは追加しない。API契約は[フォーム名簿API](../apps/backend/docs/api/forms.md)を参照。
+
+公開名簿はID・名前・所属だけを取得し、希望・制約・配置・チャットを含めない。URLを知る人が認証なしで利用でき、管理者の所有者限定APIとは別のルートで処理する。保存時はEvent.updatedAtと削除状態をD1 batch内で再確認し、Band・新規Member・対象バンドの所属・更新日時をまとめて確定する。
+
+所属解除では対象のBand_Memberだけを削除する。所属0件になったMemberもイベント名簿へ残し、同じIDで再選択できる。他バンドへの所属、Bandの希望原文・状態、制約・由来、部・配置は変更しない。新規登録は1人以上、編集時は0人まで許可する。
