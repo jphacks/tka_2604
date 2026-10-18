@@ -7,10 +7,8 @@ test('public registration adds name rows, reuses existing IDs, distinguishes sam
   const { writes } = await mockRegistrationApi(page)
   await page.goto('/event/public-live/forms')
   await page.getByRole('button', { name: '出演登録を送信' }).click()
-  await expect(page.getByRole('alert')).toContainText('バンド名')
-  await page
-    .getByRole('textbox', { name: 'バンド名 必須' })
-    .fill('新しいバンド')
+  await expect(page.getByRole('alert')).toContainText('出演名')
+  await page.getByRole('textbox', { name: '出演名 必須' }).fill('新しい出演枠')
   await page.getByRole('button', { name: 'メンバー1を削除' }).click()
   await page.getByRole('button', { name: '出演登録を送信' }).click()
   await expect(page.getByRole('alert')).toContainText('1〜20人')
@@ -33,11 +31,11 @@ test('public registration adds name rows, reuses existing IDs, distinguishes sam
   await page.reload()
   await page.getByRole('radio', { name: /登録内容の更新/ }).check()
   await page
-    .getByRole('combobox', { name: '更新するバンド' })
+    .getByRole('combobox', { name: '更新する出演枠' })
     .selectOption('new-0')
-  await expect(
-    page.getByRole('textbox', { name: 'バンド名 必須' }),
-  ).toHaveValue('新しいバンド')
+  await expect(page.getByRole('textbox', { name: '出演名 必須' })).toHaveValue(
+    '新しい出演枠',
+  )
   await expect(
     page.getByRole('combobox', { name: 'メンバー1を名簿から選択' }),
   ).toHaveValue('m1')
@@ -56,13 +54,13 @@ test('updates only the chosen band, removes everyone and re-adds the same ID', a
   await page.keyboard.press('ArrowRight')
   await expect(update).toBeChecked()
   await expect(page.getByRole('button', { name: '変更を保存' })).toBeDisabled()
-  const band = page.getByRole('combobox', { name: '更新するバンド' })
+  const band = page.getByRole('combobox', { name: '更新する出演枠' })
   await band.selectOption('a')
-  await page.getByRole('textbox', { name: 'バンド名 必須' }).fill('変更中')
+  await page.getByRole('textbox', { name: '出演名 必須' }).fill('変更中')
   await band.selectOption('b')
-  await expect(
-    page.getByRole('textbox', { name: 'バンド名 必須' }),
-  ).toHaveValue('ブルーノート')
+  await expect(page.getByRole('textbox', { name: '出演名 必須' })).toHaveValue(
+    'ブルーノート',
+  )
   await band.selectOption('a')
   await page.getByRole('button', { name: 'メンバー2を削除' }).click()
   await page.getByRole('button', { name: 'メンバー1を削除' }).click()
@@ -99,8 +97,8 @@ test('conflicts and failures keep input and require refresh before retry', async
   const api = await mockRegistrationApi(page)
   await page.goto('/event/public-live/forms')
   await page
-    .getByRole('textbox', { name: 'バンド名 必須' })
-    .fill('保持するバンド')
+    .getByRole('textbox', { name: '出演名 必須' })
+    .fill('保持する出演枠')
   await page.getByRole('textbox', { name: 'メンバー1の名前' }).fill('佐藤')
   api.fail(409)
   await page.getByRole('button', { name: '出演登録を送信' }).click()
@@ -119,9 +117,9 @@ test('conflicts and failures keep input and require refresh before retry', async
   api.fail(500)
   await page.getByRole('button', { name: '出演登録を送信' }).click()
   await expect(page.getByRole('alert')).toContainText('保存に失敗')
-  await expect(
-    page.getByRole('textbox', { name: 'バンド名 必須' }),
-  ).toHaveValue('保持するバンド')
+  await expect(page.getByRole('textbox', { name: '出演名 必須' })).toHaveValue(
+    '保持する出演枠',
+  )
   expect(api.writes).toHaveLength(0)
 })
 
@@ -132,7 +130,7 @@ test('registration remains usable at mobile width without horizontal overflow', 
   await mockRegistrationApi(page)
   await page.goto('/event/public-live/forms')
   await page.getByRole('radio', { name: /登録内容の更新/ }).check()
-  await page.getByRole('combobox', { name: '更新するバンド' }).selectOption('a')
+  await page.getByRole('combobox', { name: '更新する出演枠' }).selectOption('a')
   await expect(page.getByRole('button', { name: '変更を保存' })).toBeVisible()
   expect(
     await page.evaluate(

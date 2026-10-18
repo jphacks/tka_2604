@@ -84,7 +84,7 @@ describe('form validation', () => {
     { memberIds: ['m1'] },
     { newMembers: [] },
     { bandName: null },
-    { memberName: '全バンドで変更しない' },
+    { memberName: '全出演枠で変更しない' },
   ])('rejects invalid partial updates: %j', (patch) => {
     expect(
       updateFormBandSchema.safeParse({

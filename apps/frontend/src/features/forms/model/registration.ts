@@ -74,13 +74,13 @@ export function registrationInput(
     mode === 'update' &&
     !roster.bands.some((band) => band.bandId === draft.bandId)
   )
-    throw new Error('更新するバンドを選んでください。')
+    throw new Error('更新する出演枠を選んでください。')
   const bandName = draft.bandName.trim()
   if (!bandName || bandName.length > 80)
-    throw new Error('バンド名を1〜80文字で入力してください。')
+    throw new Error('出演名を1〜80文字で入力してください。')
   const description = draft.description.trim()
   if (description.length > 500)
-    throw new Error('バンド紹介は500文字以内で入力してください。')
+    throw new Error('紹介は500文字以内で入力してください。')
   if (draft.rows.length < (mode === 'create' ? 1 : 0) || draft.rows.length > 20)
     throw new Error(
       mode === 'create'

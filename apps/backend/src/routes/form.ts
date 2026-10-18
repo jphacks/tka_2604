@@ -51,7 +51,7 @@ export function createFormRoutes<Bindings extends object>(
         const messages = {
           invalid_input: '入力データが不正です。',
           event_not_found: 'イベントが見つかりません。',
-          band_not_found: 'バンドが見つかりません。',
+          band_not_found: '出演枠が見つかりません。',
           event_save_conflict: 'イベントが更新されました。再取得してください。',
         }
         return c.json(

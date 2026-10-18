@@ -290,7 +290,7 @@ describe('form HTTP API', () => {
   it('saves 20 new members within D1 statement limits and exposes them on the admin schedule', async () => {
     const response = await request('/bands', 'POST', {
       expectedUpdatedAt: seed.event.updatedAt,
-      bandName: '20人バンド',
+      bandName: '20人出演枠',
       memberIds: [],
       newMembers: Array.from({ length: 20 }, (_, index) => ({
         memberName: `出演者${index}`,
@@ -373,7 +373,7 @@ describe('form HTTP API', () => {
   it('registers an unassigned band with an existing member and a new same-name person', async () => {
     const response = await request('/bands', 'POST', {
       expectedUpdatedAt: seed.event.updatedAt,
-      bandName: ' 新バンド ',
+      bandName: ' 新出演枠 ',
       memberIds: ['a-m1'],
       newMembers: [{ memberName: ' 田中 ' }],
     })
@@ -383,7 +383,7 @@ describe('form HTTP API', () => {
       band: { bandId: string; bandName: string; memberIds: string[] }
       members: { memberId: string; memberName: string }[]
     }>()
-    expect(body.band.bandName).toBe('新バンド')
+    expect(body.band.bandName).toBe('新出演枠')
     expect(body.band.memberIds).toHaveLength(2)
     expect(body.members.map((m) => m.memberName)).toEqual(['田中', '田中'])
     expect(new Set(body.band.memberIds).size).toBe(2)

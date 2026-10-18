@@ -28,13 +28,13 @@ export function RegistrationFields({
       {mode === 'update' && (
         <div className="mb-7 rounded-lg bg-wash p-4">
           <label className="block text-sm font-medium">
-            更新するバンド
+            更新する出演枠
             <Select
               className="mt-2 h-11 w-full bg-white"
               value={draft.bandId}
               onChange={(event) => controller.chooseBand(event.target.value)}
             >
-              <option value="">バンドを選んでください</option>
+              <option value="">出演枠を選んでください</option>
               {data.bands.map((band) => (
                 <option key={band.bandId} value={band.bandId}>
                   {band.bandName}
@@ -48,7 +48,7 @@ export function RegistrationFields({
           </label>
           {!data.bands.length && (
             <p className="mt-3 text-xs text-muted">
-              登録済みのバンドがありません。初回登録から追加してください。
+              登録済みの出演枠がありません。初回登録から追加してください。
             </p>
           )}
         </div>
@@ -56,7 +56,7 @@ export function RegistrationFields({
       {(mode === 'create' || draft.bandId) && (
         <div className="space-y-7">
           <label className="block text-sm font-medium">
-            バンド名 <span className="ml-1 text-xs text-brand">必須</span>
+            出演名 <span className="ml-1 text-xs text-brand">必須</span>
             <Input
               value={draft.bandName}
               onChange={(event) => change({ bandName: event.target.value })}
@@ -66,13 +66,13 @@ export function RegistrationFields({
             />
           </label>
           <label className="block text-sm font-medium">
-            バンド紹介（任意）
+            紹介（任意）
             <Textarea
               value={draft.description}
               onChange={(event) => change({ description: event.target.value })}
               maxLength={500}
               rows={4}
-              placeholder="例：アップテンポなロックを中心に演奏する、明るく盛り上がるバンドです。"
+              placeholder="例：アップテンポなロックを中心に、明るく盛り上がる演奏をします。"
               className="mt-2 w-full text-sm"
               aria-describedby="band-description-help"
             />
@@ -218,7 +218,7 @@ export function RegistrationFields({
             </Button>
             <p className="mt-3 text-xs leading-5 text-muted">
               {mode === 'update'
-                ? '削除はこのバンドから外す操作です。名前の欄を差し替えても、元の人の名前や他バンドの所属は変わりません。'
+                ? '削除はこの出演枠から外す操作です。名前の欄を差し替えても、元の人の名前や他の出演枠の所属は変わりません。'
                 : '同じ名前でも、新しく入力した人は別のメンバーとして登録します。'}
             </p>
           </section>

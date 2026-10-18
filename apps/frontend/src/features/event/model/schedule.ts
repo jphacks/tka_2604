@@ -284,7 +284,7 @@ export function configureSchedule(
   )
     return {
       event,
-      error: '部数は1〜8、各部のバンド数は1〜20の整数を入力してください。',
+      error: '部数は1〜8、各部の組数は1〜20の整数を入力してください。',
     }
   const unassigned = [...event.unassigned]
   const sections = counts.map((count, index) => {

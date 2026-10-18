@@ -88,7 +88,7 @@ export function RegistrationPage() {
                         controller.another()
                       }}
                     >
-                      別のバンドを登録
+                      別の出演枠を登録
                     </Button>
                   </div>
                 </section>
@@ -104,9 +104,9 @@ export function RegistrationPage() {
                       {controller.data.eventTitle} 出演登録
                     </h1>
                     <p className="mt-3 text-sm leading-6 text-muted">
-                      バンド名とメンバーを登録してください。
+                      出演名とメンバーを登録してください。
                       <br className="hidden sm:block" />
-                      登録済みのバンドは、ここから内容を更新できます。
+                      登録済みの出演枠は、ここから内容を更新できます。
                     </p>
                   </div>
                   <form
@@ -146,8 +146,8 @@ export function RegistrationPage() {
                                 </span>
                                 <span className="mt-1 block text-xs leading-5 text-muted">
                                   {mode === 'create'
-                                    ? '新しいバンドを登録'
-                                    : 'バンドを選んで編集'}
+                                    ? '新しい出演枠を登録'
+                                    : '出演枠を選んで編集'}
                                 </span>
                               </span>
                             </label>
@@ -199,9 +199,9 @@ export function RegistrationPage() {
                       <p className="mt-3 text-center text-xs leading-5 text-muted">
                         {updating
                           ? controller.draft.bandId
-                            ? `「${controller.data.bands.find((band) => band.bandId === controller.draft.bandId)?.bandName ?? '選択中のバンド'}」を更新します。`
-                            : '更新するバンドを選んでください。'
-                          : '新しいバンドとして登録します。'}
+                            ? `「${controller.data.bands.find((band) => band.bandId === controller.draft.bandId)?.bandName ?? '選択中の出演枠'}」を更新します。`
+                            : '更新する出演枠を選んでください。'
+                          : '新しい出演枠として登録します。'}
                       </p>
                     </fieldset>
                   </form>
