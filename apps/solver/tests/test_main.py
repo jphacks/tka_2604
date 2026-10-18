@@ -150,9 +150,21 @@ def test_solve_rejects_partially_specified_band_counts(client: TestClient) -> No
     assert response.json()["error"]["code"] == "invalid_input"
 
 
-@pytest.mark.parametrize("gap_type", ["min_gap_member", "min_gap_bands"])
-def test_solve_ignores_min_gap_pairs_across_parts(
-    client: TestClient, gap_type: str
+@pytest.mark.parametrize(
+    ("gap_type", "same_part_only", "hardness", "expected_status"),
+    [
+        ("min_gap_member", True, "hard", "met"),
+        ("min_gap_bands", True, "hard", "met"),
+        ("min_gap_member", False, "soft", "unmet"),
+        ("min_gap_bands", False, "soft", "unmet"),
+    ],
+)
+def test_solve_applies_same_part_only_for_min_gap_pairs_across_parts(
+    client: TestClient,
+    gap_type: str,
+    same_part_only: bool,
+    hardness: str,
+    expected_status: str,
 ) -> None:
     payload = solve_payload()
     payload["parts"] = [
@@ -187,15 +199,15 @@ def test_solve_ignores_min_gap_pairs_across_parts(
             "constraint_id": "c-gap",
             "event_id": "event-1",
             "type": gap_type,
-            "hardness": "hard",
-            "priority": None,
+            "hardness": hardness,
+            "priority": None if hardness == "hard" else "mid",
             "enabled": True,
             "targets": (
                 {"member_id": "member-1"}
                 if gap_type == "min_gap_member"
                 else {"band_ids": ["band-a", "band-b"]}
             ),
-            "params": {"min_diff": 2, "same_part_only": True},
+            "params": {"min_diff": 2, "same_part_only": same_part_only},
         },
     ]
     if gap_type == "min_gap_member":
@@ -213,7 +225,7 @@ def test_solve_ignores_min_gap_pairs_across_parts(
     assert placements == {"band-a": "part-1", "band-b": "part-2"}
     assert body["constraintResults"][-1] == {
         "constraintId": "c-gap",
-        "status": "met",
+        "status": expected_status,
     }
 
 
