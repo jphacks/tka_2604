@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 import { Button } from './Button'
 import { Icon } from './Icon'
 import { LinkButton } from './LinkButton'
@@ -5,9 +7,11 @@ import { LinkButton } from './LinkButton'
 export function PageState({
   error,
   onRetry,
+  action,
 }: {
   error?: string
   onRetry?: () => void
+  action?: ReactNode
 }) {
   return (
     <div
@@ -20,7 +24,8 @@ export function PageState({
       />
       <p className="text-muted">{error || '読み込んでいます…'}</p>
       {error && (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap justify-center gap-2">
+          {action}
           {onRetry && <Button onClick={onRetry}>再試行</Button>}
           <LinkButton to="/event">イベント一覧へ</LinkButton>
         </div>

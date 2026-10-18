@@ -22,6 +22,11 @@ function EventWorkspace({ eventId }: { eventId: string }) {
         <PageState
           error={controller.loadError}
           onRetry={controller.retryLoad}
+          action={
+            <LinkButton primary to="/event?create=1">
+              イベントを作成
+            </LinkButton>
+          }
         />
       ) : (
         <>
@@ -49,30 +54,33 @@ function EventWorkspace({ eventId }: { eventId: string }) {
           </div>
         </>
       )}
-      {(controller.notice || controller.error || controller.loadError) && (
-        <div
-          role={controller.error || controller.loadError ? 'alert' : 'status'}
-          className={`fixed right-3 bottom-3 left-3 z-40 flex items-center justify-between gap-3 rounded-lg border bg-white p-3 shadow-sm xl:right-auto xl:max-w-xl ${controller.error || controller.loadError ? 'border-red-200 text-red-700' : 'border-brand/30 text-brand'}`}
-        >
-          <p>{controller.error || controller.loadError || controller.notice}</p>
-          {controller.saveFailed ? (
-            <>
-              <Button onClick={() => void controller.retrySave()}>
-                保存を再試行
+      {controller.event &&
+        (controller.notice || controller.error || controller.loadError) && (
+          <div
+            role={controller.error || controller.loadError ? 'alert' : 'status'}
+            className={`fixed right-3 bottom-3 left-3 z-40 flex items-center justify-between gap-3 rounded-lg border bg-white p-3 shadow-sm xl:right-auto xl:max-w-xl ${controller.error || controller.loadError ? 'border-red-200 text-red-700' : 'border-brand/30 text-brand'}`}
+          >
+            <p>
+              {controller.error || controller.loadError || controller.notice}
+            </p>
+            {controller.saveFailed ? (
+              <>
+                <Button onClick={() => void controller.retrySave()}>
+                  保存を再試行
+                </Button>
+                <Button onClick={controller.retryLoad}>最新の状態を取得</Button>
+              </>
+            ) : (
+              <Button
+                variant="ghost"
+                aria-label="通知を閉じる"
+                onClick={controller.dismissNotice}
+              >
+                閉じる
               </Button>
-              <Button onClick={controller.retryLoad}>最新の状態を取得</Button>
-            </>
-          ) : (
-            <Button
-              variant="ghost"
-              aria-label="通知を閉じる"
-              onClick={controller.dismissNotice}
-            >
-              閉じる
-            </Button>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        )}
     </AppFrame>
   )
 }

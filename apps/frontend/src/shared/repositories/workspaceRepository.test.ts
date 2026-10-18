@@ -6,6 +6,7 @@ vi.mock('../../mock/workspaceRepository', () => ({
     signIn: vi.fn(),
     signOut: vi.fn(),
     listEvents: vi.fn(),
+    createEvent: vi.fn(),
     getRegistration: vi.fn(),
     rememberEvent: vi.fn(),
   },
@@ -45,6 +46,7 @@ describe('repository data source', () => {
       await import('../../mock/workspaceRepository')
     const list = vi.spyOn(mockWorkspaceRepository, 'listEvents')
     const registration = vi.spyOn(mockWorkspaceRepository, 'getRegistration')
+    const create = vi.spyOn(mockWorkspaceRepository, 'createEvent')
     const remember = vi.spyOn(mockWorkspaceRepository, 'rememberEvent')
     vi.stubGlobal(
       'fetch',
@@ -56,12 +58,21 @@ describe('repository data source', () => {
       await import('./workspaceRepository')
     await expect(withFailure.listEvents()).rejects.toThrow('offline')
     await expect(
+      withFailure.createEvent({
+        name: 'DBに保存するイベント',
+        date: '',
+        venue: '',
+        description: '',
+      }),
+    ).rejects.toThrow('offline')
+    await expect(
       workspaceRepository.getRegistration('event-1'),
     ).rejects.toThrow('準備中')
     await expect(
       workspaceRepository.deletePerformance('event-1', 'b1'),
     ).rejects.toThrow('準備中')
     expect(list).not.toHaveBeenCalled()
+    expect(create).not.toHaveBeenCalled()
     expect(registration).not.toHaveBeenCalled()
     workspaceRepository.rememberEvent({
       id: 'event-1',

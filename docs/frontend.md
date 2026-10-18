@@ -25,13 +25,14 @@
 | ------------------------------ | -------------------------------- |
 | `/login`                       | デモ開始                         |
 | `/event`                       | イベント一覧・検索・作成         |
+| `/event?create=1`              | イベント一覧で作成フォームを開く |
 | `/event/:eventId`              | 出演順・制約・チャット           |
 | `/event/:eventId/performances` | 出演枠・所属メンバー・希望の編集 |
 | `/event/:eventId/forms`        | ログイン不要の出演登録フォーム   |
 | `/event/:eventId/forms/edit`   | フォーム設定・プレビュー         |
 | `/event/:eventId/settings`     | イベント設定・削除               |
 
-サンプルIDは `spring-live-2026`、`autumn-session-2026`、`winter-live-2026`。存在しないイベント・URLには復帰リンクを表示する。
+サンプルIDは `spring-live-2026`、`autumn-session-2026`、`winter-live-2026`。存在しないイベント・URLには復帰リンクを表示する。イベント詳細を取得できない画面からは「イベントを作成」で一覧の作成フォームを開ける。一覧が0件の場合も空状態に作成ボタンを表示する。
 
 ## データと制約の扱い
 
