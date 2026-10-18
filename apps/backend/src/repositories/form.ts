@@ -32,6 +32,7 @@ export function formRepository(
             bandId: bands.bandId,
             bandName: bands.bandName,
             description: bands.description,
+            requestText: bands.requestText,
           })
           .from(bands)
           .where(inArray(bands.eventId, ids))
@@ -89,6 +90,8 @@ export function formRepository(
                   bandId: changes.bandId,
                   bandName: changes.bandName,
                   description: changes.description,
+                  requestText: changes.requestText,
+                  requestStatus: changes.requestText ? 'pending' : null,
                 }),
               ]
             : [
@@ -97,6 +100,8 @@ export function formRepository(
                   .set({
                     bandName: changes.bandName,
                     description: changes.description,
+                    requestText: changes.requestText,
+                    requestStatus: sql`CASE WHEN ${bands.requestText} IS ${changes.requestText} THEN ${bands.requestStatus} ELSE ${changes.requestText ? 'pending' : null} END`,
                   })
                   .where(bandScope(eventId, changes.bandId)),
               ]),

@@ -34,9 +34,9 @@ test('confirms or cancels band deletion, retains the roster and persists assigne
     exact: true,
   })
   await button.click()
-  const dialog = page.getByRole('dialog', { name: 'バンドを削除', exact: true })
+  const dialog = page.getByRole('dialog', { name: '出演枠を削除', exact: true })
   await expect(dialog).toContainText('「Pretender」を削除しますか？')
-  await expect(dialog).toContainText('このバンドの希望から作られた制約も削除')
+  await expect(dialog).toContainText('この出演枠の希望から作られた制約も削除')
   await page.keyboard.press('Escape')
   await expect(dialog).toHaveCount(0)
   await expect(button).toBeFocused()
@@ -155,7 +155,7 @@ test('retains the confirmation on API failure, retries, and blocks closing or du
   await page
     .getByRole('button', { name: 'Pretenderを削除', exact: true })
     .click()
-  const dialog = page.getByRole('dialog', { name: 'バンドを削除' })
+  const dialog = page.getByRole('dialog', { name: '出演枠を削除' })
   await dialog.getByRole('button', { name: '削除する', exact: true }).click()
   await expect(dialog.getByRole('alert')).toContainText('503')
   await expect(
@@ -190,7 +190,7 @@ test('rejects stale confirmation, reloads explicitly and requires confirming the
   await page
     .getByRole('button', { name: 'Pretenderを削除', exact: true })
     .click()
-  const dialog = page.getByRole('dialog', { name: 'バンドを削除' })
+  const dialog = page.getByRole('dialog', { name: '出演枠を削除' })
   const current = (await (await request.get(url)).json()) as {
     updatedAt: string
   }
@@ -242,7 +242,7 @@ test('deletes a referenced band and retains the constraints after reload', async
   await page
     .getByRole('button', { name: '気分上々↑↑を削除', exact: true })
     .click()
-  const dialog = page.getByRole('dialog', { name: 'バンドを削除' })
+  const dialog = page.getByRole('dialog', { name: '出演枠を削除' })
   await dialog.getByRole('button', { name: '削除する', exact: true }).click()
   await expect(dialog).toHaveCount(0)
   const after = (await (await request.get(`${url}/form`)).json()) as FormRoster

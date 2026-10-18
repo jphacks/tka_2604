@@ -74,7 +74,7 @@ export function useParticipants(eventId: string, initialNotice = '') {
       resource.setData(latest)
       setDeleteTarget(null)
       setDeleteError('')
-      setNotice('最新の状態を取得しました。削除するバンドを確認してください。')
+      setNotice('最新の状態を取得しました。削除する出演枠を確認してください。')
     } catch (cause) {
       setDeleteError(
         cause instanceof Error
