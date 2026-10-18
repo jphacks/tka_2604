@@ -29,7 +29,7 @@ export function LiveInfoDialog({
       >
         <PartCountFields counts={counts} onChange={setCounts} />
         <p className="text-xs leading-5 text-muted">
-          枠を減らすと、収まらないバンドは未配置に戻ります。
+          枠を減らすと、収まらない出演枠は未配置に戻ります。
           適用後、出演順の「保存」で変更を保存してください。
         </p>
         {error && (

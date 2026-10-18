@@ -77,14 +77,14 @@ it('名簿があるときは部数を変えると組数を割り振り直す', a
   expect(result.current.draft.bandCounts).toEqual([4, 9, 4])
 })
 
-it('取込が途中で失敗したら再作成させず、名簿画面へ理由を渡す', async () => {
+it('取込が途中で失敗したら再作成させず、出演順画面へ理由を渡す', async () => {
   mocks.importRoster.mockRejectedValue(new Error('3行目で止まりました。'))
   const result = await withRoster()
 
   await act(() => result.current.create())
 
   expect(mocks.createEvent).toHaveBeenCalledTimes(1)
-  expect(mocks.navigate).toHaveBeenCalledWith('/event/e1/performances', {
+  expect(mocks.navigate).toHaveBeenCalledWith('/event/e1', {
     state: {
       notice: expect.stringContaining('3行目で止まりました。') as string,
     },

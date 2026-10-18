@@ -42,9 +42,40 @@ export type EventAction =
   | { type: 'constraint-save'; constraint: Constraint }
   | { type: 'constraint-update'; id: string; patch: ConstraintPatch }
   | { type: 'constraint-delete'; id: string }
+  | { type: 'band-deleted'; id: string; updatedAt: string }
   | { type: 'message'; message: ChatMessage }
 
 export const initialState: EventState = { event: null, notice: '', error: '' }
+
+export function removeBandFromEvent(
+  event: EventData,
+  bandId: string,
+  updatedAt: string,
+): EventData {
+  const generatedConstraintIds = new Set(
+    Object.entries(event.constraintSources ?? {})
+      .filter(([, sourceBandId]) => sourceBandId === bandId)
+      .map(([constraintId]) => constraintId),
+  )
+  return {
+    ...event,
+    updatedAt,
+    performances: event.performances.filter((band) => band.id !== bandId),
+    sections: event.sections.map((section) => ({
+      ...section,
+      slots: section.slots.map((id) => (id === bandId ? null : id)),
+    })),
+    unassigned: event.unassigned.filter((id) => id !== bandId),
+    constraints: event.constraints.filter(
+      (constraint) => !generatedConstraintIds.has(constraint.constraint_id),
+    ),
+    constraintSources: Object.fromEntries(
+      Object.entries(event.constraintSources ?? {}).filter(
+        ([constraintId]) => !generatedConstraintIds.has(constraintId),
+      ),
+    ),
+  }
+}
 
 export function eventReducer(
   state: EventState,
@@ -201,6 +232,11 @@ export function eventReducer(
           ),
         },
         '制約を削除しました。',
+      )
+    case 'band-deleted':
+      return success(
+        removeBandFromEvent(event, action.id, action.updatedAt),
+        '出演枠を削除しました。',
       )
     case 'message':
       return success({

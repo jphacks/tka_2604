@@ -11,27 +11,6 @@ export interface RosterRow {
 export const rosterHeader = '曲名,紹介,メンバー1,メンバー2,…'
 const DESCRIPTION_HEADER = '紹介'
 
-/** 取込と同じ形式の雛形。Excelで開けるようBOM・CRLFを付ける。 */
-export function rosterTemplate() {
-  const columns = Array.from({ length: 7 }, (_, i) => `メンバー${i + 1}`)
-  const rows = [
-    ['曲名', DESCRIPTION_HEADER, ...columns],
-    [
-      '気分上々↑↑/mihimaru GT',
-      '明るいポップス。手拍子で盛り上がる',
-      '佐藤',
-      '田中',
-      '鈴木',
-    ],
-    ['ソロギターメドレー', 'アコースティックのしっとりした演奏', '田中'],
-  ]
-  return (
-    '\uFEFF' +
-    rows.map((row) => row.join(',') + ','.repeat(9 - row.length)).join('\r\n') +
-    '\r\n'
-  )
-}
-
 /** UTF-8で読めなければShift_JIS（日本語版Excelの既定）として読む。 */
 export function decodeCsv(buffer: ArrayBuffer) {
   try {
@@ -82,7 +61,7 @@ export function parseRosterCsv(
   const [head, ...body] = parseCsv(text.replace(/^\uFEFF/, ''))
   if (head?.[0]?.trim() !== '曲名')
     return {
-      error: `1行目は「${rosterHeader}」の見出しにしてください。形式は「雛形をダウンロード」で確認できます。`,
+      error: `1行目は「${rosterHeader}」の見出しにしてください。`,
     }
   const described = head[1]?.trim() === DESCRIPTION_HEADER
   const rows: RosterRow[] = []
@@ -131,5 +110,3 @@ export function planRosterImport(rows: RosterRow[], registered: Member[]) {
     ambiguous: names.filter((name) => sameName(name) > 1),
   }
 }
-
-export type RosterPlan = ReturnType<typeof planRosterImport>

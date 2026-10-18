@@ -14,8 +14,8 @@ const roster: FormRoster = {
   eventTitle: 'ライブ',
   updatedAt: '2026-10-17T00:00:00.000Z',
   bands: [
-    { bandId: 'a', bandName: 'A', description: null },
-    { bandId: 'b', bandName: 'B', description: null },
+    { bandId: 'a', bandName: 'A', description: null, requestText: null },
+    { bandId: 'b', bandName: 'B', description: null, requestText: null },
   ],
   members: [{ memberId: 'm1', memberName: '田中' }],
   memberships: [
@@ -30,6 +30,7 @@ const saved: SavedFormBand = {
     bandId: 'new',
     bandName: 'New',
     description: null,
+    requestText: null,
     memberIds: ['m1', 'm2'],
   },
   members: [
@@ -54,7 +55,14 @@ describe('public registration', () => {
     await waitFor(() => expect(result.current.data).toEqual(roster))
     await act(() => result.current.submit())
     expect(repository.create).not.toHaveBeenCalled()
-    act(() => result.current.change({ bandName: 'New', rows: [] }))
+    act(() =>
+      result.current.change({
+        bandName: 'New',
+        description: 'ロック',
+        requestText: '第2部を希望',
+        rows: [],
+      }),
+    )
     await act(() => result.current.submit())
     expect(repository.create).not.toHaveBeenCalled()
     act(() =>
@@ -71,6 +79,8 @@ describe('public registration', () => {
     expect(repository.create).toHaveBeenCalledExactlyOnceWith('event', {
       expectedUpdatedAt: roster.updatedAt,
       bandName: 'New',
+      description: 'ロック',
+      requestText: '第2部を希望',
       memberIds: ['m1'],
       newMembers: [{ memberName: '田中' }],
     })
@@ -95,6 +105,8 @@ describe('public registration', () => {
     expect(repository.update).toHaveBeenCalledExactlyOnceWith('event', 'a', {
       expectedUpdatedAt: roster.updatedAt,
       bandName: 'A',
+      description: null,
+      requestText: null,
       memberIds: [],
       newMembers: [],
     })
@@ -102,6 +114,7 @@ describe('public registration', () => {
     act(() => result.current.setMode('create'))
     expect(result.current.draft.bandId).toBe('')
     expect(result.current.draft.bandName).toBe('')
+    expect(result.current.draft.description).toBe('')
   })
   it('keeps input on conflicts, requires explicit refresh, and retries with the new timestamp', async () => {
     const { repository, result } = fixture()
@@ -112,18 +125,24 @@ describe('public registration', () => {
     act(() =>
       result.current.change({
         bandName: '保持',
+        description: '保持する紹介',
+        requestText: '保持する希望',
         rows: [{ key: '1', kind: 'existing', value: 'm1' }],
       }),
     )
     await act(() => result.current.submit())
     expect(result.current.conflict).toBe(true)
     expect(result.current.draft.bandName).toBe('保持')
+    expect(result.current.draft.description).toBe('保持する紹介')
+    expect(result.current.draft.requestText).toBe('保持する希望')
     expect(result.current.submitted).toBeNull()
     await act(() => result.current.submit())
     expect(repository.create).toHaveBeenCalledTimes(1)
     repository.get.mockResolvedValue({ ...roster, updatedAt: saved.updatedAt })
     await act(() => result.current.refresh())
     expect(result.current.draft.bandName).toBe('保持')
+    expect(result.current.draft.description).toBe('保持する紹介')
+    expect(result.current.draft.requestText).toBe('保持する希望')
     await act(() => result.current.submit())
     expect(repository.create.mock.calls[1][1].expectedUpdatedAt).toBe(
       saved.updatedAt,
@@ -144,12 +163,16 @@ describe('public registration', () => {
     act(() =>
       result.current.change({
         bandName: '保持',
+        description: '保持する紹介',
+        requestText: '保持する希望',
         rows: [{ key: '1', kind: 'new', value: '佐藤' }],
       }),
     )
     await act(() => result.current.submit())
     expect(result.current.formError).toContain('保存できません')
     expect(result.current.draft.bandName).toBe('保持')
+    expect(result.current.draft.description).toBe('保持する紹介')
+    expect(result.current.draft.requestText).toBe('保持する希望')
     expect(result.current.submitted).toBeNull()
   })
 })

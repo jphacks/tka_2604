@@ -3,7 +3,7 @@
   "info": {
     "title": "Setly API",
     "version": "0.0.0",
-    "description": "実装済みのAPIは18操作です。イベント一覧・作成・設定変更・論理削除、出演順と制約の取得・保存、チャット履歴・送信、保存済みデータからの計算、公開フォームの名簿取得・バンド登録・更新を提供します。\n\n公開フォーム（Form）はURLを知る人が認証なしで利用できます。その他のイベント操作も認証APIは未接続で、現在はサーバー側の仮所有者demo-ownerを使います。固定のモックイベントを返すAPIではなく、配信環境のD1を読み書きします。\n\nバンド本体の削除は管理用DELETE /api/events/{eventId}/bands/{bandId}を使います。メンバー本体の削除APIは未実装です。更新フォームでの削除はバンドとメンバーの所属解除であり、バンド・メンバーのレコードは残ります。\n\n更新系APIのexpectedUpdatedAtには編集元データのGET応答に含まれるupdatedAtを指定してください。更新競合は409です。Try it outでの保存・計算・イベント削除は、この配信環境のDBへ反映されます。"
+    "description": "実装済みのAPIは18操作です。イベント一覧・作成・設定変更・論理削除、出演順と制約の取得・保存、チャット履歴・送信・判断記録、保存済みデータからの計算、公開フォームの名簿取得・出演枠登録・更新を提供します。\n\n公開フォーム（Form）はURLを知る人が認証なしで利用できます。その他のイベント操作も認証APIは未接続で、現在はサーバー側の仮所有者demo-ownerを使います。固定のモックイベントを返すAPIではなく、配信環境のD1を読み書きします。\n\n出演枠本体の削除は管理用DELETE /api/events/{eventId}/bands/{bandId}を使います。メンバー本体の削除APIは未実装です。更新フォームでの削除は出演枠とメンバーの所属解除であり、出演枠・メンバーのレコードは残ります。\n\n更新系APIのexpectedUpdatedAtには編集元データのGET応答に含まれるupdatedAtを指定してください。更新競合は409です。Try it outでの保存・計算・イベント削除は、この配信環境のDBへ反映されます。"
   },
   "servers": [
     {
@@ -94,12 +94,12 @@
                           "performanceCount": {
                             "type": "integer",
                             "minimum": 0,
-                            "description": "未配置を含む登録バンド数"
+                            "description": "未配置を含む登録組数"
                           },
                           "assignedCount": {
                             "type": "integer",
                             "minimum": 0,
-                            "description": "配置済みバンド数"
+                            "description": "配置済み組数"
                           },
                           "partCount": {
                             "type": "integer",
@@ -480,7 +480,7 @@
                       "minimum": 1,
                       "maximum": 20
                     },
-                    "description": "部順の設定バンド数。配列の長さが部数。省略時は1部4組。"
+                    "description": "部順の設定組数。配列の長さが部数。省略時は1部4組。"
                   }
                 },
                 "required": ["title"],
@@ -514,7 +514,7 @@
       "get": {
         "operationId": "getEvent",
         "summary": "イベント本体を取得する",
-        "description": "認証は#57で追加する。現在はデモユーザーdemo-ownerのイベントに限定し、クライアントから所有者IDを受け取らない。 バンド・メンバー・部・配置・制約・チャットは含めない。存在しない・削除済み・対象所有者以外は404。",
+        "description": "認証は#57で追加する。現在はデモユーザーdemo-ownerのイベントに限定し、クライアントから所有者IDを受け取らない。 出演枠・メンバー・部・配置・制約・チャットは含めない。存在しない・削除済み・対象所有者以外は404。",
         "tags": ["Events"],
         "security": [],
         "responses": {
@@ -1187,7 +1187,7 @@
       "get": {
         "operationId": "getEventSchedule",
         "summary": "表情報を取得する",
-        "description": "認証は#57で追加する。現在はdemo-ownerの所有する未削除イベントに限定し、クライアントから所有者IDを受け取らない。取得でデータ保存・LLM・Solverの呼出しを行わない。 バンド・メンバー・所属・部・配置・未配置を返す。バンドと未配置はbandId昇順、メンバーはmemberId昇順、所属はbandId・memberId昇順、部はsortOrder昇順、配置は部の順・order昇順。sortOrder・orderは0始まり。各部の設定枠数はbandCountとして保存・取得する。orderの欠番は未設定の位置として保持し、空き枠は設定枠数と配置位置から画面で組み立てる。",
+        "description": "認証は#57で追加する。現在はdemo-ownerの所有する未削除イベントに限定し、クライアントから所有者IDを受け取らない。取得でデータ保存・LLM・Solverの呼出しを行わない。 出演枠・メンバー・所属・部・配置・未配置を返す。出演枠と未配置はbandId昇順、メンバーはmemberId昇順、所属はbandId・memberId昇順、部はsortOrder昇順、配置は部の順・order昇順。sortOrder・orderは0始まり。各部の設定枠数はbandCountとして保存・取得する。orderの欠番は未設定の位置として保持し、空き枠は設定枠数と配置位置から画面で組み立てる。",
         "tags": ["Schedule"],
         "security": [],
         "parameters": [
@@ -1371,7 +1371,7 @@
       "post": {
         "operationId": "saveEventSchedule",
         "summary": "表を保存する",
-        "description": "demo-ownerの未削除イベントに限定。expectedUpdatedAtによる競合検出を行う。成功応答のupdatedAtを次の保存・計算リクエストへ渡す。保存ではSolverを呼ばない。各リクエストは原子的だが、2つの保存をまたぐトランザクションは設けない。 部内orderは重複のない0始まりの整数。欠番を未設定位置として保持し、自動で詰めない。orderは20・登録バンド数・保存済み最大order+1の最大値未満。",
+        "description": "demo-ownerの未削除イベントに限定。expectedUpdatedAtによる競合検出を行う。成功応答のupdatedAtを次の保存・計算リクエストへ渡す。保存ではSolverを呼ばない。各リクエストは原子的だが、2つの保存をまたぐトランザクションは設けない。 部内orderは重複のない0始まりの整数。欠番を未設定位置として保持し、自動で詰めない。orderは20・登録組数・保存済み最大order+1の最大値未満。",
         "tags": ["Schedule"],
         "security": [],
         "parameters": [
@@ -3863,7 +3863,7 @@
         "summary": "フォームの選択用名簿を取得する",
         "tags": ["Form"],
         "security": [],
-        "description": "URLを知る人が認証なしで利用できる。削除済みイベントは対象外。公開応答はID・名前・所属と更新日時だけで、希望・連絡先・回答・制約・配置は含めない。",
+        "description": "URLを知る人が認証なしで利用できる。削除済みイベントは対象外。公開応答はID・名前・紹介・希望原文・所属と更新日時を返す。連絡先・回答履歴・制約・配置は含めない。",
         "responses": {
           "200": {
             "description": "取得成功",
@@ -3876,7 +3876,7 @@
             }
           },
           "404": {
-            "description": "イベントまたは対象バンドが存在しない",
+            "description": "イベントまたは対象出演枠が存在しない",
             "content": {
               "application/json": {
                 "schema": {
@@ -3980,10 +3980,10 @@
       ],
       "post": {
         "operationId": "createFormBand",
-        "summary": "フォームからバンドと所属メンバーを登録する",
+        "summary": "フォームから出演枠と所属メンバーを登録する",
         "tags": ["Form"],
         "security": [],
-        "description": "URLを知る人が認証なしで利用できる。削除済みイベントは対象外。公開応答はID・名前・所属と更新日時だけで、希望・連絡先・回答・制約・配置は含めない。 保存時にexpectedUpdatedAtを再確認し、Band・Member・所属・Event.updatedAtを同じD1 batchで保存する。希望・制約・配置は保持し、LLM・Solverは呼ばない。 初回登録は所属メンバー合計1〜20人です。同じ名前をnewMembersへ入力しても既存の人とは統合せず、新しいメンバーIDを発行します。",
+        "description": "URLを知る人が認証なしで利用できる。削除済みイベントは対象外。公開応答はID・名前・紹介・希望原文・所属と更新日時を返す。連絡先・回答履歴・制約・配置は含めない。 保存時にexpectedUpdatedAtを再確認し、Band・Member・所属・Event.updatedAtを同じD1 batchで保存する。紹介と希望原文は独立に保存する。希望の変更時はpending、空なら状態もnull。同じ希望なら変換状態は保持する。既存の制約・配置は保持し、LLM・Solverは呼ばない。 初回登録は所属メンバー合計1〜20人です。同じ名前をnewMembersへ入力しても既存の人とは統合せず、新しいメンバーIDを発行します。",
         "responses": {
           "201": {
             "description": "登録成功",
@@ -3996,7 +3996,7 @@
             }
           },
           "404": {
-            "description": "イベントまたは対象バンドが存在しない",
+            "description": "イベントまたは対象出演枠が存在しない",
             "content": {
               "application/json": {
                 "schema": {
@@ -4282,10 +4282,10 @@
       ],
       "patch": {
         "operationId": "updateFormBand",
-        "summary": "バンド名と所属を更新する（追加・差し替え・所属解除）",
+        "summary": "出演名と所属を更新する（追加・差し替え・所属解除）",
         "tags": ["Form"],
         "security": [],
-        "description": "URLを知る人が認証なしで利用できる。削除済みイベントは対象外。公開応答はID・名前・所属と更新日時だけで、希望・連絡先・回答・制約・配置は含めない。 保存時にexpectedUpdatedAtを再確認し、Band・Member・所属・Event.updatedAtを同じD1 batchで保存する。希望・制約・配置は保持し、LLM・Solverは呼ばない。 bandNameだけの更新も可能です。所属を変更する場合はmemberIdsとnewMembersを両方指定し、更新後の所属全体（合計0〜20人）を送ります。両方を空配列にすると全員の所属を解除しますが、バンド本体やメンバー本体は削除しません。他バンドの所属・元の人の名前は保持します。バンド本体を削除する場合は管理用DELETE /api/events/{eventId}/bands/{bandId}を使います。",
+        "description": "URLを知る人が認証なしで利用できる。削除済みイベントは対象外。公開応答はID・名前・紹介・希望原文・所属と更新日時を返す。連絡先・回答履歴・制約・配置は含めない。 保存時にexpectedUpdatedAtを再確認し、Band・Member・所属・Event.updatedAtを同じD1 batchで保存する。紹介と希望原文は独立に保存する。希望の変更時はpending、空なら状態もnull。同じ希望なら変換状態は保持する。既存の制約・配置は保持し、LLM・Solverは呼ばない。 bandNameだけの更新も可能です。所属を変更する場合はmemberIdsとnewMembersを両方指定し、更新後の所属全体（合計0〜20人）を送ります。両方を空配列にすると全員の所属を解除しますが、出演枠本体やメンバー本体は削除しません。他の出演枠の所属・元の人の名前は保持します。出演枠本体を削除する場合は管理用DELETE /api/events/{eventId}/bands/{bandId}を使います。",
         "responses": {
           "200": {
             "description": "更新成功",
@@ -4298,7 +4298,7 @@
             }
           },
           "404": {
-            "description": "イベントまたは対象バンドが存在しない",
+            "description": "イベントまたは対象出演枠が存在しない",
             "content": {
               "application/json": {
                 "schema": {
@@ -4527,10 +4527,10 @@
               },
               "examples": {
                 "renameBand": {
-                  "summary": "バンド名だけを変更する",
+                  "summary": "出演名だけを変更する",
                   "value": {
                     "expectedUpdatedAt": "2026-10-18T00:00:00.000Z",
-                    "bandName": "新しいバンド名"
+                    "bandName": "新しい出演名"
                   }
                 },
                 "replaceMembers": {
@@ -4546,7 +4546,7 @@
                   }
                 },
                 "unlinkAllMembers": {
-                  "summary": "全員の所属を解除する（バンド・メンバーは残る）",
+                  "summary": "全員の所属を解除する（出演枠・メンバーは残る）",
                   "value": {
                     "expectedUpdatedAt": "2026-10-18T00:00:00.000Z",
                     "memberIds": [],
@@ -4582,10 +4582,10 @@
       ],
       "delete": {
         "operationId": "deleteEventBand",
-        "summary": "バンド本体を削除する",
+        "summary": "出演枠本体を削除する",
         "tags": ["Events"],
         "security": [],
-        "description": "現在は仮所有者demo-ownerの未削除イベントに限定する管理用API。公開フォームの所属解除とは別。expectedUpdatedAtで競合を検出し、バンド本体・希望・所属・配置とイベント更新日時を同じD1 batchで変更する。残る配置のorderは変更せず、削除した位置を未設定のまま残す。メンバー名簿、他バンドの所属、部、生成元が異なる制約、チャットを保持する。制約参照・削除後の位置範囲は削除を妨げない。生成元sourceBandIdが削除対象を指す制約は、有効状態や対象IDにかかわらず同じD1 batchで削除する。それ以外の制約JSONは保持する。存在しない対象IDや範囲外の指定を含む制約が残ることを許容する。残る制約を自動変更せず、配置変化による達成状況は再評価する。最後のバンドも削除できる。取得時の更新日時から変更があれば409、別所有者・削除済みイベント・別イベントのバンドは404。",
+        "description": "現在は仮所有者demo-ownerの未削除イベントに限定する管理用API。公開フォームの所属解除とは別。expectedUpdatedAtで競合を検出し、出演枠本体・希望・所属・配置とイベント更新日時を同じD1 batchで変更する。残る配置のorderは変更せず、削除した位置を未設定のまま残す。メンバー名簿、他の出演枠の所属、部、生成元が異なる制約、チャットを保持する。制約参照・削除後の位置範囲は削除を妨げない。生成元sourceBandIdが削除対象を指す制約は、有効状態や対象IDにかかわらず同じD1 batchで削除する。それ以外の制約JSONは保持する。存在しない対象IDや範囲外の指定を含む制約が残ることを許容する。残る制約を自動変更せず、配置変化による達成状況は再評価する。最後の出演枠も削除できる。取得時の更新日時から変更があれば409、別所有者・削除済みイベント・別イベントの出演枠は404。",
         "requestBody": {
           "required": true,
           "content": {
@@ -4609,7 +4609,7 @@
         },
         "responses": {
           "200": {
-            "description": "バンド本体・所属・配置の削除成功。再取得に使う更新日時を返す。",
+            "description": "出演枠本体・所属・配置の削除成功。再取得に使う更新日時を返す。",
             "content": {
               "application/json": {
                 "schema": {
@@ -4681,7 +4681,7 @@
             }
           },
           "404": {
-            "description": "イベントまたは対象バンドが存在しない",
+            "description": "イベントまたは対象出演枠が存在しない",
             "content": {
               "application/json": {
                 "schema": {
@@ -4924,7 +4924,7 @@
                 },
                 "description": {
                   "type": ["string", "null"],
-                  "description": "ジャンル・雰囲気などのバンド紹介。並べ替え案で使用する"
+                  "description": "ジャンル・雰囲気などの紹介。並べ替え案で使用する"
                 },
                 "requestText": {
                   "type": ["string", "null"]
@@ -5901,7 +5901,7 @@
       "FormBand": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["bandId", "bandName", "description"],
+        "required": ["bandId", "bandName", "description", "requestText"],
         "properties": {
           "bandId": {
             "type": "string",
@@ -5912,7 +5912,11 @@
           },
           "description": {
             "type": ["string", "null"],
-            "description": "ジャンル・雰囲気などのバンド紹介。AIの並べ替え案で使用する"
+            "description": "ジャンル・雰囲気などの紹介。AIの並べ替え案で使用する"
+          },
+          "requestText": {
+            "type": ["string", "null"],
+            "description": "出演順・時間帯などの制約の希望原文。紹介とは別に保存。前後空白を除去し、空文字・nullで消去。省略時は保持（新規はnull）。希望の変更時はpending、消去時は状態もnull。LLM・Solverは呼ばない。"
           }
         }
       },
@@ -5987,7 +5991,13 @@
           "band": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["bandId", "bandName", "description", "memberIds"],
+            "required": [
+              "bandId",
+              "bandName",
+              "description",
+              "memberIds",
+              "requestText"
+            ],
             "properties": {
               "bandId": {
                 "type": "string",
@@ -5998,7 +6008,7 @@
               },
               "description": {
                 "type": ["string", "null"],
-                "description": "ジャンル・雰囲気などのバンド紹介。AIの並べ替え案で使用する"
+                "description": "ジャンル・雰囲気などの紹介。AIの並べ替え案で使用する"
               },
               "memberIds": {
                 "type": "array",
@@ -6007,6 +6017,10 @@
                   "minLength": 1
                 },
                 "uniqueItems": true
+              },
+              "requestText": {
+                "type": ["string", "null"],
+                "description": "出演順・時間帯などの制約の希望原文。紹介とは別に保存。前後空白を除去し、空文字・nullで消去。省略時は保持（新規はnull）。希望の変更時はpending、消去時は状態もnull。LLM・Solverは呼ばない。"
               }
             }
           },
@@ -6041,7 +6055,7 @@
           "description": {
             "type": ["string", "null"],
             "maxLength": 500,
-            "description": "ジャンル・雰囲気などのバンド紹介（500文字まで）。空文字・nullで消去。省略時は変更しない（追加時はnull）"
+            "description": "ジャンル・雰囲気などの紹介（500文字まで）。空文字・nullで消去。省略時は変更しない（追加時はnull）"
           },
           "memberIds": {
             "type": "array",
@@ -6068,6 +6082,10 @@
               }
             },
             "maxItems": 20
+          },
+          "requestText": {
+            "type": ["string", "null"],
+            "description": "出演順・時間帯などの制約の希望原文。紹介とは別に保存。前後空白を除去し、空文字・nullで消去。省略時は保持（新規はnull）。希望の変更時はpending、消去時は状態もnull。LLM・Solverは呼ばない。"
           }
         },
         "allOf": [
@@ -6110,7 +6128,7 @@
           "description": {
             "type": ["string", "null"],
             "maxLength": 500,
-            "description": "ジャンル・雰囲気などのバンド紹介（500文字まで）。空文字・nullで消去。省略時は変更しない（追加時はnull）"
+            "description": "ジャンル・雰囲気などの紹介（500文字まで）。空文字・nullで消去。省略時は変更しない（追加時はnull）"
           },
           "memberIds": {
             "type": "array",
@@ -6137,6 +6155,10 @@
               }
             },
             "maxItems": 20
+          },
+          "requestText": {
+            "type": ["string", "null"],
+            "description": "出演順・時間帯などの制約の希望原文。紹介とは別に保存。前後空白を除去し、空文字・nullで消去。省略時は保持（新規はnull）。希望の変更時はpending、消去時は状態もnull。LLM・Solverは呼ばない。"
           }
         },
         "dependentRequired": {
@@ -6151,7 +6173,7 @@
             "required": ["memberIds", "newMembers"]
           }
         ],
-        "description": "memberIdsとnewMembersの合計は0〜20人。両配列を指定すると対象バンドの所属を全置換し、省略時は保持する。所属解除後もMemberは名簿に残り、他バンド所属も保持する。"
+        "description": "memberIdsとnewMembersの合計は0〜20人。両配列を指定すると対象出演枠の所属を全置換し、省略時は保持する。所属解除後もMemberは名簿に残り、他の出演枠所属も保持する。"
       },
       "ChatProposedConstraint": {
         "oneOf": [
@@ -6399,15 +6421,15 @@
     },
     {
       "name": "Events",
-      "description": "イベント一覧・作成・基本情報・設定変更・イベント全体の論理削除と、確認後のバンド本体削除。"
+      "description": "イベント一覧・作成・基本情報・設定変更・イベント全体の論理削除と、確認後の出演枠本体削除。"
     },
     {
       "name": "Form",
-      "description": "公開フォームの名簿取得・バンド初回登録・所属編集。新規は1〜20人、更新は0〜20人。所属解除してもバンドとメンバーは名簿に残ります。バンド本体削除はEventsの管理用DELETEを使います。"
+      "description": "公開フォームの名簿取得・出演枠初回登録・所属編集。新規は1〜20人、更新は0〜20人。所属解除しても出演枠とメンバーは名簿に残ります。出演枠本体削除はEventsの管理用DELETEを使います。"
     },
     {
       "name": "Schedule",
-      "description": "部・名簿・配置の取得と、出演順だけの保存。既存バンドの削除には使えません。"
+      "description": "部・名簿・配置の取得と、出演順だけの保存。既存出演枠の削除には使えません。"
     },
     {
       "name": "Constraints",

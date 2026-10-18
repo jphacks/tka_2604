@@ -55,7 +55,7 @@ export function ConstraintsPanel({
           ({ constraint, text, status, detail }) => (
             <article
               key={constraint.constraint_id}
-              className={`rounded-lg border p-3 ${status === 'unmet' && constraint.hardness === 'hard' ? 'border-red-200 bg-red-50/30' : 'border-line'}`}
+              className={`rounded-lg border p-3 ${!constraint.enabled ? 'border-slate-200 bg-slate-50/70' : (status === 'unmet' || status === 'invalid') && constraint.hardness === 'hard' ? 'border-red-200 bg-red-50/30' : constraint.hardness === 'hard' || status === 'met' ? 'border-sky-200 bg-sky-50/40' : status === 'unmet' || status === 'invalid' ? 'border-amber-200 bg-amber-50/40' : 'border-slate-200 bg-slate-50/70'}`}
             >
               <div className="mb-3 flex items-start gap-2">
                 <input
@@ -74,22 +74,6 @@ export function ConstraintsPanel({
                 >
                   {text}
                 </h3>
-                <Button
-                  variant="ghost"
-                  className="px-1.5"
-                  aria-label={`${text}を編集`}
-                  onClick={() => setEditing(constraint)}
-                >
-                  <Icon name="edit" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="px-1.5 hover:text-red-600"
-                  aria-label={`${text}を削除`}
-                  onClick={() => setDeleting(constraint)}
-                >
-                  <Icon name="trash" />
-                </Button>
               </div>
               <ConstraintControls
                 label={text}
@@ -107,11 +91,31 @@ export function ConstraintsPanel({
                 }
               />
               <p
-                className={`mt-3 text-xs leading-6 ${status === 'met' ? 'text-emerald-700' : status === 'unmet' || status === 'invalid' ? 'text-red-700' : 'text-muted'}`}
+                className={`mt-3 text-xs leading-6 ${status === 'met' ? 'text-emerald-700' : status === 'unmet' || status === 'invalid' ? (constraint.hardness === 'hard' ? 'text-red-700' : 'text-amber-800') : 'text-muted'}`}
               >
                 {status === 'met' ? '✓ ' : ''}
                 {detail}
               </p>
+              <div className="mt-2 flex justify-end gap-1 border-t border-line/60 pt-2">
+                <Button
+                  variant="ghost"
+                  className="px-2"
+                  aria-label={`${text}を編集`}
+                  onClick={() => setEditing(constraint)}
+                >
+                  <Icon name="edit" />
+                  編集
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="px-2 hover:text-red-600"
+                  aria-label={`${text}を削除`}
+                  onClick={() => setDeleting(constraint)}
+                >
+                  <Icon name="trash" />
+                  削除
+                </Button>
+              </div>
             </article>
           ),
         )}

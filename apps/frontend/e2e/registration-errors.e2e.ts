@@ -7,10 +7,8 @@ test('public registration adds name rows, reuses existing IDs, distinguishes sam
   const { writes } = await mockRegistrationApi(page)
   await page.goto('/event/public-live/forms')
   await page.getByRole('button', { name: '出演登録を送信' }).click()
-  await expect(page.getByRole('alert')).toContainText('バンド名')
-  await page
-    .getByRole('textbox', { name: 'バンド名 必須' })
-    .fill('新しいバンド')
+  await expect(page.getByRole('alert')).toContainText('出演名')
+  await page.getByRole('textbox', { name: '出演名 必須' }).fill('新しい出演枠')
   await page.getByRole('button', { name: 'メンバー1を削除' }).click()
   await page.getByRole('button', { name: '出演登録を送信' }).click()
   await expect(page.getByRole('alert')).toContainText('1〜20人')
@@ -33,11 +31,11 @@ test('public registration adds name rows, reuses existing IDs, distinguishes sam
   await page.reload()
   await page.getByRole('radio', { name: /登録内容の更新/ }).check()
   await page
-    .getByRole('combobox', { name: '更新するバンド' })
+    .getByRole('combobox', { name: '更新する出演枠' })
     .selectOption('new-0')
-  await expect(
-    page.getByRole('textbox', { name: 'バンド名 必須' }),
-  ).toHaveValue('新しいバンド')
+  await expect(page.getByRole('textbox', { name: '出演名 必須' })).toHaveValue(
+    '新しい出演枠',
+  )
   await expect(
     page.getByRole('combobox', { name: 'メンバー1を名簿から選択' }),
   ).toHaveValue('m1')
@@ -56,13 +54,13 @@ test('updates only the chosen band, removes everyone and re-adds the same ID', a
   await page.keyboard.press('ArrowRight')
   await expect(update).toBeChecked()
   await expect(page.getByRole('button', { name: '変更を保存' })).toBeDisabled()
-  const band = page.getByRole('combobox', { name: '更新するバンド' })
+  const band = page.getByRole('combobox', { name: '更新する出演枠' })
   await band.selectOption('a')
-  await page.getByRole('textbox', { name: 'バンド名 必須' }).fill('変更中')
+  await page.getByRole('textbox', { name: '出演名 必須' }).fill('変更中')
   await band.selectOption('b')
-  await expect(
-    page.getByRole('textbox', { name: 'バンド名 必須' }),
-  ).toHaveValue('ブルーノート')
+  await expect(page.getByRole('textbox', { name: '出演名 必須' })).toHaveValue(
+    'ブルーノート',
+  )
   await band.selectOption('a')
   await page.getByRole('button', { name: 'メンバー2を削除' }).click()
   await page.getByRole('button', { name: 'メンバー1を削除' }).click()
@@ -99,8 +97,8 @@ test('conflicts and failures keep input and require refresh before retry', async
   const api = await mockRegistrationApi(page)
   await page.goto('/event/public-live/forms')
   await page
-    .getByRole('textbox', { name: 'バンド名 必須' })
-    .fill('保持するバンド')
+    .getByRole('textbox', { name: '出演名 必須' })
+    .fill('保持する出演枠')
   await page.getByRole('textbox', { name: 'メンバー1の名前' }).fill('佐藤')
   api.fail(409)
   await page.getByRole('button', { name: '出演登録を送信' }).click()
@@ -119,9 +117,9 @@ test('conflicts and failures keep input and require refresh before retry', async
   api.fail(500)
   await page.getByRole('button', { name: '出演登録を送信' }).click()
   await expect(page.getByRole('alert')).toContainText('保存に失敗')
-  await expect(
-    page.getByRole('textbox', { name: 'バンド名 必須' }),
-  ).toHaveValue('保持するバンド')
+  await expect(page.getByRole('textbox', { name: '出演名 必須' })).toHaveValue(
+    '保持する出演枠',
+  )
   expect(api.writes).toHaveLength(0)
 })
 
@@ -132,7 +130,7 @@ test('registration remains usable at mobile width without horizontal overflow', 
   await mockRegistrationApi(page)
   await page.goto('/event/public-live/forms')
   await page.getByRole('radio', { name: /登録内容の更新/ }).check()
-  await page.getByRole('combobox', { name: '更新するバンド' }).selectOption('a')
+  await page.getByRole('combobox', { name: '更新する出演枠' }).selectOption('a')
   await expect(page.getByRole('button', { name: '変更を保存' })).toBeVisible()
   expect(
     await page.evaluate(
@@ -140,3 +138,64 @@ test('registration remains usable at mobile width without horizontal overflow', 
     ),
   ).toBe(true)
 })
+
+for (const width of [390, 1280]) {
+  test(`registration shares header geometry with other screens and stays fixed at both scroll edges at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto('/login')
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await expect(page).toHaveURL(/\/event$/)
+    await page.evaluate(() => document.fonts.ready)
+    const expectedHeader = await page.getByRole('banner').boundingBox()
+    const expectedBrand = await page
+      .getByRole('link', { name: 'Setly ホーム' })
+      .boundingBox()
+    await mockRegistrationApi(page)
+    await page.goto('/event/public-live/forms')
+    const header = page.getByRole('banner')
+    await expect(header).toBeVisible()
+    expect(await header.boundingBox()).toEqual(expectedHeader)
+    expect(
+      await page.getByRole('link', { name: 'Setly ホーム' }).boundingBox(),
+    ).toEqual(expectedBrand)
+    await expect(
+      page.getByText('出演者向けフォーム', { exact: true }),
+    ).toBeVisible()
+    for (let row = 0; row < 4; row++)
+      await page.getByRole('button', { name: 'メンバーの行を追加' }).click()
+    const submit = page.getByRole('button', { name: '出演登録を送信' })
+    await submit.scrollIntoViewIfNeeded()
+    const content = page.getByRole('main')
+    expect(await content.evaluate((node) => node.scrollTop)).toBeGreaterThan(
+      500,
+    )
+    expect(await page.evaluate(() => window.scrollY)).toBe(0)
+    await expect(submit).toBeInViewport()
+    await expect(header).toBeInViewport({ ratio: 1 })
+    expect((await header.boundingBox())?.y).toBe(0)
+    for (const delta of [3000, -3000]) {
+      await content.evaluate((node, end) => {
+        node.scrollTop = end ? node.scrollHeight : 0
+      }, delta > 0)
+      const scrollTop = await content.evaluate((node) => node.scrollTop)
+      await content.hover()
+      await page.mouse.wheel(0, delta)
+      // Wait for the wheel event to be processed, including scroll chaining.
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+          }),
+      )
+      expect(await content.evaluate((node) => node.scrollTop)).toBe(scrollTop)
+      expect(await page.evaluate(() => window.scrollY)).toBe(0)
+      expect((await header.boundingBox())?.y).toBe(0)
+    }
+    await submit.scrollIntoViewIfNeeded()
+    await page.screenshot({
+      path: `test-results/registration-fixed-${width}.png`,
+    })
+  })
+}
