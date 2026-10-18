@@ -14,8 +14,8 @@ const roster: FormRoster = {
   eventTitle: 'ライブ',
   updatedAt: '2026-10-17T00:00:00.000Z',
   bands: [
-    { bandId: 'a', bandName: 'A', description: null },
-    { bandId: 'b', bandName: 'B', description: null },
+    { bandId: 'a', bandName: 'A', description: null, requestText: null },
+    { bandId: 'b', bandName: 'B', description: null, requestText: null },
   ],
   members: [{ memberId: 'm1', memberName: '田中' }],
   memberships: [
@@ -30,6 +30,7 @@ const saved: SavedFormBand = {
     bandId: 'new',
     bandName: 'New',
     description: null,
+    requestText: null,
     memberIds: ['m1', 'm2'],
   },
   members: [
@@ -58,6 +59,7 @@ describe('public registration', () => {
       result.current.change({
         bandName: 'New',
         description: 'ロック',
+        requestText: '第2部を希望',
         rows: [],
       }),
     )
@@ -78,6 +80,7 @@ describe('public registration', () => {
       expectedUpdatedAt: roster.updatedAt,
       bandName: 'New',
       description: 'ロック',
+      requestText: '第2部を希望',
       memberIds: ['m1'],
       newMembers: [{ memberName: '田中' }],
     })
@@ -103,6 +106,7 @@ describe('public registration', () => {
       expectedUpdatedAt: roster.updatedAt,
       bandName: 'A',
       description: null,
+      requestText: null,
       memberIds: [],
       newMembers: [],
     })
@@ -122,6 +126,7 @@ describe('public registration', () => {
       result.current.change({
         bandName: '保持',
         description: '保持する紹介',
+        requestText: '保持する希望',
         rows: [{ key: '1', kind: 'existing', value: 'm1' }],
       }),
     )
@@ -129,6 +134,7 @@ describe('public registration', () => {
     expect(result.current.conflict).toBe(true)
     expect(result.current.draft.bandName).toBe('保持')
     expect(result.current.draft.description).toBe('保持する紹介')
+    expect(result.current.draft.requestText).toBe('保持する希望')
     expect(result.current.submitted).toBeNull()
     await act(() => result.current.submit())
     expect(repository.create).toHaveBeenCalledTimes(1)
@@ -136,6 +142,7 @@ describe('public registration', () => {
     await act(() => result.current.refresh())
     expect(result.current.draft.bandName).toBe('保持')
     expect(result.current.draft.description).toBe('保持する紹介')
+    expect(result.current.draft.requestText).toBe('保持する希望')
     await act(() => result.current.submit())
     expect(repository.create.mock.calls[1][1].expectedUpdatedAt).toBe(
       saved.updatedAt,
@@ -157,6 +164,7 @@ describe('public registration', () => {
       result.current.change({
         bandName: '保持',
         description: '保持する紹介',
+        requestText: '保持する希望',
         rows: [{ key: '1', kind: 'new', value: '佐藤' }],
       }),
     )
@@ -164,6 +172,7 @@ describe('public registration', () => {
     expect(result.current.formError).toContain('保存できません')
     expect(result.current.draft.bandName).toBe('保持')
     expect(result.current.draft.description).toBe('保持する紹介')
+    expect(result.current.draft.requestText).toBe('保持する希望')
     expect(result.current.submitted).toBeNull()
   })
 })

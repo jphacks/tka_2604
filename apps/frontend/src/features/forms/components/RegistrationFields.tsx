@@ -83,6 +83,23 @@ export function RegistrationFields({
               ジャンルや雰囲気などを500文字以内で入力してください。AIによる並べ替えの参考にします。
             </span>
           </label>
+          <label className="block text-sm font-medium">
+            制約の希望（任意）
+            <Textarea
+              value={draft.requestText}
+              onChange={(event) => change({ requestText: event.target.value })}
+              rows={4}
+              placeholder="例：第2部の出演を希望します。"
+              className="mt-2 w-full text-sm"
+              aria-describedby="request-text-help"
+            />
+            <span
+              id="request-text-help"
+              className="mt-2 block text-xs leading-6 font-normal text-muted"
+            >
+              出演順や時間帯などの希望を入力してください。希望は原文で保存されます。主催者による確認・制約への反映が必要です。
+            </span>
+          </label>
           <section aria-labelledby="members-heading">
             <div className="mb-2 flex items-center justify-between gap-3">
               <h2 id="members-heading" className="text-sm font-semibold">

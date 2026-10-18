@@ -13,6 +13,7 @@ export interface MemberRow {
 export interface RegistrationDraft {
   bandId: string
   bandName: string
+  requestText: string
   description: string
   rows: MemberRow[]
 }
@@ -20,7 +21,13 @@ export function newMemberRow(kind: MemberRow['kind'] = 'new'): MemberRow {
   return { key: crypto.randomUUID(), kind, value: '' }
 }
 export function emptyRegistration(): RegistrationDraft {
-  return { bandId: '', bandName: '', description: '', rows: [newMemberRow()] }
+  return {
+    bandId: '',
+    bandName: '',
+    description: '',
+    requestText: '',
+    rows: [newMemberRow()],
+  }
 }
 export function selectBand(
   roster: FormRoster,
@@ -32,6 +39,8 @@ export function selectBand(
       roster.bands.find((band) => band.bandId === bandId)?.bandName ?? '',
     description:
       roster.bands.find((band) => band.bandId === bandId)?.description ?? '',
+    requestText:
+      roster.bands.find((band) => band.bandId === bandId)?.requestText ?? '',
     rows: roster.memberships
       .filter((item) => item.bandId === bandId)
       .map((item) => ({
@@ -100,6 +109,7 @@ export function registrationInput(
     expectedUpdatedAt: roster.updatedAt,
     bandName,
     description: description || null,
+    requestText: draft.requestText.trim() || null,
     memberIds,
     newMembers,
   }
@@ -117,6 +127,7 @@ export function applySavedBand(
         bandId: saved.band.bandId,
         bandName: saved.band.bandName,
         description: saved.band.description,
+        requestText: saved.band.requestText,
       },
     ],
     members: [

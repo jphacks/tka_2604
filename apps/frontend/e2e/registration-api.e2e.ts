@@ -291,6 +291,10 @@ test('band descriptions persist through form creation, editing, reload and clear
       .fill('紹介付きバンド')
     await page.getByRole('textbox', { name: 'メンバー1の名前' }).fill('出演者')
     await field.fill(description)
+    const requestField = page.getByRole('textbox', {
+      name: '制約の希望（任意）',
+    })
+    await requestField.fill('第2部を希望します。')
     await expect(field).toHaveAttribute('maxlength', '500')
     const savedResponse = page.waitForResponse(
       (response) =>
@@ -303,10 +307,13 @@ test('band descriptions persist through form creation, editing, reload and clear
     const saved = (await response.json()) as SavedFormBand
     const bandId = saved.band.bandId
     expect(saved.band.description).toBe(description)
+    expect(saved.band.requestText).toBe('第2部を希望します。')
+    expect((await readBand(bandId))?.requestText).toBe('第2部を希望します。')
     expect((await readBand(bandId))?.description).toBe(description)
 
     await page.goto(`${formUrl}?bandId=${bandId}`)
     await expect(field).toHaveValue(description)
+    await expect(requestField).toHaveValue('第2部を希望します。')
     await page.setViewportSize({ width: 390, height: 844 })
     await expect(field).toBeVisible()
     await page.screenshot({
@@ -314,12 +321,14 @@ test('band descriptions persist through form creation, editing, reload and clear
       fullPage: true,
     })
     await field.fill('ジャズ中心の落ち着いた雰囲気')
+    await requestField.fill('前半を希望します。')
     await submit('変更を保存', '登録内容を更新しました')
     expect((await readBand(bandId))?.description).toBe(
       'ジャズ中心の落ち着いた雰囲気',
     )
     await page.reload()
     await expect(field).toHaveValue('ジャズ中心の落ち着いた雰囲気')
+    await expect(requestField).toHaveValue('前半を希望します。')
 
     // Editing other fields must keep the saved introduction.
     await page
@@ -333,8 +342,15 @@ test('band descriptions persist through form creation, editing, reload and clear
     await field.fill('   ')
     await submit('変更を保存', '登録内容を更新しました')
     expect((await readBand(bandId))?.description).toBeNull()
+    expect((await readBand(bandId))?.requestText).toBe('前半を希望します。')
     await page.reload()
     await expect(field).toHaveValue('')
+    await expect(requestField).toHaveValue('前半を希望します。')
+    await requestField.fill('  ')
+    await submit('変更を保存', '登録内容を更新しました')
+    expect((await readBand(bandId))?.requestText).toBeNull()
+    await page.reload()
+    await expect(requestField).toHaveValue('')
 
     await page.getByRole('radio', { name: /初回登録/ }).check()
     await expect(field).toHaveValue('')

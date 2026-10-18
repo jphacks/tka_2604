@@ -136,7 +136,7 @@ describe('form HTTP API', () => {
     const body = await created.text()
     for (const privateValue of [
       'passwordHash',
-      'requestText',
+      'requestStatus',
       'converted',
       'sourceBandId',
       'createdUserId',
@@ -192,7 +192,7 @@ describe('form HTTP API', () => {
         {
           expectedUpdatedAt: seed.event.updatedAt,
           bandName: '不正',
-          requestText: '変更不可',
+          requestStatus: 'converted',
           createdUserId: 'forged',
         },
       ],
@@ -355,8 +355,9 @@ describe('form HTTP API', () => {
           bandId: 'a-b1',
           bandName: 'A',
           description: '明るいポップス。客席を盛り上げる',
+          requestText: '先頭に固定',
         },
-        { bandId: 'a-b2', bandName: 'B', description: null },
+        { bandId: 'a-b2', bandName: 'B', description: null, requestText: null },
       ],
       members: [
         { memberId: 'a-m0', memberName: '未所属' },
@@ -441,6 +442,68 @@ describe('form HTTP API', () => {
     expect(after.bands.find((b) => b.bandId === 'a-b1')?.bandName).toBe(
       '新しい名前',
     )
+  })
+
+  it('stores introductions and request text independently and preserves conversion state for unchanged requests', async () => {
+    const created = await request('/bands', 'POST', {
+      expectedUpdatedAt: seed.event.updatedAt,
+      bandName: '希望付き',
+      description: 'ロック',
+      requestText: ' 第2部を希望 ',
+      memberIds: ['a-m1'],
+      newMembers: [],
+    })
+    expect(created.status).toBe(201)
+    const saved = await created.json<SavedFormBand>()
+    expect(saved.band).toMatchObject({
+      description: 'ロック',
+      requestText: '第2部を希望',
+    })
+    const read = async () =>
+      db.select().from(bands).where(eq(bands.bandId, saved.band.bandId)).get()
+    expect(await read()).toMatchObject({
+      requestText: '第2部を希望',
+      requestStatus: 'pending',
+    })
+    await db
+      .update(bands)
+      .set({ requestStatus: 'converted' })
+      .where(eq(bands.bandId, saved.band.bandId))
+    const update = async (patch: object) => {
+      const roster = await (await request()).json<FormRoster>()
+      const response = await request(`/bands/${saved.band.bandId}`, 'PATCH', {
+        expectedUpdatedAt: roster.updatedAt,
+        ...patch,
+      })
+      expect(response.status).toBe(200)
+      return response.json<SavedFormBand>()
+    }
+    await update({ description: 'ジャズ', requestText: '第2部を希望' })
+    expect(await read()).toMatchObject({
+      description: 'ジャズ',
+      requestText: '第2部を希望',
+      requestStatus: 'converted',
+    })
+    await update({ requestText: '前半を希望' })
+    expect(await read()).toMatchObject({
+      description: 'ジャズ',
+      requestText: '前半を希望',
+      requestStatus: 'pending',
+    })
+    await update({ description: null })
+    expect(await read()).toMatchObject({
+      description: null,
+      requestText: '前半を希望',
+    })
+    await update({ requestText: '  ' })
+    expect(await read()).toMatchObject({
+      requestText: null,
+      requestStatus: null,
+    })
+    const roster = await (await request()).json<FormRoster>()
+    expect(
+      roster.bands.find((band) => band.bandId === saved.band.bandId),
+    ).toMatchObject({ description: null, requestText: null })
   })
 
   it('saves, keeps and clears a band description', async () => {

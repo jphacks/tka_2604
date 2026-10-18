@@ -3759,7 +3759,7 @@
         "summary": "フォームの選択用名簿を取得する",
         "tags": ["Form"],
         "security": [],
-        "description": "URLを知る人が認証なしで利用できる。削除済みイベントは対象外。公開応答はID・名前・所属と更新日時だけで、希望・連絡先・回答・制約・配置は含めない。",
+        "description": "URLを知る人が認証なしで利用できる。削除済みイベントは対象外。公開応答はID・名前・紹介・希望原文・所属と更新日時を返す。連絡先・回答履歴・制約・配置は含めない。",
         "responses": {
           "200": {
             "description": "取得成功",
@@ -3879,7 +3879,7 @@
         "summary": "フォームからバンドと所属メンバーを登録する",
         "tags": ["Form"],
         "security": [],
-        "description": "URLを知る人が認証なしで利用できる。削除済みイベントは対象外。公開応答はID・名前・所属と更新日時だけで、希望・連絡先・回答・制約・配置は含めない。 保存時にexpectedUpdatedAtを再確認し、Band・Member・所属・Event.updatedAtを同じD1 batchで保存する。希望・制約・配置は保持し、LLM・Solverは呼ばない。 初回登録は所属メンバー合計1〜20人です。同じ名前をnewMembersへ入力しても既存の人とは統合せず、新しいメンバーIDを発行します。",
+        "description": "URLを知る人が認証なしで利用できる。削除済みイベントは対象外。公開応答はID・名前・紹介・希望原文・所属と更新日時を返す。連絡先・回答履歴・制約・配置は含めない。 保存時にexpectedUpdatedAtを再確認し、Band・Member・所属・Event.updatedAtを同じD1 batchで保存する。紹介と希望原文は独立に保存する。希望の変更時はpending、空なら状態もnull。同じ希望なら変換状態は保持する。既存の制約・配置は保持し、LLM・Solverは呼ばない。 初回登録は所属メンバー合計1〜20人です。同じ名前をnewMembersへ入力しても既存の人とは統合せず、新しいメンバーIDを発行します。",
         "responses": {
           "201": {
             "description": "登録成功",
@@ -4181,7 +4181,7 @@
         "summary": "バンド名と所属を更新する（追加・差し替え・所属解除）",
         "tags": ["Form"],
         "security": [],
-        "description": "URLを知る人が認証なしで利用できる。削除済みイベントは対象外。公開応答はID・名前・所属と更新日時だけで、希望・連絡先・回答・制約・配置は含めない。 保存時にexpectedUpdatedAtを再確認し、Band・Member・所属・Event.updatedAtを同じD1 batchで保存する。希望・制約・配置は保持し、LLM・Solverは呼ばない。 bandNameだけの更新も可能です。所属を変更する場合はmemberIdsとnewMembersを両方指定し、更新後の所属全体（合計0〜20人）を送ります。両方を空配列にすると全員の所属を解除しますが、バンド本体やメンバー本体は削除しません。他バンドの所属・元の人の名前は保持します。バンド本体を削除する場合は管理用DELETE /api/events/{eventId}/bands/{bandId}を使います。",
+        "description": "URLを知る人が認証なしで利用できる。削除済みイベントは対象外。公開応答はID・名前・紹介・希望原文・所属と更新日時を返す。連絡先・回答履歴・制約・配置は含めない。 保存時にexpectedUpdatedAtを再確認し、Band・Member・所属・Event.updatedAtを同じD1 batchで保存する。紹介と希望原文は独立に保存する。希望の変更時はpending、空なら状態もnull。同じ希望なら変換状態は保持する。既存の制約・配置は保持し、LLM・Solverは呼ばない。 bandNameだけの更新も可能です。所属を変更する場合はmemberIdsとnewMembersを両方指定し、更新後の所属全体（合計0〜20人）を送ります。両方を空配列にすると全員の所属を解除しますが、バンド本体やメンバー本体は削除しません。他バンドの所属・元の人の名前は保持します。バンド本体を削除する場合は管理用DELETE /api/events/{eventId}/bands/{bandId}を使います。",
         "responses": {
           "200": {
             "description": "更新成功",
@@ -5761,7 +5761,7 @@
       "FormBand": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["bandId", "bandName", "description"],
+        "required": ["bandId", "bandName", "description", "requestText"],
         "properties": {
           "bandId": {
             "type": "string",
@@ -5773,6 +5773,10 @@
           "description": {
             "type": ["string", "null"],
             "description": "ジャンル・雰囲気などのバンド紹介。AIの並べ替え案で使用する"
+          },
+          "requestText": {
+            "type": ["string", "null"],
+            "description": "出演順・時間帯などの制約の希望原文。紹介とは別に保存。前後空白を除去し、空文字・nullで消去。省略時は保持（新規はnull）。希望の変更時はpending、消去時は状態もnull。LLM・Solverは呼ばない。"
           }
         }
       },
@@ -5847,7 +5851,13 @@
           "band": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["bandId", "bandName", "description", "memberIds"],
+            "required": [
+              "bandId",
+              "bandName",
+              "description",
+              "memberIds",
+              "requestText"
+            ],
             "properties": {
               "bandId": {
                 "type": "string",
@@ -5867,6 +5877,10 @@
                   "minLength": 1
                 },
                 "uniqueItems": true
+              },
+              "requestText": {
+                "type": ["string", "null"],
+                "description": "出演順・時間帯などの制約の希望原文。紹介とは別に保存。前後空白を除去し、空文字・nullで消去。省略時は保持（新規はnull）。希望の変更時はpending、消去時は状態もnull。LLM・Solverは呼ばない。"
               }
             }
           },
@@ -5928,6 +5942,10 @@
               }
             },
             "maxItems": 20
+          },
+          "requestText": {
+            "type": ["string", "null"],
+            "description": "出演順・時間帯などの制約の希望原文。紹介とは別に保存。前後空白を除去し、空文字・nullで消去。省略時は保持（新規はnull）。希望の変更時はpending、消去時は状態もnull。LLM・Solverは呼ばない。"
           }
         },
         "allOf": [
@@ -5997,6 +6015,10 @@
               }
             },
             "maxItems": 20
+          },
+          "requestText": {
+            "type": ["string", "null"],
+            "description": "出演順・時間帯などの制約の希望原文。紹介とは別に保存。前後空白を除去し、空文字・nullで消去。省略時は保持（新規はnull）。希望の変更時はpending、消去時は状態もnull。LLM・Solverは呼ばない。"
           }
         },
         "dependentRequired": {
