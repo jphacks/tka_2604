@@ -97,6 +97,7 @@ test('edits assigned and unassigned performances without losing schedule or cond
     '佐藤',
   )
 
+  await page.getByRole('button', { name: '通知を閉じる', exact: true }).click()
   await schedule.getByRole('button', { name: /未配置へ/ }).click()
   await schedule
     .getByRole('button', { name: '源泉掛け流しを編集', exact: true })

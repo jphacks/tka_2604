@@ -1,5 +1,6 @@
 import type { SortingStrategy } from '@dnd-kit/sortable'
 
+import { movePersistedPerformance } from './persistedSchedule'
 import { buildSchedule, findTarget, movePerformance } from './schedule'
 import type { EventData, PerformanceRow } from './types'
 
@@ -19,7 +20,11 @@ export function createScheduleSortingStrategy(
         overIndex === rows.length ? 'unassigned' : rows[overIndex]?.key
       const target = overKey ? findTarget(event, overKey) : undefined
       const result =
-        id && target ? movePerformance(event, id, target) : undefined
+        id && target
+          ? (event.scheduleMode === 'dense'
+              ? movePersistedPerformance
+              : movePerformance)(event, id, target)
+          : undefined
       const destinations = new Map<string, number>()
       if (result && !result.error) {
         const projected = buildSchedule(result.event)

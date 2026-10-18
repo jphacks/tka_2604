@@ -1,3 +1,4 @@
+import { dataSource } from '../../../shared/repositories/dataSource'
 import { Brand } from '../../../shared/ui/Brand'
 import { Button } from '../../../shared/ui/Button'
 import { Icon } from '../../../shared/ui/Icon'
@@ -55,7 +56,7 @@ export function LoginPage() {
           </div>
         </div>
         <p className="text-[11px] text-muted">
-          セトリ — ライブの出演順づくりを支えるワークスペース
+          Setly — ライブの出演順づくりを支えるワークスペース
         </p>
       </section>
       <main className="flex items-center justify-center bg-white px-8 py-16">
@@ -65,7 +66,9 @@ export function LoginPage() {
           </span>
           <h2 className="text-2xl font-semibold">デモをはじめる</h2>
           <p className="mt-2 mb-8 text-sm text-muted">
-            サンプルデータで、出演順づくりを体験できます。
+            {dataSource === 'api'
+              ? '保存済みのイベントを開いて、出演順を確認できます。'
+              : 'サンプルデータで、出演順づくりを体験できます。'}
           </p>
           {login.error && (
             <p role="alert" className="mb-4 text-red-600">
@@ -84,7 +87,9 @@ export function LoginPage() {
           <p className="mt-5 text-center text-[11px] leading-5 text-muted">
             このプレビューでは、実際の認証は行いません。
             <br />
-            データはこのタブ内で共有し、再読み込みすると初期状態に戻ります。
+            {dataSource === 'api'
+              ? 'イベントのデータはDBに保存され、再読み込み後も残ります。'
+              : 'データはこのタブ内で共有し、再読み込みすると初期状態に戻ります。'}
           </p>
         </div>
       </main>

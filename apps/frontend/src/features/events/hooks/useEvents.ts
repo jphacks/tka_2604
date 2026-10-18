@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 
 import { useResource } from '../../../shared/hooks/useResource'
 import type { EventDraft, EventStatus } from '../../../shared/model/workspace'
@@ -20,7 +20,8 @@ export function useEvents() {
   const resource = useResource(load)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<EventStatus | 'all'>('all')
-  const [creating, setCreating] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const creating = searchParams.get('create') === '1'
   const [draft, setDraft] = useState(emptyDraft)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -71,10 +72,23 @@ export function useEvents() {
     openCreate: () => {
       setDraft(emptyDraft)
       setError('')
-      setCreating(true)
+      setSearchParams(
+        (params) => {
+          params.set('create', '1')
+          return params
+        },
+        { replace: true },
+      )
     },
     closeCreate: () => {
-      if (!busy) setCreating(false)
+      if (!busy)
+        setSearchParams(
+          (params) => {
+            params.delete('create')
+            return params
+          },
+          { replace: true },
+        )
     },
     setDraft: (patch: Partial<EventDraft>) =>
       setDraft((value) => ({ ...value, ...patch })),

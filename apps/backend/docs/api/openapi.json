@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "JPHACKS 出演順作成 API",
+    "title": "Setly API",
     "version": "0.0.0",
     "description": "イベント本体・表・制約・チャット履歴と、表・制約の個別保存・保存済みデータからの計算API。認証は#57で追加し、現段階はサーバー側のデモユーザーで所有者を絞り込む。 フォーム名簿APIは独立したformルートで、イベントURLを知る人が認証なしで利用できる。"
   },
@@ -2467,7 +2467,7 @@
       "post": {
         "operationId": "sendChatMessage",
         "summary": "チャット本文を保存し、AIの返信を保存して返す",
-        "description": "入力検証・イベント所有者と削除状態の確認後、ユーザー発言を先に保存する。最新状態と直近6メッセージでGeminiを呼び、検証済みのmessage本文だけをassistantとして保存する。制約の適用・承認待ち案の保持・Solver実行は行わない。認証接続まではサーバー側のdemo-ownerに限定する。",
+        "description": "入力検証・イベント所有者と削除状態の確認後、ユーザー発言を先に保存する。最新状態と直近6メッセージでGeminiを呼び、検証済みのmessage本文だけをassistantとして保存する。制約変更案がある新規応答は、検証済みproposalを一時的に返す。確認・必須／任意・必要な優先度の選択後、frontendが既存の制約保存APIで反映する。未適用案は履歴へ保存せず、同じ発言の再送では本文だけを返して変更を再実行しない。チャット送信自体で制約適用やSolver実行は行わない。認証接続まではサーバー側のdemo-ownerに限定する。",
         "tags": ["Chat"],
         "parameters": [
           {
@@ -2515,7 +2515,7 @@
         },
         "responses": {
           "200": {
-            "description": "ユーザー発言と検証済みAI回答の保存後の返信。再送では保存済み回答を返す。",
+            "description": "ユーザー発言と検証済みAI回答の保存後の返信。新規生成時のみ未適用のproposalを返すことがある。再送では保存済み回答本文だけを返す。",
             "content": {
               "application/json": {
                 "schema": {
@@ -2524,6 +2524,9 @@
                     "reply": {
                       "type": "string",
                       "minLength": 1
+                    },
+                    "proposal": {
+                      "$ref": "#/components/schemas/ChatProposal"
                     }
                   },
                   "required": ["reply"]
@@ -5449,6 +5452,243 @@
           }
         ],
         "description": "memberIdsとnewMembersの合計は0〜20人。両配列を指定すると対象バンドの所属を全置換し、省略時は保持する。所属解除後もMemberは名簿に残り、他バンド所属も保持する。"
+      },
+      "ChatProposedConstraint": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "targets", "params", "hardness", "priority"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["min_gap_member"]
+              },
+              "targets": {
+                "$ref": "#/components/schemas/ConstraintMinGapMember/$defs/MinGapMemberTargets"
+              },
+              "params": {
+                "$ref": "#/components/schemas/ConstraintMinGapMember/$defs/MinGapMemberParams"
+              },
+              "hardness": {
+                "type": ["string", "null"],
+                "enum": ["hard", "soft", null]
+              },
+              "priority": {
+                "type": ["string", "null"],
+                "enum": ["high", "mid", "low", null]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "targets", "params", "hardness", "priority"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["min_gap_bands"]
+              },
+              "targets": {
+                "$ref": "#/components/schemas/ConstraintMinGapBands/$defs/MinGapBandsTargets"
+              },
+              "params": {
+                "$ref": "#/components/schemas/ConstraintMinGapBands/$defs/MinGapBandsParams"
+              },
+              "hardness": {
+                "type": ["string", "null"],
+                "enum": ["hard", "soft", null]
+              },
+              "priority": {
+                "type": ["string", "null"],
+                "enum": ["high", "mid", "low", null]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "targets", "params", "hardness", "priority"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["before"]
+              },
+              "targets": {
+                "$ref": "#/components/schemas/ConstraintBefore/$defs/BeforeTargets"
+              },
+              "params": {
+                "$ref": "#/components/schemas/ConstraintBefore/$defs/BeforeParams"
+              },
+              "hardness": {
+                "type": ["string", "null"],
+                "enum": ["hard", "soft", null]
+              },
+              "priority": {
+                "type": ["string", "null"],
+                "enum": ["high", "mid", "low", null]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "targets", "params", "hardness", "priority"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["at_position"]
+              },
+              "targets": {
+                "$ref": "#/components/schemas/ConstraintAtPosition/$defs/AtPositionTargets"
+              },
+              "params": {
+                "$ref": "#/components/schemas/ConstraintAtPosition/$defs/AtPositionParams"
+              },
+              "hardness": {
+                "type": ["string", "null"],
+                "enum": ["hard", "soft", null]
+              },
+              "priority": {
+                "type": ["string", "null"],
+                "enum": ["high", "mid", "low", null]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "targets", "params", "hardness", "priority"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["in_range"]
+              },
+              "targets": {
+                "$ref": "#/components/schemas/ConstraintInRange/$defs/InRangeTargets"
+              },
+              "params": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/ConstraintInRange/$defs/InRangePositionParams"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ConstraintInRange/$defs/InRangePartParams"
+                  }
+                ]
+              },
+              "hardness": {
+                "type": ["string", "null"],
+                "enum": ["hard", "soft", null]
+              },
+              "priority": {
+                "type": ["string", "null"],
+                "enum": ["high", "mid", "low", null]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "targets", "params", "hardness", "priority"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["count"]
+              },
+              "targets": {
+                "$ref": "#/components/schemas/ConstraintCount/$defs/CountTargets"
+              },
+              "params": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/ConstraintCount/$defs/CountPerPartParams"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ConstraintCount/$defs/CountInPartsParams"
+                  }
+                ]
+              },
+              "hardness": {
+                "type": ["string", "null"],
+                "enum": ["hard", "soft", null]
+              },
+              "priority": {
+                "type": ["string", "null"],
+                "enum": ["high", "mid", "low", null]
+              }
+            }
+          }
+        ]
+      },
+      "ChatConstraintAction": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "constraint"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["add_constraint"]
+              },
+              "constraint": {
+                "$ref": "#/components/schemas/ChatProposedConstraint"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "constraintId", "constraint"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["update_constraint"]
+              },
+              "constraintId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "constraint": {
+                "$ref": "#/components/schemas/ChatProposedConstraint"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "constraintId"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["delete_constraint"]
+              },
+              "constraintId": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      },
+      "ChatProposal": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["expectedUpdatedAt", "actions"],
+        "properties": {
+          "expectedUpdatedAt": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z$"
+          },
+          "actions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/ChatConstraintAction"
+            }
+          }
+        }
       }
     }
   }

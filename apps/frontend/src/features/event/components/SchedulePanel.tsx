@@ -45,22 +45,48 @@ function ScheduleTable({
   if (!event || !schedule) return null
   return (
     <Panel
+      inert={
+        controller.saving ||
+        controller.solving ||
+        controller.refreshing ||
+        controller.sending
+      }
       title="出演順"
       action={
-        schedule.unassigned.length > 0 ? (
-          <Button
-            variant="subtle"
-            className="text-xs"
-            onClick={() =>
-              unassignedRef.current?.scrollIntoView({
-                block: 'nearest',
-                behavior: 'smooth',
-              })
-            }
-          >
-            未配置へ（{schedule.unassigned.length}）
-          </Button>
-        ) : undefined
+        <div className="flex items-center gap-2">
+          {controller.persistent && (
+            <Button
+              aria-label="出演順を保存"
+              className="text-xs"
+              variant={controller.scheduleDirty ? 'primary' : 'secondary'}
+              disabled={
+                !controller.scheduleDirty ||
+                controller.saving ||
+                controller.solving ||
+                controller.refreshing ||
+                controller.sending
+              }
+              onClick={() => void controller.saveSchedule()}
+            >
+              {controller.savingSchedule ? '保存中…' : '保存'}
+              {controller.scheduleDirty && ' *'}
+            </Button>
+          )}
+          {schedule.unassigned.length > 0 ? (
+            <Button
+              variant="subtle"
+              className="text-xs"
+              onClick={() =>
+                unassignedRef.current?.scrollIntoView({
+                  block: 'nearest',
+                  behavior: 'smooth',
+                })
+              }
+            >
+              未配置へ（{schedule.unassigned.length}）
+            </Button>
+          ) : undefined}
+        </div>
       }
       detail={
         <span className="text-xs text-muted">
@@ -69,8 +95,28 @@ function ScheduleTable({
       }
     >
       <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-line bg-canvas/50 px-3 py-2 text-xs">
-        <Button disabled title="ソルバー接続は準備中です" className="text-xs">
-          自動生成（準備中）
+        <Button
+          disabled={
+            !controller.persistent ||
+            !event.performances.length ||
+            controller.saving ||
+            controller.solving ||
+            controller.refreshing ||
+            controller.sending
+          }
+          title={
+            controller.persistent
+              ? '出演順・制約を保存してから計算します'
+              : 'ソルバー接続は準備中です'
+          }
+          className="text-xs"
+          onClick={() => void controller.generate()}
+        >
+          {controller.solving
+            ? '計算中…'
+            : controller.persistent
+              ? '自動生成'
+              : '自動生成（準備中）'}
         </Button>
         <Button onClick={controller.exportCsv} className="text-xs">
           CSVを出力
@@ -118,17 +164,25 @@ function ScheduleTable({
                 <h3 className="font-semibold text-brand-dark">
                   {section.name} · {section.assigned}/{section.capacity}組
                 </h3>
-                <span>{section.range}番</span>
+                <span>
+                  {controller.persistent && !section.assigned
+                    ? '—'
+                    : `${section.range}番`}
+                </span>
               </div>
               {section.rows.map((row) =>
                 row.performance ? (
                   <PerformanceRow
                     key={row.key}
                     row={{ ...row, performance: row.performance }}
-                    capacity={schedule.capacity}
+                    capacity={
+                      controller.persistent
+                        ? schedule.assignedCount + (row.order === null ? 1 : 0)
+                        : schedule.capacity
+                    }
                     onFixed={setFixed}
                     onOrder={setOrder}
-                    onEdit={onEdit}
+                    onEdit={controller.persistent ? undefined : onEdit}
                   />
                 ) : (
                   <EmptyPerformanceRow key={row.key} row={row} />
@@ -148,10 +202,14 @@ function ScheduleTable({
                 <PerformanceRow
                   key={row.key}
                   row={row}
-                  capacity={schedule.capacity}
+                  capacity={
+                    controller.persistent
+                      ? schedule.assignedCount + (row.order === null ? 1 : 0)
+                      : schedule.capacity
+                  }
                   onFixed={setFixed}
                   onOrder={setOrder}
-                  onEdit={onEdit}
+                  onEdit={controller.persistent ? undefined : onEdit}
                 />
               ))}
               {!schedule.unassigned.length && (

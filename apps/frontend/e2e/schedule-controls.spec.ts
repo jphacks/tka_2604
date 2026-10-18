@@ -97,8 +97,10 @@ test('keyboard movement skips fixed slots across parts', async ({ page }) => {
     exact: true,
   })
   await handle.focus()
-  await page.keyboard.press('Space')
+  await page.keyboard.press('Space', { delay: 50 })
   await expect(handle).toHaveAttribute('aria-pressed', 'true')
+  // Wait for the initial collision measurement before sending movement keys.
+  await expect(page.getByText('移動先：Pretender（2番）')).toHaveCount(1)
   await page.keyboard.press('ArrowDown')
   await expect(page.getByText('移動先：青と夏（4番）')).toHaveCount(1)
   await page.keyboard.press('ArrowDown')
@@ -128,7 +130,7 @@ test('keyboard handle supports cancel and commit while keeping focus and fixed r
     exact: true,
   })
   await handle.focus()
-  await page.keyboard.press('Space')
+  await page.keyboard.press('Space', { delay: 50 })
   await expect(handle).toHaveAttribute('aria-pressed', 'true')
   await page.keyboard.press('ArrowDown')
   await expect(page.getByText('移動先：VPS（3番）')).toHaveCount(1)
@@ -137,7 +139,7 @@ test('keyboard handle supports cancel and commit while keeping focus and fixed r
     page.getByRole('textbox', { name: 'Pretenderの出演順', exact: true }),
   ).toHaveValue('2')
   await expect(handle).toBeFocused()
-  await page.keyboard.press('Space')
+  await page.keyboard.press('Space', { delay: 50 })
   await expect(handle).toHaveAttribute('aria-pressed', 'true')
   await page.keyboard.press('ArrowDown')
   await expect(page.getByText('移動先：VPS（3番）')).toHaveCount(1)

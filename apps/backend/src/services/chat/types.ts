@@ -71,6 +71,11 @@ export type ChatGeneration = {
   output: AIChatOutput
 }
 
+export interface ChatResponse {
+  reply: string
+  proposal?: { expectedUpdatedAt: string; actions: ConstraintProposalAction[] }
+}
+
 export type ChatMessage = EventChat['messages'][number]
 
 export interface ChatRepository {
@@ -90,5 +95,6 @@ export interface ChatRepository {
     eventId: string,
     messageId: string,
     text: string,
+    replyId?: string,
   ): Promise<ChatMessage>
 }
