@@ -10,6 +10,17 @@ export function createApiClient(
 }
 export type ApiClient = ReturnType<typeof createApiClient>
 
+const solverErrors: Record<string, string> = {
+  solver_unavailable:
+    'Solverの接続設定が不足しています。管理者に確認してください。現在の配置は保持しています。',
+  solver_timeout:
+    '計算が時間内に完了しませんでした。現在の配置は保持しています。もう一度お試しください。',
+  solver_upstream_error:
+    'Solverと通信できませんでした。現在の配置は保持しています。もう一度お試しください。',
+  solver_invalid_response:
+    '計算結果を検証できませんでした。現在の配置は保持しています。管理者に確認してください。',
+}
+
 export async function ensureOk(
   response: Pick<Response, 'ok' | 'status' | 'json'>,
   conflictMessage = 'イベントが更新されました。未保存の編集は保持しています。「最新の状態を取得」から再取得してください。',
@@ -31,6 +42,12 @@ export async function ensureOk(
     ) {
       if ('code' in error && error.code === 'event_save_conflict')
         throw new Error(conflictMessage)
+      if (
+        'code' in error &&
+        typeof error.code === 'string' &&
+        solverErrors[error.code]
+      )
+        throw new Error(solverErrors[error.code])
       throw new Error(error.message)
     }
   }

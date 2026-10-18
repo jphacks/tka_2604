@@ -77,3 +77,5 @@ npm run test:e2e:api -- registration-api.e2e.ts
 ```
 
 `npm run test:e2e`と`npm run test:e2e:api`は同じ実API・専用ローカルD1のテストを実行する。テストの入力例は単体テストまたは専用DBへの明示登録にだけ使い、アプリへ組み込まない。`CAPTURE_FORM_SCREENSHOTS=1`をAPIテストへ付けると登録・更新フォームを再撮影できる。
+
+実Solverと専用D1を含めたブラウザ検証は `npm run test:e2e:solver` で実行する。[準備・確認範囲](setup.md#実solverを含めたe2e)を参照。`count`の実計算は未対応（#75）。
