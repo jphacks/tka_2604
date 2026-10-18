@@ -2952,7 +2952,7 @@
       "post": {
         "operationId": "solveEvent",
         "summary": "保存済みデータから出演順を計算して保存する",
-        "description": "表・制約のPOSTとは独立したAPI。呼出し順序はフロント側が制御する。リクエストはexpectedUpdatedAtのみ。DBから同じ時点の部・配置・名簿・所属・制約を取得しSolverへ渡す。応答を再検証し、更新競合がなければ結果配置を保存する。解なし・探索未完了・失敗時は現在配置を保持する。",
+        "description": "表・制約のPOSTとは独立したAPI。呼出し順序はフロント側が制御する。リクエストはexpectedUpdatedAtとparts（各部のpartId・bandCount）。bandCountは画面の組数（空き枠を含む0以上の整数）で、計算時だけ使用し永続化しない。保存済みの全部の部IDを重複なく指定する。DBから同じ時点の部・配置・名簿・所属・制約を取得しSolverへ渡す。応答を再検証し、更新競合がなければ結果配置を保存する。解なし・探索未完了・失敗時は現在配置を保持する。",
         "tags": ["Events"],
         "security": [],
         "parameters": [
@@ -2974,16 +2974,45 @@
               "schema": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["expectedUpdatedAt"],
+                "required": ["expectedUpdatedAt", "parts"],
                 "properties": {
                   "expectedUpdatedAt": {
                     "type": "string",
                     "description": "UTCのISO 8601日時"
+                  },
+                  "parts": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["partId", "bandCount"],
+                      "properties": {
+                        "partId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "bandCount": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      }
+                    }
                   }
                 }
               },
               "example": {
-                "expectedUpdatedAt": "2026-10-17T00:00:00.000Z"
+                "expectedUpdatedAt": "2026-10-17T00:00:00.000Z",
+                "parts": [
+                  {
+                    "partId": "part-1",
+                    "bandCount": 5
+                  },
+                  {
+                    "partId": "part-2",
+                    "bandCount": 5
+                  }
+                ]
               }
             }
           }

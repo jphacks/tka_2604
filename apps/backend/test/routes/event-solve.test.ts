@@ -35,7 +35,13 @@ function request(body: unknown, eventId = 'demo-event') {
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        parts: [
+          { partId: 'demo-part-2', bandCount: 0 },
+          { partId: 'demo-part-1', bandCount: 5 },
+        ],
+        ...(body as Record<string, unknown>),
+      }),
     },
     {
       DB: local.binding,
@@ -57,6 +63,42 @@ const solved = () => ({
 })
 
 describe('solve from persisted event data', () => {
+  it.each([
+    undefined,
+    [],
+    [{ partId: 'demo-part-1', bandCount: 5 }],
+    [
+      { partId: 'demo-part-1', bandCount: 5 },
+      { partId: 'demo-part-1', bandCount: 5 },
+    ],
+    [
+      { partId: 'demo-part-1', bandCount: 5 },
+      { partId: 'other-part', bandCount: 5 },
+    ],
+    ...[undefined, -1, 1.5, '5'].map((bandCount) => [
+      { partId: 'demo-part-1', bandCount },
+      { partId: 'demo-part-2', bandCount: 5 },
+    ]),
+  ])(
+    'rejects invalid part capacities without calling Solver or saving: %j',
+    async (parts) => {
+      const before = (await snapshot())!
+      const send = vi.fn<typeof fetch>()
+      vi.stubGlobal('fetch', send)
+      const response = await request({
+        expectedUpdatedAt: before.event.updatedAt,
+        parts,
+      })
+      expect(response.status).toBe(422)
+      await expectJsonResponse(
+        response,
+        openApiDocument.paths['/api/events/{eventId}/solve'].post.responses,
+      )
+      expect(send).not.toHaveBeenCalled()
+      expect(await snapshot()).toEqual(before)
+    },
+  )
+
   it.each(['soft', 'disabled'])(
     'accepts %s constraints while keeping their original JSON',
     async (kind) => {
@@ -204,6 +246,7 @@ describe('solve from persisted event data', () => {
       parts: before.parts.map(({ partId, sortOrder }) => ({
         partId,
         sortOrder,
+        bandCount: sortOrder === 0 ? 5 : 0,
       })),
       bands: before.bands.map(({ bandId }) => ({ bandId })),
       members: before.members.map(({ memberId }) => ({ memberId })),

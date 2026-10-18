@@ -33,6 +33,12 @@ const json = (body: unknown, status = 200) => Response.json(body, { status })
 
 describe('events RPC adapter', () => {
   it('infers request fields from the backend validator', () => {
+    type SolveInput = InferRequestType<
+      ApiClient['api']['events'][':eventId']['solve']['$post']
+    >['json']
+    expectTypeOf<SolveInput['parts']>().toEqualTypeOf<
+      { partId: string; bandCount: number }[]
+    >()
     type CreateInput = InferRequestType<
       ApiClient['api']['events']['$post']
     >['json']
@@ -290,4 +296,31 @@ it('does not retry a conflicting save with a freshly fetched revision', async ()
   await expect(api.saveConstraints(event)).rejects.toThrow('再取得')
   expect(event.updatedAt).toBe(details.updatedAt)
   expect(fetcher).toHaveBeenCalledTimes(1)
+})
+
+it('sends displayed part capacities including empty slots to Solver API', async () => {
+  const { api, fetcher } = setup([json({ result: {}, schedule: null })])
+  await api.solve({
+    id: 'event-1',
+    name: 'Live',
+    updatedAt: details.updatedAt,
+    members: [],
+    performances: [],
+    messages: [],
+    constraints: [],
+    unassigned: [],
+    sections: [
+      { id: 'part-1', slots: ['b1', null, null, null, null] },
+      { id: 'part-2', slots: [null, null, null] },
+      { id: 'part-3', slots: [] },
+    ],
+  })
+  expect(JSON.parse(requestBody(fetcher.mock.calls[0][1]))).toEqual({
+    expectedUpdatedAt: details.updatedAt,
+    parts: [
+      { partId: 'part-1', bandCount: 5 },
+      { partId: 'part-2', bandCount: 3 },
+      { partId: 'part-3', bandCount: 0 },
+    ],
+  })
 })

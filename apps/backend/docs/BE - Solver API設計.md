@@ -2,7 +2,7 @@
 
 ## 概要
 
-BEから制約・部・バンド・メンバー・所属・現在配置を受け取り、配置・探索状態・制約ごとの達成状況を返すSolver APIの入出力契約。Pythonの`/solve`実装は#27で扱う。ブラウザから呼ぶbackendのAPIは[計算API](api/solver.md)を参照し、この資料の送信データはDBの保存済み情報から組み立てる。
+BEから制約・部・バンド・メンバー・所属・現在配置を受け取り、配置・探索状態・制約ごとの達成状況を返すSolver APIの入出力契約。Pythonの`/solve`実装は#27で扱う。ブラウザから呼ぶbackendのAPIは[計算API](api/solver.md)を参照し、bandCountは計算APIで受け取った画面の組数、それ以外の送信データはDBの保存済み情報から組み立てる。
 
 ## API仕様
 
@@ -24,8 +24,8 @@ BEから制約・部・バンド・メンバー・所属・現在配置を受け
 {
   "eventId": "event-1",
   "parts": [
-    { "partId": "part-1", "sortOrder": 0 },
-    { "partId": "part-2", "sortOrder": 1 }
+    { "partId": "part-1", "sortOrder": 0, "bandCount": 5 },
+    { "partId": "part-2", "sortOrder": 1, "bandCount": 5 }
   ],
   "bands": [
     { "bandId": "band-a" },
@@ -92,7 +92,7 @@ BEから制約・部・バンド・メンバー・所属・現在配置を受け
 - `constraints`は一覧全件。`enabled: false`は計算対象外。
 - `currentPlacements`は探索のヒント。未配置バンドは含めず、現在配置がなければ空配列を送る。固定・変更量最小化は意味しない。
 - 部・位置・部内順は0始まり。配置の`partId`は文字列ID、制約の`part_ids`は`sortOrder`の番号。全体位置は部順に連結した配置順で、部の境界は間隔を増やさない。
-- 固定枠数は持たず、部の本数は`count`で指定する。固定位置はhardの`at_position`で指定する。
+- `parts[].bandCount`は必須で、画面で指定した各部の組数（空き枠を含む0以上の整数）を送る。現在の配置数とは異なり、空の部でも指定値を送る。枠数は計算時のみ受け取り、DBには永続化しない。部の本数に関する制約は引き続き`count`で指定できる。固定位置はhardの`at_position`で指定する。
 - 対象ID・所属・位置範囲・hard/priorityの対応を検証し、入力不備と全配置不可を区別する。
 
 ## レスポンス
