@@ -27,30 +27,7 @@ async function fillPerformance(page: Page, name: string) {
     .fill('佐藤、田中、鈴木')
 }
 
-test('public registration works without login and validates required fields', async ({
-  page,
-}) => {
-  await page.goto('/event/spring-live-2026/forms')
-  await expect(
-    page.getByRole('heading', { name: '春ライブ 2026 出演登録' }),
-  ).toBeVisible()
-  await page.getByRole('button', { name: '出演登録を送信' }).click()
-  await expect(page.getByRole('alert')).toContainText('出演名を入力')
-  await fillPerformance(page, '公開フォームの出演枠')
-  await page
-    .getByRole('textbox', { name: '出演に関する希望 任意' })
-    .fill('第2部以降を希望')
-  await page.getByRole('button', { name: '出演登録を送信' }).click()
-  await expect(
-    page.getByRole('heading', { name: '出演登録を受け付けました' }),
-  ).toBeVisible()
-  await page.getByRole('button', { name: '別の出演枠を登録' }).click()
-  await expect(page.getByRole('textbox', { name: '出演名 必須' })).toHaveValue(
-    '',
-  )
-})
-
-test('login, event creation, manual registration, form response, and schedule are connected', async ({
+test('mock login, event creation, manual registration, editing and schedule are connected', async ({
   page,
 }) => {
   await page.goto('/')
@@ -69,19 +46,6 @@ test('login, event creation, manual registration, form response, and schedule ar
   await expect(
     page.getByText('手動登録した出演枠', { exact: true }),
   ).toBeVisible()
-  await page.getByRole('link', { name: '回答フォーム', exact: true }).click()
-  await fillPerformance(page, 'フォームからの出演枠')
-  await page.getByRole('button', { name: '出演登録を送信' }).click()
-  await expect(
-    page.getByRole('heading', { name: '出演登録を受け付けました' }),
-  ).toBeVisible()
-  await page.getByRole('link', { name: '登録内容を確認' }).click()
-  await expect(
-    page.getByText('フォームからの出演枠', { exact: true }),
-  ).toBeVisible()
-  await expect(
-    page.getByText('手動登録した出演枠', { exact: true }),
-  ).toBeVisible()
   await page
     .getByRole('button', { name: '手動登録した出演枠を編集', exact: true })
     .click()
@@ -94,7 +58,7 @@ test('login, event creation, manual registration, form response, and schedule ar
   ).toBeVisible()
   await page.getByRole('link', { name: '出演順', exact: true }).click()
   const order = page.getByRole('textbox', {
-    name: 'フォームからの出演枠の出演順',
+    name: '編集済みの出演枠の出演順',
     exact: true,
   })
   await order.fill('1')
@@ -110,19 +74,16 @@ test('login, event creation, manual registration, form response, and schedule ar
   await expect(
     page.getByRole('textbox', { name: 'フォーム名', exact: true }),
   ).toBeVisible()
-  await page.getByRole('link', { name: '回答フォームを開く' }).click()
-  await expect(page.getByRole('textbox', { name: '出演名 必須' })).toBeVisible()
-  await page.getByRole('link', { name: 'フォーム管理へ' }).click()
   await page.getByRole('link', { name: '出演順', exact: true }).click()
   await expect(
     page.getByRole('textbox', {
-      name: 'フォームからの出演枠の出演順',
+      name: '編集済みの出演枠の出演順',
       exact: true,
     }),
   ).toHaveValue('1')
 })
 
-test('form configuration controls the public form and closed state', async ({
+test('mock form configuration is saved and reflected in its preview', async ({
   page,
 }) => {
   await login(page)
@@ -139,24 +100,12 @@ test('form configuration controls the public form and closed state', async ({
   await page.getByRole('checkbox', { name: /回答を受け付ける/ }).uncheck()
   await page.getByRole('button', { name: '設定を保存' }).click()
   await expect(page.getByRole('status')).toContainText('設定を更新しました')
-  await page.getByRole('link', { name: '回答フォームを開く' }).click()
   await expect(
-    page.getByRole('heading', { name: '出演登録の受付は終了しました' }),
+    page.getByText('変更したフォーム', { exact: true }),
   ).toBeVisible()
-  await page.getByRole('link', { name: 'フォーム管理へ' }).click()
   await page.getByRole('checkbox', { name: /回答を受け付ける/ }).check()
   await page.getByRole('button', { name: '設定を保存' }).click()
   await expect(page.getByRole('status')).toContainText('設定を更新しました')
-  await page.getByRole('link', { name: '回答フォームを開く' }).click()
-  await expect(
-    page.getByRole('heading', { name: '変更したフォーム' }),
-  ).toBeVisible()
-  await expect(
-    page.getByRole('textbox', { name: '連絡先メール 任意' }),
-  ).toHaveCount(0)
-  await expect(
-    page.getByRole('textbox', { name: '出演に関する希望 任意' }),
-  ).toHaveCount(0)
 })
 
 test('schedule edits persist during navigation and pointer dragging works', async ({
@@ -254,6 +203,18 @@ test('unknown URLs and event ids display recovery links', async ({ page }) => {
   await expect(
     page.getByRole('heading', { name: 'ページが見つかりません' }),
   ).toBeVisible()
+  await page.route('**/api/events/missing-event/form', (route) =>
+    route.fulfill({
+      status: 404,
+      json: {
+        error: {
+          code: 'event_not_found',
+          message: 'イベントが見つかりません。',
+          details: [],
+        },
+      },
+    }),
+  )
   await page.goto('/event/missing-event/forms')
   await expect(page.getByRole('alert')).toContainText(
     'イベントが見つかりません',

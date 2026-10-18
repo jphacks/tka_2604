@@ -1,67 +1,9 @@
 import { useState } from 'react'
 
 import { useEventResource } from '../../../shared/hooks/useEventResource'
-import type {
-  FormSettings,
-  PerformanceDraft,
-} from '../../../shared/model/workspace'
-import { validatePerformance } from '../../../shared/model/workspace'
+import type { FormSettings } from '../../../shared/model/workspace'
 import { workspaceRepository } from '../../../shared/repositories/workspaceRepository'
 
-const emptyDraft: PerformanceDraft = {
-  name: '',
-  memberIds: [],
-  members: '',
-  requests: '',
-  contact: '',
-}
-export function useRegistrationForm(eventId: string) {
-  const resource = useEventResource(eventId)
-  const [draft, setDraft] = useState(emptyDraft)
-  const [busy, setBusy] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
-  const [error, setError] = useState('')
-  async function submit() {
-    if (busy || !resource.data?.settings.accepting) return
-    const message = validatePerformance({
-      ...draft,
-      contact: resource.data.settings.collectContact ? draft.contact : '',
-      requests: resource.data.settings.collectRequests ? draft.requests : '',
-    })
-    if (message) {
-      setError(message)
-      return
-    }
-    setBusy(true)
-    setError('')
-    try {
-      await workspaceRepository.submitPerformance(eventId, draft)
-      setSubmitted(true)
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : '送信に失敗しました。')
-    } finally {
-      setBusy(false)
-    }
-  }
-  return {
-    ...resource,
-    draft,
-    busy,
-    submitted,
-    formError: error,
-    submit,
-    setDraft: (patch: Partial<PerformanceDraft>) => {
-      setDraft((value) => ({ ...value, ...patch }))
-      setError('')
-    },
-    another: () => {
-      setDraft(emptyDraft)
-      resource.refresh()
-      setSubmitted(false)
-      setError('')
-    },
-  }
-}
 export function useFormEditor(eventId: string) {
   const resource = useEventResource(eventId)
   const [draft, setDraft] = useState<FormSettings | null>(null)
@@ -120,5 +62,4 @@ export function useFormEditor(eventId: string) {
     },
   }
 }
-export type RegistrationController = ReturnType<typeof useRegistrationForm>
 export type FormEditorController = ReturnType<typeof useFormEditor>

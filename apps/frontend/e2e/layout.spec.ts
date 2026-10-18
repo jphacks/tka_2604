@@ -2,6 +2,10 @@ import { expect, test } from './fixtures'
 
 for (const width of [1280, 1600]) {
   test(`event workspace uses the viewport at ${width}px`, async ({ page }) => {
+    // Layout checks use fixed replies and never call the real LLM.
+    await page.route('**/api/events/*/chat', (route) =>
+      route.fulfill({ json: { reply: 'AIからの返信です。' } }),
+    )
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/event/spring-live-2026')
     await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
