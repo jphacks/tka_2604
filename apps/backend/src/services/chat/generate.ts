@@ -1,6 +1,18 @@
+import type { SolverClient } from '../solver/contract.ts'
 import { aiChatInputSchema, aiChatOutputSchema } from './contract.ts'
 import { AIChatError } from './errors.ts'
-import type { AIChatOutput, ChatModel } from './types.ts'
+import {
+  evaluateReorder,
+  hasHardViolation,
+  repairWithSolver,
+  validateReorder,
+} from './reorder.ts'
+import type {
+  AIChatInput,
+  AIChatOutput,
+  ChatModel,
+  ReorderResult,
+} from './types.ts'
 import {
   inheritUpdateSettings,
   validateActions,
@@ -38,5 +50,34 @@ export async function generateAIChatResponse(
     validateActions(actions, input, 'ai_chat_invalid_output')
     return aiChatOutputSchema.parse({ ...output, actions })
   }
+  if (output.type === 'reorder_proposal')
+    validateReorder(output.placements, input)
   return output
+}
+
+// Hard violations are judged here, never by the model. When the model's order
+// breaks one, the Solver returns the nearest hard-feasible order. Without a
+// Solver, or if it cannot, the proposal is returned with its violations.
+export async function generateAIChatTurn(
+  value: unknown,
+  model: ChatModel,
+  repair?: { eventId: string; solver: SolverClient },
+): Promise<{ output: AIChatOutput; reorder?: ReorderResult }> {
+  const output = await generateAIChatResponse(value, model)
+  if (output.type !== 'reorder_proposal') return { output }
+  const input: AIChatInput = aiChatInputSchema.parse(value)
+  const proposed = evaluateReorder(output.placements, input, 'llm')
+  if (!repair || !hasHardViolation(proposed))
+    return { output, reorder: proposed }
+  const repaired = await repairWithSolver(
+    output.placements,
+    input,
+    repair.eventId,
+    repair.solver,
+  )
+  const result = repaired && evaluateReorder(repaired, input, 'solver')
+  return {
+    output,
+    reorder: result && !hasHardViolation(result) ? result : proposed,
+  }
 }

@@ -67,9 +67,10 @@ export function buildAIChatInput(
         sortOrder,
         partName,
       })),
-      bands: schedule.bands.map(({ bandId, bandName }) => ({
+      bands: schedule.bands.map(({ bandId, bandName, description }) => ({
         bandId,
         bandName,
+        description,
       })),
       members: schedule.members.map(({ memberId, memberName }) => ({
         memberId,

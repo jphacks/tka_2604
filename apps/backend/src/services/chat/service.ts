@@ -1,6 +1,7 @@
 import { eventService } from '../events/service'
 import type { EventRepository } from '../events/types'
-import { generateAIChatResponse } from './generate.ts'
+import type { SolverClient } from '../solver/contract'
+import { generateAIChatTurn } from './generate.ts'
 import { buildAIChatInput } from './input.ts'
 import type { ChatGeneration, ChatModel, ChatTurn } from './types.ts'
 
@@ -8,6 +9,7 @@ export function chatService(
   repository: EventRepository,
   userId: string,
   model: ChatModel,
+  solver?: SolverClient,
 ) {
   const events = eventService(repository, userId)
   return {
@@ -25,7 +27,11 @@ export function chatService(
       return {
         eventId: event.eventId,
         updatedAt: event.updatedAt,
-        output: await generateAIChatResponse(input, model),
+        ...(await generateAIChatTurn(
+          input,
+          model,
+          solver && { eventId: event.eventId, solver },
+        )),
       }
     },
   }

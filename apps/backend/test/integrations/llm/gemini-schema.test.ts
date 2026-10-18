@@ -14,7 +14,7 @@ describe('Gemini response JSON Schema', () => {
     { hardness: 'soft', priority: 'high' },
     { hardness: 'soft', priority: null },
   ])('allows nullable proposal settings: %j', (settings) => {
-    const output = approval()
+    const output = { ...approval(), placements: [] }
     Object.assign(output.actions[0].constraint, settings)
     expect(validate(output), JSON.stringify(validate.errors)).toBe(true)
   })

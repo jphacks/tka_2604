@@ -13,8 +13,8 @@ export function input(): AIChatInput {
         { partId: 'part-2', sortOrder: 1, partName: '第2部' },
       ],
       bands: [
-        { bandId: 'band-a', bandName: 'A' },
-        { bandId: 'band-b', bandName: 'B' },
+        { bandId: 'band-a', bandName: 'A', description: '明るいポップス' },
+        { bandId: 'band-b', bandName: 'B', description: null },
       ],
       members: [{ memberId: 'member-1', memberName: '田中' }],
       memberships: [
@@ -83,7 +83,6 @@ export function snapshot(): ChatEventSnapshot {
       updatedAt,
       bands: state.bands.map((band) => ({
         ...band,
-        description: null,
         requestText: null,
         requestStatus: null,
       })),

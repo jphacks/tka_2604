@@ -1,4 +1,5 @@
 import type { EventRepository } from '../events/types'
+import type { SolverClient } from '../solver/contract'
 import { chatService } from './service'
 import type { ChatModel, ChatRepository, ChatResponse } from './types'
 
@@ -7,8 +8,9 @@ export function chatMessageService(
   messages: ChatRepository,
   userId: string,
   model: ChatModel,
+  solver?: SolverClient,
 ) {
-  const generator = chatService(eventRepository, userId, model)
+  const generator = chatService(eventRepository, userId, model, solver)
   return {
     async send(
       eventId: string,

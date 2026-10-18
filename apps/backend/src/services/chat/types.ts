@@ -5,6 +5,7 @@ import type {
   EventDetails,
   EventSchedule,
 } from '../events/types.ts'
+import type { Evaluation, Violation } from '../solver/evaluation.ts'
 
 export type { Constraint } from '../../generated/constraint.ts'
 
@@ -39,7 +40,10 @@ export type AIChatInput = {
   context: {
     event: Pick<EventDetails, 'title'>
     parts: EventSchedule['parts']
-    bands: Pick<EventSchedule['bands'][number], 'bandId' | 'bandName'>[]
+    bands: Pick<
+      EventSchedule['bands'][number],
+      'bandId' | 'bandName' | 'description'
+    >[]
     members: EventSchedule['members']
     memberships: EventSchedule['memberships']
     constraints: EventConstraints['constraints'][number]['constraint'][]
@@ -50,6 +54,8 @@ export type AIChatInput = {
   pendingProposal: { actions: ConstraintProposalAction[] } | null
 }
 
+export type Placement = EventSchedule['placements'][number]
+
 export type AIChatOutput =
   | {
       type: 'approval_required'
@@ -58,6 +64,29 @@ export type AIChatOutput =
     }
   | { type: 'clarification_required'; message: string; actions: [] }
   | { type: 'answer'; message: string; actions: [] }
+  | {
+      type: 'reorder_proposal'
+      message: string
+      actions: []
+      placements: [Placement, ...Placement[]]
+    }
+
+// BE-side judgement of a reorder proposal; never produced by the model.
+export type ReorderResult = {
+  placements: Placement[]
+  // 'solver' when the model's order broke a hard constraint and the Solver
+  // returned the nearest hard-feasible order.
+  source: 'llm' | 'solver'
+  results: {
+    constraintId: string
+    hardness: Constraint['hardness']
+    priority: Constraint['priority']
+    before: Evaluation['status']
+    after: Evaluation['status']
+    violations: Violation[]
+    explanations: string[]
+  }[]
+}
 
 export type ChatModel = (input: AIChatInput) => Promise<unknown>
 
@@ -69,6 +98,7 @@ export type ChatGeneration = {
   eventId: string
   updatedAt: string
   output: AIChatOutput
+  reorder?: ReorderResult
 }
 
 export interface ChatResponse {

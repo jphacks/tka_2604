@@ -75,6 +75,7 @@ export const proposedConstraintSchema = z.custom<ProposedConstraint>(
 
 const id = z.string().min(1)
 const order = z.number().int().nonnegative()
+const placementSchema = z.strictObject({ bandId: id, partId: id, order })
 const actionSchema = z.discriminatedUnion('type', [
   z.strictObject({
     type: z.literal('add_constraint'),
@@ -98,13 +99,17 @@ export const aiChatInputSchema: z.ZodType<AIChatInput> = z.strictObject({
         partName: z.string().nullable(),
       }),
     ),
-    bands: z.array(z.strictObject({ bandId: id, bandName: z.string() })),
+    bands: z.array(
+      z.strictObject({
+        bandId: id,
+        bandName: z.string(),
+        description: z.string().nullable(),
+      }),
+    ),
     members: z.array(z.strictObject({ memberId: id, memberName: z.string() })),
     memberships: z.array(z.strictObject({ bandId: id, memberId: id })),
     constraints: z.array(constraintSchema),
-    currentPlacements: z.array(
-      z.strictObject({ bandId: id, partId: id, order }),
-    ),
+    currentPlacements: z.array(placementSchema),
   }),
   recentMessages: z.array(
     z.strictObject({ role: z.enum(['user', 'assistant']), text: z.string() }),
@@ -115,9 +120,26 @@ export const aiChatInputSchema: z.ZodType<AIChatInput> = z.strictObject({
     .nullable(),
 })
 
-export const aiChatOutputSchema: z.ZodType<AIChatOutput> = z.discriminatedUnion(
-  'type',
-  [
+// Structured Outputs require every property, so non-reorder replies carry an
+// empty placements array that is dropped before the strict per-type check.
+function dropEmptyPlacements(value: unknown) {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !('placements' in value) ||
+    !Array.isArray(value.placements) ||
+    value.placements.length > 0 ||
+    ('type' in value && value.type === 'reorder_proposal')
+  )
+    return value
+  return Object.fromEntries(
+    Object.entries(value).filter(([key]) => key !== 'placements'),
+  )
+}
+
+export const aiChatOutputSchema: z.ZodType<AIChatOutput> = z.preprocess(
+  dropEmptyPlacements,
+  z.discriminatedUnion('type', [
     z.strictObject({
       type: z.literal('approval_required'),
       message: z.string().trim().min(1),
@@ -133,7 +155,13 @@ export const aiChatOutputSchema: z.ZodType<AIChatOutput> = z.discriminatedUnion(
       message: z.string().trim().min(1),
       actions: z.tuple([]),
     }),
-  ],
+    z.strictObject({
+      type: z.literal('reorder_proposal'),
+      message: z.string().trim().min(1),
+      actions: z.tuple([]),
+      placements: z.tuple([placementSchema]).rest(placementSchema),
+    }),
+  ]),
 )
 
 // Keep the provider-facing schema simple. Response-specific cardinality and
@@ -206,10 +234,26 @@ export const aiChatOutputJsonSchema = forStructuredOutputs({
   properties: {
     type: {
       type: 'string',
-      enum: ['approval_required', 'clarification_required', 'answer'],
+      enum: [
+        'approval_required',
+        'clarification_required',
+        'answer',
+        'reorder_proposal',
+      ],
     },
     message: { type: 'string' },
     actions: { type: 'array', items: actionJsonSchema },
+    placements: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          bandId: { type: 'string' },
+          partId: { type: 'string' },
+          order: { type: 'integer', minimum: 0 },
+        },
+      },
+    },
   },
-  required: ['type', 'message', 'actions'],
+  required: ['type', 'message', 'actions', 'placements'],
 }) as JsonSchema

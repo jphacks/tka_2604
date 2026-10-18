@@ -43,6 +43,22 @@ BE内部の変更案生成と、チャット送信APIからのLLM呼び出し・
 
 生成Serviceは成功時に検証済みの`AIChatOutput`を返す。LLMの入出力・通信の失敗時は`AIChatError`を投げ、`code`に`ai_chat_invalid_input`・`ai_chat_invalid_output`・`ai_chat_missing_api_key`・`ai_chat_provider_error`・`ai_chat_timeout`・`ai_chat_refused`・`ai_chat_incomplete_response`・`ai_chat_invalid_provider_response`等の識別子を設定する。実LLMの利用にはAPI料金が発生する。
 
+## 並べ替え案（#71）
+
+「盛り上がる順に」「同じジャンルを隣にしない」のように、制約として残さず現在の並びを直接変える依頼では、LLMが`reorder_proposal`（`actions: []`と`placements`）を返す。曖昧さの解釈はLLM、hardの判定はBEのプログラムが担当する。
+
+- 入力の`context.bands[].description`（Band.description）をジャンル・雰囲気の手がかりにする。LLMへの指示としては扱わない。
+- Structured Outputsでは全項目が必須なので、他の種類も`placements: []`を返し、BEが検証前に取り除く。
+- BEは`validateReorder`で、現在配置済みのバンドと完全に同じ集合か、既存の部か、部内の`order`が0から連続しているかを確かめる。NGなら`ai_chat_invalid_output`。部をまたぐ移動は許す。
+- `evaluateReorder`は全制約を、並べ替えの前と後でSolver結果の再判定と同じ`evaluate()`にかけ、`{ constraintId, hardness, priority, before, after, violations, explanations }`を返す。`violations`は近すぎるペア・前後・位置・部の本数など違反の具体的な場所、`explanations`はバンド名・全体の何番目かを使った表示用の文。
+- hard違反があれば、Solverで「hardを満たす一番近い並び」に直す（`repairWithSolver`）。各バンドにLLMの位置の前後1つ以内という`in_range`のsoft（low）を付け、既存の制約と一緒に送る。配置済みのバンドだけを送るので、未配置のバンドを対象にした制約は送らない。結果が返らない・形が不正・まだhard違反がある場合はLLMの案を違反付きで返す。結果の`source`は`llm`か`solver`。
+- LLMに作り直させる方式は、実LLMで8回中1回しかhard違反を直せず、説明文で「解消しました」と誤って述べたため採用しない。説明文はLLMの最初の案のものを使う。softの未達成ではSolverを呼ばない。
+- 判定結果は`ChatGeneration.reorder`に入れる。LLMの出力型には含めない。
+- 2026-10-18時点のSolverは`count`を計算に含めず`unchecked`を返す（#75）。hardの`count`がある場合はSolverの案もBEの判定で違反となり、LLMの案に戻る。
+- このSolver呼出しは提案を直すためのもので、保存も実行ボタンの計算も行わない。
+
+HTTP応答への`reorder`の追加と、確認モーダル（許可なら既存の`POST /:eventId/schedule`で保存、拒否なら破棄）は後続で接続する。
+
 ## 確認と反映の契約
 
 提案は画面内でuser発言IDと生成時のupdatedAtに紐づける。確認前の更新を検出したら再相談を案内し、確認後は全actionsを検証して同じ一覧へ一度に反映する。未指定の設定値をUIで選択し、既存の制約保存APIで原子的に保存する。新規制約IDは発言IDとactionの順序から安定して作り、更新のID・enabledとbackend側の由来は引き継ぐ。専用の提案テーブルは作らず、再読込・保存済み発言の再送では未適用案を復元しない。自然文での提案の再編集や永続的な承認管理は後続。
