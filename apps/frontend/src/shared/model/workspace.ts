@@ -39,6 +39,25 @@ export function defaultEventName(now: Date) {
   }).format(now)
   return `イベント ${time}`
 }
+const MAX_PARTS = 8
+const MAX_BANDS_PER_PART = 20
+/**
+ * 名簿の組数を部へ均等に割り振る。前の部ほど1組多くし、
+ * 1部の上限を超える場合だけ部を増やす（部数の上限まで）。
+ */
+export function splitBandCounts(total: number, parts: number) {
+  const count = Math.min(
+    MAX_PARTS,
+    Math.max(parts, Math.ceil(total / MAX_BANDS_PER_PART), 1),
+  )
+  const base = Math.floor(total / count)
+  return Array.from({ length: count }, (_, index) =>
+    Math.min(
+      MAX_BANDS_PER_PART,
+      Math.max(1, base + (index < total % count ? 1 : 0)),
+    ),
+  )
+}
 export function formatDate(date: string) {
   if (!date) return '日程未定'
   return new Intl.DateTimeFormat('ja-JP', {
