@@ -35,6 +35,8 @@ let model: ReturnType<typeof vi.fn<ChatModel>>
 const answer = { type: 'answer', message: 'AIの回答', actions: [] }
 const responses =
   openApiDocument.paths['/api/events/{eventId}/chat'].post.responses
+const decisionResponses =
+  openApiDocument.paths['/api/events/{eventId}/chat/decision'].post.responses
 
 beforeEach(async () => {
   local = await testDatabase()
@@ -66,6 +68,76 @@ function post(body: unknown, id = eventId) {
 async function rows() {
   return (await eventsRepository(db).getChat('demo-owner', eventId))!.messages
 }
+
+describe('decision log API', () => {
+  const messageId = 'decision-123e4567-e89b-42d3-a456-426614174000'
+  function decide(decision: string, id = eventId) {
+    return app.request(
+      `/api/events/${id}/chat/decision`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision, messageId }),
+      },
+      { DB: local.binding },
+    )
+  }
+  it('saves one unanswered user message without calling the model, and reuses it on retry', async () => {
+    const before = await eventsRepository(db).get('demo-owner', eventId)
+    const response = await decide('applied')
+    expect(response.status).toBe(200)
+    await expectJsonResponse(response, decisionResponses)
+    expect(await response.json()).toEqual({
+      messageId,
+      text: '提案を受理しました。',
+    })
+    expect((await decide('applied')).status).toBe(200)
+    expect(await rows()).toMatchObject([
+      { messageId, role: 'user', replyToMessageId: null },
+    ])
+    expect(await eventsRepository(db).get('demo-owner', eventId)).toEqual(
+      before,
+    )
+    expect(gemini.createGeminiChatModel).not.toHaveBeenCalled()
+  })
+  it('rejects different decisions for one ID and invalid input without writing', async () => {
+    await decide('discarded')
+    expect((await rows())[0].text).toBe('提案を破棄しました。')
+    const conflict = await decide('applied')
+    expect(conflict.status).toBe(409)
+    await expectJsonResponse(conflict, decisionResponses)
+    const invalid = await decide('unknown')
+    expect(invalid.status).toBe(422)
+    await expectJsonResponse(invalid, decisionResponses)
+    expect(await rows()).toHaveLength(1)
+  })
+  it('reserves decision IDs for the save-only endpoint', async () => {
+    const response = await post({ message: '通常の依頼', messageId })
+    expect(response.status).toBe(422)
+    await expectJsonResponse(response, responses)
+    expect(await rows()).toEqual([])
+  })
+  it('rejects malformed decision JSON without writing', async () => {
+    const response = await app.request(
+      `/api/events/${eventId}/chat/decision`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{',
+      },
+      { DB: local.binding },
+    )
+    expect(response.status).toBe(400)
+    await expectJsonResponse(response, decisionResponses)
+    expect(await rows()).toEqual([])
+  })
+  it('rejects an inaccessible event before writing', async () => {
+    const response = await decide('applied', 'missing')
+    expect(response.status).toBe(404)
+    await expectJsonResponse(response, decisionResponses)
+    expect(await rows()).toEqual([])
+  })
+})
 
 describe('persisted chat POST API', () => {
   it('does not call the model if saving the user fails', async () => {

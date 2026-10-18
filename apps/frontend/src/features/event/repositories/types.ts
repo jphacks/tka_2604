@@ -24,4 +24,10 @@ export interface EventRepository {
     signal?: AbortSignal,
     messageId?: string,
   ): Promise<ChatResponse>
+  recordDecision(
+    eventId: string,
+    decision: 'applied' | 'discarded',
+    messageId: string,
+    signal?: AbortSignal,
+  ): Promise<void>
 }

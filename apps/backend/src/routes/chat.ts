@@ -14,7 +14,16 @@ const chatRequest = z.strictObject({
     .min(1)
     .max(128)
     .regex(/^[A-Za-z0-9_-]+$/)
+    .refine((id) => !id.startsWith('decision-'))
     .optional(),
+})
+const decisionRequest = z.strictObject({
+  messageId: z
+    .string()
+    .regex(
+      /^decision-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    ),
+  decision: z.enum(['applied', 'discarded']),
 })
 
 export function createChatRoutes<Bindings extends object>(
@@ -23,6 +32,11 @@ export function createChatRoutes<Bindings extends object>(
     input: { messageId: string; message: string },
     bindings: Bindings,
   ) => Promise<ChatResponse>,
+  recordDecision: (
+    eventId: string,
+    input: z.output<typeof decisionRequest>,
+    bindings: Bindings,
+  ) => Promise<{ messageId: string; text: string }>,
 ) {
   return new Hono<{ Bindings: Bindings }>()
     .onError((error, c) => {
@@ -93,6 +107,44 @@ export function createChatRoutes<Bindings extends object>(
         500,
       )
     })
+    .post(
+      '/:eventId/chat/decision',
+      validator('json', (value: unknown, c) => {
+        const parsed = decisionRequest.safeParse(value)
+        if (!parsed.success)
+          return c.json(
+            {
+              error: {
+                code: 'invalid_input',
+                message: '入力データが不正です。',
+                details: parsed.error.issues.map((issue) => ({
+                  path: `/${issue.path.join('/')}`,
+                  reason: issue.message,
+                })),
+              },
+            },
+            422,
+          )
+        return parsed.data
+      }),
+      async (
+        c: Context<
+          { Bindings: Bindings },
+          '/:eventId/chat/decision',
+          {
+            in: { json: z.input<typeof decisionRequest> }
+            out: { json: z.output<typeof decisionRequest> }
+          }
+        >,
+      ) => {
+        const saved = await recordDecision(
+          c.req.param('eventId'),
+          c.req.valid('json'),
+          c.env,
+        )
+        return c.json({ messageId: saved.messageId, text: saved.text })
+      },
+    )
     .post(
       '/:eventId/chat',
       validator('json', (value: unknown, c) => {

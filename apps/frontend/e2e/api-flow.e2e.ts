@@ -746,11 +746,18 @@ test('chat proposals require confirmation and auto-save only constraints', async
       503,
     )
     await expect(page.getByRole('alert')).toContainText('503')
-    await expect(proposal).toHaveCount(0)
+    await expect(proposal).toBeVisible()
     await page.unroute(`**${path}/constraints`)
     await autoSave(page, `${path}/constraints`, () =>
-      page.getByRole('button', { name: '保存を再試行' }).click(),
+      proposal.getByRole('button', { name: '確認して反映' }).click(),
     )
+    await expect(proposal).toHaveCount(0)
+    await expect(page.getByRole('log', { name: 'チャット履歴' })).toContainText(
+      '提案を受理しました。',
+    )
+    await expect(
+      page.getByRole('button', { name: 'この発言を再試行' }),
+    ).toHaveCount(0)
     const saved = (await (
       await request.get(`${path}/constraints`)
     ).json()) as typeof before
@@ -789,6 +796,96 @@ test('chat proposals require confirmation and auto-save only constraints', async
       ).status(),
     ).toBe(200)
   }
+})
+
+test('reorder proposal decisions appear in chat without an AI reply', async ({
+  page,
+  request,
+}) => {
+  const path = '/api/events/demo-event'
+  const before = (await (await request.get(`${path}/schedule`)).json()) as {
+    updatedAt: string
+    placements: { bandId: string; partId: string; order: number }[]
+  }
+  const messages: {
+    messageId: string
+    role: string
+    text: string
+    replyToMessageId: string | null
+  }[] = []
+  await page.route(`**${path}/chat`, async (route) => {
+    if (route.request().method() === 'GET') {
+      const response = await route.fetch()
+      const body = (await response.json()) as { messages: unknown[] }
+      await route.fulfill({
+        json: { ...body, messages: [...body.messages, ...messages] },
+      })
+      return
+    }
+    const input = route.request().postDataJSON() as {
+      messageId: string
+      message: string
+    }
+    messages.push(
+      {
+        messageId: input.messageId,
+        role: 'user',
+        text: input.message,
+        replyToMessageId: null,
+      },
+      {
+        messageId: `reply-${messages.length}`,
+        role: 'assistant',
+        text: 'この並びを提案します。',
+        replyToMessageId: input.messageId,
+      },
+    )
+    await route.fulfill({
+      json: {
+        reply: 'この並びを提案します。',
+        reorder: {
+          expectedUpdatedAt: before.updatedAt,
+          source: 'llm',
+          placements: before.placements,
+          results: [],
+        },
+      },
+    })
+  })
+  await page.goto('/event/demo-event')
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  const send = async () => {
+    await page
+      .getByRole('textbox', { name: 'AIへのメッセージ' })
+      .fill('並べ替えて')
+    await page.getByRole('button', { name: 'メッセージを送信' }).click()
+    await expect(
+      page.getByRole('dialog', { name: '並べ替え案の確認' }),
+    ).toBeVisible()
+  }
+  await send()
+  await page.getByRole('button', { name: '破棄する' }).click()
+  await expect(
+    page.getByRole('dialog', { name: '並べ替え案の確認' }),
+  ).toHaveCount(0)
+  await expect(page.getByRole('log', { name: 'チャット履歴' })).toContainText(
+    '提案を破棄しました。',
+  )
+  const afterDiscard = (await (
+    await request.get(`${path}/schedule`)
+  ).json()) as { updatedAt: string }
+  expect(afterDiscard.updatedAt).toBe(before.updatedAt)
+  await send()
+  await page.getByRole('button', { name: 'この並びで保存' }).click()
+  await expect(
+    page.getByRole('dialog', { name: '並べ替え案の確認' }),
+  ).toHaveCount(0)
+  await expect(page.getByRole('log', { name: 'チャット履歴' })).toContainText(
+    '提案を受理しました。',
+  )
+  await expect(
+    page.getByRole('button', { name: 'この発言を再試行' }),
+  ).toHaveCount(0)
 })
 
 test('generation saves the displayed schedule and constraints before calling solve', async ({

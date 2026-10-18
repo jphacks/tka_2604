@@ -5,6 +5,19 @@ import type { ChatResponse } from '../../../../../backend/src/services/chat/type
 
 const client = hc<ChatAppType>('/api/events')
 
+export async function recordChatDecision(
+  eventId: string,
+  decision: 'applied' | 'discarded',
+  messageId: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  const response = await client[':eventId'].chat.decision.$post(
+    { param: { eventId }, json: { decision, messageId } },
+    { init: { signal } },
+  )
+  if (!response.ok) throw new Error('選択を会話履歴に記録できませんでした。')
+}
+
 export async function sendChatMessage(
   eventId: string,
   message: string,
