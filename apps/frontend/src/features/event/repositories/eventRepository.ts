@@ -1,5 +1,5 @@
 import { eventsApi } from '../../../shared/api/events'
-import { sendChatMessage } from './chatRepository'
+import { recordChatDecision, sendChatMessage } from './chatRepository'
 import type { EventRepository } from './types'
 
 export const eventRepository: EventRepository = {
@@ -7,6 +7,8 @@ export const eventRepository: EventRepository = {
   getMessages: eventsApi.getMessages,
   solve: (event) => eventsApi.solve(event),
   saveSchedule: (event) => eventsApi.saveSchedule(event),
+  deleteBand: (eventId, bandId, expectedUpdatedAt) =>
+    eventsApi.deleteBand(eventId, bandId, expectedUpdatedAt),
   async saveConstraints(event) {
     const saved = await eventsApi.saveConstraints(event)
     return {
@@ -20,4 +22,5 @@ export const eventRepository: EventRepository = {
     }
   },
   sendMessage: sendChatMessage,
+  recordDecision: recordChatDecision,
 }

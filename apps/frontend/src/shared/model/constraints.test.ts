@@ -5,6 +5,7 @@ import {
   describeConstraint,
   evaluateConstraint,
   validateConstraint,
+  violatedBandIds,
 } from './constraints'
 import { type EventData, isFixed } from './event'
 
@@ -110,6 +111,38 @@ describe('schema constraints on the current schedule', () => {
         event,
       ).status,
     ).toBe('met')
+  })
+  it('identifies the bands involved in each violated constraint', () => {
+    const gap: Constraint = {
+      ...base,
+      type: 'min_gap_bands',
+      targets: { band_ids: ['a', 'b', 'c'] },
+      params: { min_diff: 2, same_part_only: false },
+    }
+    const before: Constraint = {
+      ...base,
+      type: 'before',
+      targets: { before_band_id: 'c', after_band_id: 'a' },
+      params: {},
+    }
+    const range: Constraint = {
+      ...base,
+      type: 'in_range',
+      targets: { band_ids: ['a', 'c'] },
+      params: { kind: 'positions', position_from: 1, position_to: 2 },
+    }
+    expect(violatedBandIds(gap, event)).toEqual(['a', 'b', 'c'])
+    expect(violatedBandIds(before, event)).toEqual(['c', 'a'])
+    expect(violatedBandIds(range, event)).toEqual(['a'])
+    expect(
+      violatedBandIds(
+        {
+          ...before,
+          targets: { before_band_id: 'a', after_band_id: 'c' },
+        },
+        event,
+      ),
+    ).toEqual([])
   })
   it('distinguishes unassigned, invalid, disabled, and unmet', () => {
     const constraint: Constraint = {

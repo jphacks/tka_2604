@@ -21,7 +21,7 @@
 ```
 
 - `message`は1〜1000文字。前後の空白を除去し、空白だけなら422。
-- `messageId`は省略可能で、指定時は英数字・`_`・`-`からなる1〜128文字。同じ発言の再送には同じID・本文を使う。省略時はBEが発行する。
+- `messageId`は省略可能で、指定時は英数字・`_`・`-`からなる1〜128文字。決定記録用の`decision-`始まりは通常送信には使えない。同じ発言の再送には同じID・本文を使う。省略時はBEが発行する。
 - 定義外の項目・不正な型は422。クライアントから所有者IDや最新状態・履歴は受け取らない。
 
 処理順序：
@@ -79,8 +79,10 @@ PR #60のイベントAPIと同じ`{ error: { code, message, details } }`でエ�
 
 ## 懸念点・未決定事項
 
+制約変更案と順序変更案の受理・破棄は`POST /api/events/:eventId/chat/decision`へ`{ "messageId": "decision-<UUID>", "decision": "applied" | "discarded" }`を送る。backendが「提案を受理しました。」「提案を破棄しました。」の固定文をuser発言として保存して返す。LLMは呼ばず、返信発言は作らない。同じIDと選択の再送は同じ発言を返し、異なる選択なら409。受理時は制約または出演順の保存成功後に記録する。通常の未返信発言の再試行対象から`decision-<UUID>`形式の記録IDを除外する。
+
 - 履歴には本文だけを使い、新規応答に限って変更案を一時的に返す。提案の自然文での再編集と、チャット発言によるSolver実行は後続。未確認のactionsを完成済み制約として保存しない。
 - frontendのAPIモードはDBの名簿と履歴を取得し、送信に`messageId`を指定する。返信後は履歴を再取得し、失敗後・再読込後の未回答発言も同じID・本文で再試行できる。未保存の出演順は右上の保存ボタンから保存し、制約の自動保存完了後に送信する。IDを省略した送信では、本文が同じでも新しい発言になる。
-- 内部の生成・検証は[AIチャット入出力](../AIチャット入出力.md)を参照。GETの履歴取得は[イベントAPI](events.md)を参照。
+- 内部の入出力は[チャット契約](../../src/services/chat/contract.ts)、生成・検証は[生成処理](../../src/services/chat/generate.ts)・[検証処理](../../src/services/chat/validation.ts)を参照。GETの履歴取得は[イベントAPI](events.md)を参照。
 - ローカルではD1のmigrationとイベントの準備に加えて、ルートの`.env`または`.dev.vars`に`GOOGLE_AI_API_TOKEN`を設定する。Cloudflare上はdevelop/mainごとに同名のSecretを登録する。`wrangler.jsonc`は必要なSecret名だけを宣言し、値を含めない。
 - 通常テストは隔離したD1とLLMモックを使う。frontendのブラウザテストでも外部LLMは呼ばない。

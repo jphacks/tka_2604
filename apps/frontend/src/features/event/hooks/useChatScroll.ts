@@ -1,10 +1,14 @@
 import { useEffect, useRef } from 'react'
 
-export function useChatScroll(messageCount: number, sending: boolean) {
+export function useChatScroll(
+  messageCount: number,
+  sending: boolean,
+  active = true,
+) {
   const container = useRef<HTMLDivElement>(null)
   const previousCount = useRef(messageCount)
   useEffect(() => {
-    if (messageCount > previousCount.current || sending) {
+    if (messageCount > previousCount.current || sending || active) {
       const element = container.current
       if (element)
         element.scrollTo({
@@ -16,6 +20,6 @@ export function useChatScroll(messageCount: number, sending: boolean) {
         })
     }
     previousCount.current = messageCount
-  }, [messageCount, sending])
+  }, [messageCount, sending, active])
   return container
 }

@@ -7,19 +7,26 @@ import type {
 export type RegistrationMode = 'create' | 'update'
 export interface MemberRow {
   key: string
-  kind: 'new' | 'existing'
   value: string
 }
 export interface RegistrationDraft {
   bandId: string
   bandName: string
+  requestText: string
+  description: string
   rows: MemberRow[]
 }
-export function newMemberRow(kind: MemberRow['kind'] = 'new'): MemberRow {
-  return { key: crypto.randomUUID(), kind, value: '' }
+export function newMemberRow(): MemberRow {
+  return { key: crypto.randomUUID(), value: '' }
 }
 export function emptyRegistration(): RegistrationDraft {
-  return { bandId: '', bandName: '', rows: [newMemberRow()] }
+  return {
+    bandId: '',
+    bandName: '',
+    description: '',
+    requestText: '',
+    rows: [newMemberRow()],
+  }
 }
 export function selectBand(
   roster: FormRoster,
@@ -29,11 +36,14 @@ export function selectBand(
     bandId,
     bandName:
       roster.bands.find((band) => band.bandId === bandId)?.bandName ?? '',
+    description:
+      roster.bands.find((band) => band.bandId === bandId)?.description ?? '',
+    requestText:
+      roster.bands.find((band) => band.bandId === bandId)?.requestText ?? '',
     rows: roster.memberships
       .filter((item) => item.bandId === bandId)
       .map((item) => ({
         key: crypto.randomUUID(),
-        kind: 'existing',
         value: item.memberId,
       })),
   }
@@ -62,10 +72,13 @@ export function registrationInput(
     mode === 'update' &&
     !roster.bands.some((band) => band.bandId === draft.bandId)
   )
-    throw new Error('更新するバンドを選んでください。')
+    throw new Error('更新する出演枠を選んでください。')
   const bandName = draft.bandName.trim()
   if (!bandName || bandName.length > 80)
-    throw new Error('バンド名を1〜80文字で入力してください。')
+    throw new Error('出演名を1〜80文字で入力してください。')
+  const description = draft.description.trim()
+  if (description.length > 500)
+    throw new Error('紹介は500文字以内で入力してください。')
   if (draft.rows.length < (mode === 'create' ? 1 : 0) || draft.rows.length > 20)
     throw new Error(
       mode === 'create'
@@ -75,24 +88,24 @@ export function registrationInput(
   const memberIds: string[] = []
   const newMembers: { memberName: string }[] = []
   for (const row of draft.rows) {
-    if (row.kind === 'new') {
-      const memberName = row.value.trim()
-      if (!memberName || memberName.length > 40)
-        throw new Error(
-          '新しいメンバーの名前を1〜40文字で入力してください。空の行は削除してください。',
-        )
-      newMembers.push({ memberName })
-    } else {
-      if (!roster.members.some((member) => member.memberId === row.value))
-        throw new Error('登録済みのメンバーを選んでください。')
+    if (roster.members.some((member) => member.memberId === row.value)) {
       if (memberIds.includes(row.value))
         throw new Error('同じメンバーが重複しています。')
       memberIds.push(row.value)
+      continue
     }
+    const memberName = row.value.trim()
+    if (!memberName || memberName.length > 40)
+      throw new Error(
+        '新しいメンバーの名前を1〜40文字で入力してください。空の行は削除してください。',
+      )
+    newMembers.push({ memberName })
   }
   return {
     expectedUpdatedAt: roster.updatedAt,
     bandName,
+    description: description || null,
+    requestText: draft.requestText.trim() || null,
     memberIds,
     newMembers,
   }
@@ -110,6 +123,7 @@ export function applySavedBand(
         bandId: saved.band.bandId,
         bandName: saved.band.bandName,
         description: saved.band.description,
+        requestText: saved.band.requestText,
       },
     ],
     members: [

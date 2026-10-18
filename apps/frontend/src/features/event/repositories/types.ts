@@ -13,10 +13,21 @@ export interface EventRepository {
   solve(event: EventData): Promise<SolveResponse>
   saveSchedule(event: EventData): Promise<EventSaveResult>
   saveConstraints(event: EventData): Promise<EventSaveResult>
+  deleteBand(
+    eventId: string,
+    bandId: string,
+    expectedUpdatedAt: string,
+  ): Promise<{ eventId: string; bandId: string; updatedAt: string }>
   sendMessage(
     eventId: string,
     message: string,
     signal?: AbortSignal,
     messageId?: string,
   ): Promise<ChatResponse>
+  recordDecision(
+    eventId: string,
+    decision: 'applied' | 'discarded',
+    messageId: string,
+    signal?: AbortSignal,
+  ): Promise<void>
 }

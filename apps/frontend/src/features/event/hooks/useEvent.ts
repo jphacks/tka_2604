@@ -12,6 +12,7 @@ import {
   type ConstraintPatch,
   eventReducer,
   initialState,
+  removeBandFromEvent,
 } from '../model/eventReducer'
 import { exportEventCsv } from '../model/export'
 import { buildSchedule, configureSchedule, findTarget } from '../model/schedule'
@@ -26,6 +27,7 @@ export function useEvent(eventId: string) {
     'schedule' | 'constraints' | null
   >(null)
   const saving = savingKind !== null
+  const [deletingBand, setDeletingBand] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [failedKind, setFailedKind] = useState<'schedule' | 'constraints'>(
     'constraints',
@@ -49,7 +51,7 @@ export function useEvent(eventId: string) {
     eventId,
     dispatch,
     event,
-    dirty || saving || solving || refreshing,
+    dirty || saving || solving || refreshing || deletingBand,
   )
   const [loadError, setLoadError] = useState('')
   const [retry, setRetry] = useState(0)
@@ -130,15 +132,21 @@ export function useEvent(eventId: string) {
 
   const save = useCallback(
     async (kind: 'schedule' | 'constraints', snapshot = event) => {
-      if (!snapshot || busy.current || refreshing || chat.sending) return false
+      if (
+        !snapshot ||
+        busy.current ||
+        refreshing ||
+        chat.sending ||
+        deletingBand
+      )
+        return null
       busy.current = true
       setSavingKind(kind)
       setSaveError('')
       dispatch({ type: 'notice', message: '' })
       const signal = lifetime.current?.signal
       try {
-        await persist(snapshot, kind)
-        return true
+        return await persist(snapshot, kind)
       } catch (error) {
         if (!signal?.aborted) {
           setFailedKind(kind)
@@ -150,9 +158,9 @@ export function useEvent(eventId: string) {
         busy.current = false
         if (!signal?.aborted) setSavingKind(null)
       }
-      return false
+      return null
     },
-    [event, refreshing, chat.sending, persist],
+    [event, refreshing, chat.sending, deletingBand, persist],
   )
 
   useEffect(() => {
@@ -162,6 +170,7 @@ export function useEvent(eventId: string) {
       solving ||
       refreshing ||
       chat.sending ||
+      deletingBand ||
       saveError
     )
       return
@@ -178,12 +187,14 @@ export function useEvent(eventId: string) {
     solving,
     refreshing,
     chat.sending,
+    deletingBand,
     saveError,
     save,
   ])
 
   async function generate() {
-    if (!event || busy.current || refreshing || chat.sending) return
+    if (!event || busy.current || refreshing || chat.sending || deletingBand)
+      return
     busy.current = true
     setSolving(true)
     setSaveError('')
@@ -228,8 +239,45 @@ export function useEvent(eventId: string) {
       }))
     : []
   const edit: typeof dispatch = (action) => {
-    if (busy.current || refreshing || chat.sending) return
+    if (busy.current || refreshing || chat.sending || deletingBand) return
     dispatch(action)
+  }
+  async function deleteBand(bandId: string) {
+    const snapshot = event
+    if (
+      !snapshot?.updatedAt ||
+      dirty ||
+      busy.current ||
+      refreshing ||
+      chat.sending ||
+      deletingBand
+    )
+      return false
+    busy.current = true
+    setDeletingBand(true)
+    dispatch({ type: 'notice', message: '' })
+    try {
+      const saved = await eventRepository.deleteBand(
+        eventId,
+        bandId,
+        snapshot.updatedAt,
+      )
+      const next = removeBandFromEvent(snapshot, bandId, saved.updatedAt)
+      dispatch({ type: 'band-deleted', id: bandId, updatedAt: saved.updatedAt })
+      setBaseline(next)
+      return true
+    } catch (error) {
+      dispatch({
+        type: 'notice',
+        error: true,
+        message:
+          error instanceof Error ? error.message : '削除に失敗しました。',
+      })
+      return false
+    } finally {
+      busy.current = false
+      setDeletingBand(false)
+    }
   }
   return {
     ...state,
@@ -240,10 +288,13 @@ export function useEvent(eventId: string) {
     saveSchedule: () => save('schedule'),
     generate,
     solving,
-    applyProposal: () => {
+    deletingBand,
+    deleteBand,
+    applyProposal: async () => {
       if (
         !event ||
         !chat.chatProposal ||
+        chat.pendingDecision ||
         chat.chatBlocked ||
         busy.current ||
         refreshing ||
@@ -252,8 +303,11 @@ export function useEvent(eventId: string) {
         return
       try {
         const constraints = applyChatProposal(event, chat.chatProposal)
-        dispatch({ type: 'constraints-replaced', constraints })
-        chat.dismissProposal()
+        if (await save('constraints', { ...event, constraints })) {
+          dispatch({ type: 'constraints-replaced', constraints })
+          chat.dismissProposal()
+          await chat.recordDecision('applied')
+        }
       } catch (error) {
         dispatch({
           type: 'notice',
@@ -265,12 +319,22 @@ export function useEvent(eventId: string) {
         })
       }
     },
-    // Approving a reorder replaces the schedule and saves it at once; on a
-    // save failure the edit stays local with the usual retry notice.
+    dismissProposal: () => {
+      if (
+        !chat.chatProposal ||
+        chat.pendingDecision ||
+        chat.chatBlocked ||
+        busy.current
+      )
+        return
+      chat.dismissProposal()
+      void chat.recordDecision('discarded')
+    },
     applyReorder: async () => {
       if (
         !event ||
         !chat.chatReorder ||
+        chat.pendingDecision ||
         chat.chatBlocked ||
         busy.current ||
         refreshing ||
@@ -291,14 +355,27 @@ export function useEvent(eventId: string) {
         })
         return
       }
+      const saved = await save('schedule', next)
+      if (!saved) return
       chat.dismissReorder()
       setReorderRevision((value) => value + 1)
-      dispatch({ type: 'loaded', event: next })
-      if (await save('schedule', next))
-        dispatch({
-          type: 'notice',
-          message: '並べ替え案を出演順に保存しました。',
-        })
+      dispatch({ type: 'loaded', event: saved })
+      dispatch({
+        type: 'notice',
+        message: '並べ替え案を出演順に保存しました。',
+      })
+      await chat.recordDecision('applied')
+    },
+    dismissReorder: () => {
+      if (
+        !chat.chatReorder ||
+        chat.pendingDecision ||
+        chat.chatBlocked ||
+        busy.current
+      )
+        return
+      chat.dismissReorder()
+      void chat.recordDecision('discarded')
     },
     reorderRevision,
     loadError,
@@ -321,7 +398,7 @@ export function useEvent(eventId: string) {
         (view.status === 'unmet' || view.status === 'invalid'),
     ).length,
     exportCsv: () => {
-      if (event) {
+      if (event && window.confirm('出演順をCSVでエクスポートしますか？')) {
         exportEventCsv(event)
         dispatch({
           type: 'notice',

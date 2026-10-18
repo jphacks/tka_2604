@@ -58,7 +58,11 @@ export function ReorderDialog({ controller }: { controller: EventController }) {
   }
   const summary = summarizeChatReorder(event, reorder)
   const hard = summary.hardViolations.length > 0
-  const busy = controller.chatBlocked || controller.sending || controller.saving
+  const busy =
+    controller.chatBlocked ||
+    controller.sending ||
+    controller.saving ||
+    Boolean(controller.pendingDecision)
   return (
     <Dialog title="並べ替え案の確認" onClose={controller.dismissReorder}>
       <p className="text-sm leading-6">{reorder.reply}</p>
@@ -89,7 +93,9 @@ export function ReorderDialog({ controller }: { controller: EventController }) {
         </p>
       )}
       <div className="mt-6 flex justify-end gap-2">
-        <Button onClick={controller.dismissReorder}>破棄する</Button>
+        <Button disabled={busy} onClick={controller.dismissReorder}>
+          破棄する
+        </Button>
         <Button
           variant={hard ? 'danger' : 'primary'}
           disabled={Boolean(error) || busy}

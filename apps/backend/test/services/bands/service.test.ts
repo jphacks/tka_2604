@@ -11,7 +11,6 @@ const fixture = (): Snapshot => ({
     eventId: 'event',
     createdUserId: 'owner',
     title: 'Live',
-    status: 'planning',
     date: null,
     venue: null,
     description: null,

@@ -3,6 +3,7 @@ import {
   memberLabel,
   positionLimit,
 } from '../../../shared/model/event'
+import { AutoComplete } from '../../../shared/ui/AutoComplete'
 import { Input, Select } from '../../../shared/ui/Input'
 import {
   ALL_MULTI_MEMBERS,
@@ -57,28 +58,36 @@ export function ConstraintFields({
   return (
     <div className="space-y-4">
       {draft.type === 'min_gap_member' && (
-        <label className="block space-y-2 text-sm font-medium">
-          対象のメンバー
-          <Select
-            className="block h-10 w-full"
-            value={draft.memberId}
-            onChange={(changeEvent) =>
-              change({ memberId: changeEvent.target.value })
-            }
-          >
-            <option value="">メンバーを選んでください</option>
-            {multiCount > 0 && (
-              <option value={ALL_MULTI_MEMBERS}>
-                掛け持ちの全員（{multiCount}人）
-              </option>
-            )}
-            {event.members.map((member) => (
-              <option key={member.id} value={member.id}>
-                {memberLabel(event, member)}
-              </option>
-            ))}
-          </Select>
-        </label>
+        <div className="space-y-2 text-sm font-medium">
+          <p>対象のメンバー</p>
+          <AutoComplete
+            label="対象のメンバー"
+            value={draft.memberId === ALL_MULTI_MEMBERS ? '' : draft.memberId}
+            allowCustomValue={false}
+            disabled={draft.memberId === ALL_MULTI_MEMBERS}
+            options={event.members.map((member) => ({
+              value: member.id,
+              label: memberLabel(event, member),
+            }))}
+            placeholder="メンバー名で検索"
+            onValueChange={(memberId) => change({ memberId })}
+            onSelect={(memberId) => change({ memberId })}
+          />
+          {multiCount > 0 && (
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={draft.memberId === ALL_MULTI_MEMBERS}
+                onChange={(event) =>
+                  change({
+                    memberId: event.target.checked ? ALL_MULTI_MEMBERS : '',
+                  })
+                }
+              />
+              掛け持ちの全員（{multiCount}人）
+            </label>
+          )}
+        </div>
       )}
       {multiple && (
         <BandPicker

@@ -11,7 +11,14 @@ const roster: FormRoster = {
   eventId: 'event',
   eventTitle: 'Live',
   updatedAt: '2026-10-17T00:00:00.000Z',
-  bands: [{ bandId: 'a', bandName: 'A', description: '明るいポップス' }],
+  bands: [
+    {
+      bandId: 'a',
+      bandName: 'A',
+      description: '明るいポップス',
+      requestText: null,
+    },
+  ],
   members: [{ memberId: 'm1', memberName: '田中' }],
   memberships: [{ bandId: 'a', memberId: 'm1' }],
 }
@@ -74,12 +81,14 @@ describe('form service', () => {
       bandId: 'a',
       bandName: 'B',
       description: '明るいポップス',
+      requestText: null,
       memberIds: ['m1'],
     })
     expect(repository.save).toHaveBeenCalledWith('event', roster.updatedAt, {
       bandId: 'a',
       bandName: 'B',
       description: '明るいポップス',
+      requestText: null,
       create: false,
       newMembers: [],
     })
@@ -99,6 +108,7 @@ describe('form service', () => {
       expectedUpdatedAt: roster.updatedAt,
       bandName: 'C',
       description: 'メタル',
+      requestText: null,
       memberIds: ['m1'],
       newMembers: [],
     })
@@ -106,8 +116,13 @@ describe('form service', () => {
     const cleared = await service.update('event', 'a', {
       expectedUpdatedAt: roster.updatedAt,
       description: null,
+      requestText: null,
     })
-    expect(cleared.band).toMatchObject({ bandName: 'A', description: null })
+    expect(cleared.band).toMatchObject({
+      bandName: 'A',
+      description: null,
+      requestText: null,
+    })
     expect(
       repository.save.mock.calls.map(([, , changes]) => changes.description),
     ).toEqual(['メタル', null])

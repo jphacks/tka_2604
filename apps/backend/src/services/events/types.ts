@@ -1,11 +1,8 @@
 import type { Constraint } from '../../generated/constraint'
 
-export type EventStatus = 'planning' | 'adjusting' | 'confirmed'
-
 export interface EventDetails {
   eventId: string
   title: string
-  status: EventStatus
   date: string | null
   venue: string | null
   description: string | null
@@ -29,7 +26,7 @@ export interface CreateEventInput {
 }
 
 export type EventSettingsPatch = Partial<
-  Pick<EventDetails, 'title' | 'status' | 'date' | 'venue' | 'description'>
+  Pick<EventDetails, 'title' | 'date' | 'venue' | 'description'>
 >
 
 export interface EventSchedule {

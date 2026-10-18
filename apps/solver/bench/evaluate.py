@@ -1,7 +1,7 @@
 """Solverの返却を入力と突き合わせ、整合性と制約ごとの判定を独立に確かめる。
 
 計測と回帰確認の基準で、Solver本体の評価（#25）とは別に保つ。判定は
-docs/schema.mdとBE - Solver API設計に従う。
+docs/schema.mdとsrc/solver_input.py・src/solver_output.pyの入出力定義に従う。
 - 全体位置は部順に、実際に配置したバンドを連結した順番（0始まり）。
 - 未配置の対象を含み結果が決まらない条件はunchecked。配置済みだけで違反が
   確定するならhardはviolated、softはunmetとする。

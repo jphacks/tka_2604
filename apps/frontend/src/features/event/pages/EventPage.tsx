@@ -1,7 +1,8 @@
 import type { CSSProperties } from 'react'
-import { useParams } from 'react-router'
+import { useEffect, useState } from 'react'
+import { useLocation, useParams } from 'react-router'
 
-import { AppFrame } from '../../../shared/ui/AppFrame'
+import { useEventName } from '../../../app/eventNameContext'
 import { Button } from '../../../shared/ui/Button'
 import { LinkButton } from '../../../shared/ui/LinkButton'
 import { PageState } from '../../../shared/ui/PageState'
@@ -9,6 +10,7 @@ import { ChatPanel } from '../components/ChatPanel'
 import { ColumnResizer } from '../components/ColumnResizer'
 import { ConstraintsPanel } from '../components/ConstraintsPanel'
 import { SchedulePanel } from '../components/SchedulePanel'
+import { type WorkspacePanel, WorkspaceTabs } from '../components/WorkspaceTabs'
 import { useColumnResize } from '../hooks/useColumnResize'
 import { useEvent } from '../hooks/useEvent'
 
@@ -19,9 +21,16 @@ export function EventPage() {
 
 function EventWorkspace({ eventId }: { eventId: string }) {
   const controller = useEvent(eventId)
+  const importNotice = (useLocation().state as { notice?: string } | null)
+    ?.notice
+  const setEventName = useEventName()
   const columns = useColumnResize()
+  const [activePanel, setActivePanel] = useState<WorkspacePanel>('schedule')
+  useEffect(() => {
+    if (controller.event?.name) setEventName?.(controller.event.name)
+  }, [controller.event?.name, setEventName])
   return (
-    <AppFrame workspace eventId={eventId} eventName={controller.event?.name}>
+    <>
       {!controller.event ? (
         <PageState
           error={controller.loadError}
@@ -34,6 +43,14 @@ function EventWorkspace({ eventId }: { eventId: string }) {
         />
       ) : (
         <>
+          {importNotice && (
+            <p
+              role="alert"
+              className="shrink-0 border-b border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"
+            >
+              {importNotice}
+            </p>
+          )}
           {controller.hardViolationCount > 0 && (
             <p
               role="status"
@@ -46,11 +63,12 @@ function EventWorkspace({ eventId }: { eventId: string }) {
           {controller.event.performances.length === 0 && (
             <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-brand/20 bg-wash p-3">
               <p className="text-sm">まず出演名とメンバーを登録しましょう。</p>
-              <LinkButton primary to={`/event/${eventId}/performances`}>
+              <LinkButton primary to={`/event/${eventId}/forms`}>
                 出演枠を登録する
               </LinkButton>
             </div>
           )}
+          <WorkspaceTabs active={activePanel} onChange={setActivePanel} />
           <div
             style={
               {
@@ -60,9 +78,30 @@ function EventWorkspace({ eventId }: { eventId: string }) {
             }
             className="relative grid min-h-0 min-w-0 flex-1 xl:grid-cols-[minmax(0,1fr)_var(--constraints-width)_var(--chat-width)]"
           >
-            <SchedulePanel controller={controller} />
-            <ConstraintsPanel controller={controller} />
-            <ChatPanel controller={controller} />
+            {(
+              [
+                ['schedule', <SchedulePanel controller={controller} />],
+                ['constraints', <ConstraintsPanel controller={controller} />],
+                [
+                  'chat',
+                  <ChatPanel
+                    controller={controller}
+                    active={activePanel === 'chat'}
+                  />,
+                ],
+              ] as const
+            ).map(([id, panel]) => (
+              <div
+                key={id}
+                id={`workspace-panel-${id}`}
+                role="tabpanel"
+                aria-labelledby={`workspace-tab-${id}`}
+                tabIndex={0}
+                className={`min-h-0 min-w-0 flex-col xl:flex ${activePanel === id ? 'flex' : 'hidden'}`}
+              >
+                {panel}
+              </div>
+            ))}
             <ColumnResizer
               handle="constraints"
               label="出演順と制約の幅を変更"
@@ -82,9 +121,9 @@ function EventWorkspace({ eventId }: { eventId: string }) {
         (controller.notice || controller.error || controller.loadError) && (
           <div
             role={controller.error || controller.loadError ? 'alert' : 'status'}
-            className={`fixed right-3 bottom-3 left-3 z-40 flex items-center justify-between gap-3 rounded-lg border bg-white p-3 shadow-sm xl:right-auto xl:max-w-xl ${controller.error || controller.loadError ? 'border-red-200 text-red-700' : 'border-brand/30 text-brand'}`}
+            className={`fixed right-3 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] left-3 z-40 flex max-h-[50dvh] flex-wrap items-center justify-between gap-3 overflow-y-auto rounded-lg border bg-white p-3 shadow-sm xl:right-auto xl:bottom-3 xl:max-w-xl ${controller.error || controller.loadError ? 'border-red-200 text-red-700' : 'border-brand/30 text-brand'}`}
           >
-            <p>
+            <p className="min-w-0 flex-1 basis-full wrap-anywhere xl:basis-auto">
               {controller.error || controller.loadError || controller.notice}
             </p>
             {controller.saveFailed ? (
@@ -105,6 +144,6 @@ function EventWorkspace({ eventId }: { eventId: string }) {
             )}
           </div>
         )}
-    </AppFrame>
+    </>
   )
 }

@@ -1,6 +1,6 @@
 # ソルバーの計測用データ（#34）
 
-ダミーの名簿で `/solve` を呼び、時間・status・hard違反・soft達成を同じ手順で測る。入出力は[BE - Solver API設計](../../backend/docs/BE%20-%20Solver%20API設計.md)に従う。
+ダミーの名簿で `/solve` を呼び、時間・status・hard違反・soft達成を同じ手順で測る。入出力は[Solver入力モデル](../src/solver_input.py)・[Solver出力モデル](../src/solver_output.py)に従う。APIの起動・認証・探索状態は[SolverのREADME](../README.md#api)を参照する。
 
 ## 名簿（`data/`）
 

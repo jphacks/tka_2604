@@ -7,8 +7,10 @@ import { ConfirmDialog } from '../../../shared/ui/ConfirmDialog'
 import { Icon } from '../../../shared/ui/Icon'
 import { Panel } from '../../../shared/ui/Panel'
 import type { EventController } from '../hooks/useEvent'
+import { constraintTone, groupConstraintViews } from '../model/constraintGroups'
 import { ConstraintControls } from './ConstraintControls'
 import { ConstraintForm } from './ConstraintForm'
+import { ConstraintGroupCard } from './ConstraintGroupCard'
 
 export function ConstraintsPanel({
   controller,
@@ -18,7 +20,7 @@ export function ConstraintsPanel({
   const [editing, setEditing] = useState<Constraint | null | undefined>(
     undefined,
   )
-  const [deleting, setDeleting] = useState<Constraint | null>(null)
+  const [deleting, setDeleting] = useState<Constraint[] | null>(null)
   const event = controller.event
   if (!event) return null
   return (
@@ -50,12 +52,30 @@ export function ConstraintsPanel({
           未達成のみ（{controller.unmetCount}）
         </Button>
       </div>
-      <div className="max-h-[75dvh] min-h-0 space-y-2 overflow-y-auto p-2 xl:max-h-none xl:flex-1">
-        {controller.constraintViews.map(
-          ({ constraint, text, status, detail }) => (
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2 wrap-anywhere">
+        {groupConstraintViews(controller.constraintViews).map(({ views }) => {
+          if (views.length > 1)
+            return (
+              <ConstraintGroupCard
+                key={views[0].constraint.constraint_id}
+                event={event}
+                views={views}
+                onUpdate={(patch) => {
+                  for (const view of views)
+                    controller.updateConstraint(
+                      view.constraint.constraint_id,
+                      patch,
+                    )
+                }}
+                onEdit={setEditing}
+                onDelete={setDeleting}
+              />
+            )
+          const [{ constraint, text, status, detail }] = views
+          return (
             <article
               key={constraint.constraint_id}
-              className={`rounded-lg border p-3 ${status === 'unmet' && constraint.hardness === 'hard' ? 'border-red-200 bg-red-50/30' : 'border-line'}`}
+              className={`rounded-lg border p-3 ${constraintTone(constraint.enabled, constraint.hardness, status)}`}
             >
               <div className="mb-3 flex items-start gap-2">
                 <input
@@ -70,26 +90,10 @@ export function ConstraintsPanel({
                   }
                 />
                 <h3
-                  className={`flex-1 text-sm leading-6 ${constraint.enabled ? '' : 'text-muted line-through'}`}
+                  className={`min-w-0 flex-1 text-sm leading-6 ${constraint.enabled ? '' : 'text-muted line-through'}`}
                 >
                   {text}
                 </h3>
-                <Button
-                  variant="ghost"
-                  className="px-1.5"
-                  aria-label={`${text}を編集`}
-                  onClick={() => setEditing(constraint)}
-                >
-                  <Icon name="edit" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="px-1.5 hover:text-red-600"
-                  aria-label={`${text}を削除`}
-                  onClick={() => setDeleting(constraint)}
-                >
-                  <Icon name="trash" />
-                </Button>
               </div>
               <ConstraintControls
                 label={text}
@@ -107,14 +111,34 @@ export function ConstraintsPanel({
                 }
               />
               <p
-                className={`mt-3 text-xs leading-6 ${status === 'met' ? 'text-emerald-700' : status === 'unmet' || status === 'invalid' ? 'text-red-700' : 'text-muted'}`}
+                className={`mt-3 text-xs leading-6 ${status === 'met' ? 'text-emerald-700' : status === 'unmet' || status === 'invalid' ? (constraint.hardness === 'hard' ? 'text-red-700' : 'text-amber-800') : 'text-muted'}`}
               >
                 {status === 'met' ? '✓ ' : ''}
                 {detail}
               </p>
+              <div className="mt-2 flex justify-end gap-1 border-t border-line/60 pt-2">
+                <Button
+                  variant="ghost"
+                  className="px-2"
+                  aria-label={`${text}を編集`}
+                  onClick={() => setEditing(constraint)}
+                >
+                  <Icon name="edit" />
+                  編集
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="px-2 hover:text-red-600"
+                  aria-label={`${text}を削除`}
+                  onClick={() => setDeleting([constraint])}
+                >
+                  <Icon name="trash" />
+                  削除
+                </Button>
+              </div>
             </article>
-          ),
-        )}
+          )
+        })}
         {!controller.constraintViews.length && (
           <p className="py-8 text-center text-sm leading-7 text-muted">
             {controller.showUnmet
@@ -134,10 +158,15 @@ export function ConstraintsPanel({
       {deleting && (
         <ConfirmDialog
           title="制約を削除"
-          message={`「${describeConstraint(deleting, event)}」を削除します。位置固定の条件を削除すると固定も解除されます。`}
+          message={
+            deleting.length === 1
+              ? `「${describeConstraint(deleting[0], event)}」を削除します。位置固定の条件を削除すると固定も解除されます。`
+              : `${deleting.length}件の制約をまとめて削除します。`
+          }
           onCancel={() => setDeleting(null)}
           onConfirm={() => {
-            controller.deleteConstraint(deleting.constraint_id)
+            for (const constraint of deleting)
+              controller.deleteConstraint(constraint.constraint_id)
             setDeleting(null)
           }}
         />

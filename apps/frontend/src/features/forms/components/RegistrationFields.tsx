@@ -1,19 +1,27 @@
+import { useEffect, useRef } from 'react'
+
 import { Button } from '../../../shared/ui/Button'
 import { Icon } from '../../../shared/ui/Icon'
-import { Input, Select } from '../../../shared/ui/Input'
+import { Input, Select, Textarea } from '../../../shared/ui/Input'
 import type { PublicRegistrationController } from '../hooks/usePublicRegistration'
-import {
-  memberOptionLabel,
-  type MemberRow,
-  newMemberRow,
-} from '../model/registration'
+import { type MemberRow, newMemberRow } from '../model/registration'
+import { MemberNameInput } from './MemberNameInput'
 
 export function RegistrationFields({
   controller,
+  fixedBand = false,
 }: {
   controller: PublicRegistrationController
+  fixedBand?: boolean
 }) {
   const { data, draft, mode } = controller
+  const selectRefs = useRef(new Map<string, HTMLSelectElement>())
+  const focusAfterSelect = useRef<string | null>(null)
+  useEffect(() => {
+    if (!focusAfterSelect.current) return
+    selectRefs.current.get(focusAfterSelect.current)?.focus()
+    focusAfterSelect.current = null
+  }, [draft.rows])
   const change = (patch: Parameters<typeof controller.change>[0]) =>
     controller.change(patch)
   if (!data) return null
@@ -25,16 +33,16 @@ export function RegistrationFields({
     })
   return (
     <>
-      {mode === 'update' && (
+      {mode === 'update' && !fixedBand && (
         <div className="mb-7 rounded-lg bg-wash p-4">
           <label className="block text-sm font-medium">
-            更新するバンド
+            更新する出演枠
             <Select
               className="mt-2 h-11 w-full bg-white"
               value={draft.bandId}
               onChange={(event) => controller.chooseBand(event.target.value)}
             >
-              <option value="">バンドを選んでください</option>
+              <option value="">出演枠を選んでください</option>
               {data.bands.map((band) => (
                 <option key={band.bandId} value={band.bandId}>
                   {band.bandName}
@@ -48,7 +56,7 @@ export function RegistrationFields({
           </label>
           {!data.bands.length && (
             <p className="mt-3 text-xs text-muted">
-              登録済みのバンドがありません。初回登録から追加してください。
+              登録済みの出演枠がありません。初回登録から追加してください。
             </p>
           )}
         </div>
@@ -56,7 +64,7 @@ export function RegistrationFields({
       {(mode === 'create' || draft.bandId) && (
         <div className="space-y-7">
           <label className="block text-sm font-medium">
-            バンド名 <span className="ml-1 text-xs text-brand">必須</span>
+            出演名 <span className="ml-1 text-xs text-brand">必須</span>
             <Input
               value={draft.bandName}
               onChange={(event) => change({ bandName: event.target.value })}
@@ -64,6 +72,41 @@ export function RegistrationFields({
               placeholder="例：サンセット・レコード"
               className="mt-2 h-11 w-full text-sm"
             />
+          </label>
+          <label className="block text-sm font-medium">
+            紹介（任意）
+            <Textarea
+              value={draft.description}
+              onChange={(event) => change({ description: event.target.value })}
+              maxLength={500}
+              rows={4}
+              placeholder="例：アップテンポなロックを中心に、明るく盛り上がる演奏をします。"
+              className="mt-2 w-full text-sm"
+              aria-describedby="band-description-help"
+            />
+            <span
+              id="band-description-help"
+              className="mt-2 block text-xs leading-6 font-normal text-muted"
+            >
+              ジャンルや雰囲気などを500文字以内で入力してください。AIによる並べ替えの参考にします。
+            </span>
+          </label>
+          <label className="block text-sm font-medium">
+            制約の希望（任意）
+            <Textarea
+              value={draft.requestText}
+              onChange={(event) => change({ requestText: event.target.value })}
+              rows={4}
+              placeholder="例：第2部の出演を希望します。"
+              className="mt-2 w-full text-sm"
+              aria-describedby="request-text-help"
+            />
+            <span
+              id="request-text-help"
+              className="mt-2 block text-xs leading-6 font-normal text-muted"
+            >
+              出演順や時間帯などの希望を入力してください。制約に反映するには、主催者による確認が必要です。
+            </span>
           </label>
           <section aria-labelledby="members-heading">
             <div className="mb-2 flex items-center justify-between gap-3">
@@ -77,7 +120,7 @@ export function RegistrationFields({
             <p className="mb-4 text-xs leading-6 text-muted">
               {mode === 'create'
                 ? '1人につき1行、人数分の行を追加してください。掛け持ちの人は名簿から選べます。'
-                : '追加・差し替え・削除した内容は「変更を保存」で反映されます。全員を外すこともできます。'}
+                : '追加・差し替え・削除した内容は「変更を保存」で反映されます。'}
             </p>
             <div className="space-y-3">
               {draft.rows.map((row, index) => (
@@ -87,10 +130,7 @@ export function RegistrationFields({
                 >
                   <div className="mb-2.5 flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-muted">
-                      メンバー {index + 1}{' '}
-                      <span className="ml-2 font-normal">
-                        {row.kind === 'new' ? '新しく登録' : '登録済み'}
-                      </span>
+                      メンバー {index + 1}
                     </span>
                     <Button
                       variant="ghost"
@@ -108,59 +148,22 @@ export function RegistrationFields({
                       削除
                     </Button>
                   </div>
-                  {row.kind === 'new' ? (
-                    <Input
-                      aria-label={`メンバー${index + 1}の名前`}
-                      placeholder="名前を入力"
-                      maxLength={40}
-                      value={row.value}
-                      onChange={(event) =>
-                        updateRow(row.key, { value: event.target.value })
-                      }
-                      className="h-10 w-full text-sm"
-                      autoComplete="off"
-                    />
-                  ) : (
-                    <Select
-                      aria-label={`メンバー${index + 1}を名簿から選択`}
-                      value={row.value}
-                      onChange={(event) =>
-                        updateRow(row.key, { value: event.target.value })
-                      }
-                      className="h-10 w-full"
-                    >
-                      <option value="">登録済みのメンバーを選択</option>
-                      {data.members.map((member) => (
-                        <option
-                          key={member.memberId}
-                          value={member.memberId}
-                          disabled={draft.rows.some(
-                            (item) =>
-                              item.key !== row.key &&
-                              item.kind === 'existing' &&
-                              item.value === member.memberId,
-                          )}
-                        >
-                          {memberOptionLabel(data, member.memberId)}
-                        </option>
-                      ))}
-                    </Select>
-                  )}
-                  <button
-                    type="button"
-                    className="mt-2.5 text-xs font-medium text-brand hover:underline disabled:opacity-45"
-                    disabled={row.kind === 'new' && !data.members.length}
-                    onClick={() =>
+                  <MemberNameInput
+                    roster={data}
+                    value={row.value}
+                    label={`メンバー${index + 1}の名前`}
+                    excludedIds={draft.rows
+                      .filter((item) => item.key !== row.key)
+                      .map((item) => item.value)}
+                    disabled={controller.busy || controller.refreshing}
+                    onValueChange={(value) => updateRow(row.key, { value })}
+                    onSelect={(memberId, fromKeyboard) => {
+                      if (fromKeyboard) focusAfterSelect.current = row.key
                       updateRow(row.key, {
-                        kind: row.kind === 'new' ? 'existing' : 'new',
-                        value: '',
+                        value: memberId,
                       })
-                    }
-                  >
-                    {row.kind === 'new'
-                      ? '名簿から選ぶ'
-                      : '新しい人を入力して差し替え'}
-                  </button>
+                    }}
+                  />
                 </div>
               ))}
             </div>
@@ -181,11 +184,6 @@ export function RegistrationFields({
               <Icon name="plus" />
               メンバーの行を追加
             </Button>
-            <p className="mt-3 text-xs leading-5 text-muted">
-              {mode === 'update'
-                ? '削除はこのバンドから外す操作です。名前の欄を差し替えても、元の人の名前や他バンドの所属は変わりません。'
-                : '同じ名前でも、新しく入力した人は別のメンバーとして登録します。'}
-            </p>
           </section>
         </div>
       )}

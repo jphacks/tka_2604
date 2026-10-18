@@ -15,7 +15,6 @@ beforeEach(async () => {
     return Promise.resolve({
       ...draft,
       id: 'created-event',
-      status: 'planning',
     })
   })
   vi.spyOn(eventRepository, 'getEvent').mockImplementation((id) =>

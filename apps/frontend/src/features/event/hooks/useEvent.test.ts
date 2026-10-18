@@ -6,10 +6,12 @@ import type { EventRepository } from '../repositories/types'
 
 const api = vi.hoisted(() => ({
   getEvent: vi.fn(),
+  deleteBand: vi.fn<EventRepository['deleteBand']>(),
   solve: vi.fn<EventRepository['solve']>(),
   saveSchedule: vi.fn<EventRepository['saveSchedule']>(),
   saveConstraints: vi.fn<EventRepository['saveConstraints']>(),
   sendMessage: vi.fn<EventRepository['sendMessage']>(),
+  recordDecision: vi.fn<EventRepository['recordDecision']>(),
   getMessages: vi.fn<EventRepository['getMessages']>(),
 }))
 
@@ -169,6 +171,58 @@ it('marks a frame count edit dirty and persists it on explicit saving', async ()
   ])
 })
 
+it('deletes a band with the current version and synchronizes the schedule baseline', async () => {
+  const withSource: EventData = {
+    ...structuredClone(event),
+    constraintSources: { generated: 'a', manual: null },
+    constraints: [
+      {
+        schema_version: '1.0.0',
+        constraint_id: 'generated',
+        event_id: 'e',
+        type: 'at_position',
+        hardness: 'hard',
+        priority: null,
+        enabled: true,
+        targets: { band_id: 'a' },
+        params: { position: 0 },
+      },
+      {
+        schema_version: '1.0.0',
+        constraint_id: 'manual',
+        event_id: 'e',
+        type: 'at_position',
+        hardness: 'hard',
+        priority: null,
+        enabled: true,
+        targets: { band_id: 'b' },
+        params: { position: 1 },
+      },
+    ],
+  }
+  api.getEvent.mockResolvedValueOnce(withSource)
+  api.deleteBand.mockResolvedValueOnce({
+    eventId: 'e',
+    bandId: 'a',
+    updatedAt: '2026-10-17T00:01:00.000Z',
+  })
+  const { result } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
+  await act(() => result.current.deleteBand('a'))
+  expect(api.deleteBand).toHaveBeenCalledWith('e', 'a', withSource.updatedAt)
+  expect(result.current.event?.sections[0].slots).toEqual([null, 'b'])
+  expect(result.current.event?.performances.map((band) => band.id)).toEqual([
+    'b',
+  ])
+  expect(
+    result.current.event?.constraints.map((item) => item.constraint_id),
+  ).toEqual(['manual'])
+  expect(result.current.event?.members).toEqual([])
+  expect(result.current.event?.updatedAt).toBe('2026-10-17T00:01:00.000Z')
+  expect(result.current.scheduleDirty).toBe(false)
+  expect(result.current.constraintsDirty).toBe(false)
+})
+
 it('persists order then constraints before invoking Solver with the last revision', async () => {
   const calls: string[] = []
   api.saveSchedule.mockImplementationOnce((snapshot) => {
@@ -250,10 +304,13 @@ async function receiveReorder(result: {
 
 it('saves an approved reorder through the schedule API and keeps the order on rejection', async () => {
   api.saveSchedule.mockResolvedValue({ updatedAt: '2026-10-17T00:00:00.001Z' })
+  api.recordDecision.mockResolvedValue(undefined)
   const { result } = renderHook(() => useEvent('e'))
   await waitFor(() => expect(result.current.event).not.toBeNull())
   await receiveReorder(result)
   act(() => result.current.dismissReorder())
+  await waitFor(() => expect(result.current.pendingDecision).toBeNull())
+  expect(api.recordDecision.mock.calls[0][1]).toBe('discarded')
   expect(result.current.event?.sections[0].slots).toEqual(['a', 'b'])
   expect(api.saveSchedule).not.toHaveBeenCalled()
 
@@ -266,6 +323,27 @@ it('saves an approved reorder through the schedule API and keeps the order on re
   expect(result.current.chatReorder).toBeNull()
   expect(result.current.scheduleDirty).toBe(false)
   expect(result.current.notice).toBe('並べ替え案を出演順に保存しました。')
+  expect(api.recordDecision.mock.calls[1][1]).toBe('applied')
+})
+
+it('keeps a reorder proposal open and does not log acceptance until schedule saving succeeds', async () => {
+  api.saveSchedule.mockRejectedValueOnce(new Error('保存失敗'))
+  api.saveSchedule.mockResolvedValueOnce({
+    updatedAt: '2026-10-17T00:00:00.001Z',
+  })
+  api.recordDecision.mockResolvedValue(undefined)
+  const { result } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
+  await receiveReorder(result)
+  await act(() => result.current.applyReorder())
+  expect(result.current.chatReorder).not.toBeNull()
+  expect(result.current.event?.sections[0].slots).toEqual(['a', 'b'])
+  expect(api.recordDecision).not.toHaveBeenCalled()
+  await act(() => result.current.applyReorder())
+  expect(result.current.chatReorder).toBeNull()
+  expect(result.current.event?.sections[0].slots).toEqual(['b', 'a'])
+  expect(result.current.event?.updatedAt).toBe('2026-10-17T00:00:00.001Z')
+  expect(api.recordDecision.mock.calls[0][1]).toBe('applied')
 })
 
 it('does not apply a reorder proposed for an older version', async () => {
@@ -282,6 +360,114 @@ it('does not apply a reorder proposed for an older version', async () => {
   )
   await act(() => result.current.applyReorder())
   expect(api.saveSchedule).not.toHaveBeenCalled()
+  expect(api.recordDecision).not.toHaveBeenCalled()
   expect(result.current.error).toContain('イベントが更新されました')
   expect(result.current.event?.sections[0].slots).toEqual(['a', 'b'])
+})
+
+it('records a constraint proposal only after its save succeeds', async () => {
+  api.sendMessage.mockResolvedValue({
+    reply: 'Aを第1部にしますか？',
+    proposal: {
+      expectedUpdatedAt: event.updatedAt!,
+      actions: [
+        {
+          type: 'add_constraint',
+          constraint: {
+            type: 'in_range',
+            targets: { band_ids: ['a'] },
+            params: { kind: 'parts', part_ids: [0] },
+            hardness: 'hard',
+            priority: null,
+          },
+        },
+      ],
+    },
+  })
+  api.getMessages.mockResolvedValue([])
+  api.saveConstraints.mockResolvedValue({
+    updatedAt: '2026-10-17T00:00:00.001Z',
+  })
+  api.recordDecision.mockResolvedValue(undefined)
+  const { result } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
+  act(() => result.current.setChatDraft('Aを第1部に'))
+  await act(() => result.current.sendMessage())
+  api.saveConstraints.mockImplementationOnce(() => {
+    expect(api.recordDecision).not.toHaveBeenCalled()
+    return Promise.resolve({ updatedAt: '2026-10-17T00:00:00.001Z' })
+  })
+  await act(() => result.current.applyProposal())
+  expect(api.saveConstraints).toHaveBeenCalledTimes(1)
+  expect(api.recordDecision).toHaveBeenCalledWith(
+    'e',
+    'applied',
+    expect.stringMatching(/^decision-/),
+    expect.any(AbortSignal),
+  )
+  expect(result.current.event?.constraints).toHaveLength(1)
+  expect(result.current.chatProposal).toBeNull()
+})
+
+it('does not record application when saving the proposed constraint fails', async () => {
+  api.sendMessage.mockResolvedValue({
+    reply: 'Aを第1部にしますか？',
+    proposal: {
+      expectedUpdatedAt: event.updatedAt!,
+      actions: [
+        {
+          type: 'add_constraint',
+          constraint: {
+            type: 'in_range',
+            targets: { band_ids: ['a'] },
+            params: { kind: 'parts', part_ids: [0] },
+            hardness: 'hard',
+            priority: null,
+          },
+        },
+      ],
+    },
+  })
+  api.getMessages.mockResolvedValue([])
+  api.saveConstraints.mockRejectedValue(new Error('保存失敗'))
+  const { result } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
+  act(() => result.current.setChatDraft('Aを第1部に'))
+  await act(() => result.current.sendMessage())
+  await act(() => result.current.applyProposal())
+  expect(api.recordDecision).not.toHaveBeenCalled()
+  expect(result.current.chatProposal).not.toBeNull()
+  expect(result.current.event?.constraints).toEqual([])
+})
+
+it('records discarding a constraint proposal without saving constraints', async () => {
+  api.sendMessage.mockResolvedValue({
+    reply: 'Aを第1部にしますか？',
+    proposal: {
+      expectedUpdatedAt: event.updatedAt!,
+      actions: [
+        {
+          type: 'add_constraint',
+          constraint: {
+            type: 'in_range',
+            targets: { band_ids: ['a'] },
+            params: { kind: 'parts', part_ids: [0] },
+            hardness: 'hard',
+            priority: null,
+          },
+        },
+      ],
+    },
+  })
+  api.getMessages.mockResolvedValue([])
+  api.recordDecision.mockResolvedValue(undefined)
+  const { result } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
+  act(() => result.current.setChatDraft('Aを第1部に'))
+  await act(() => result.current.sendMessage())
+  act(() => result.current.dismissProposal())
+  await waitFor(() => expect(api.recordDecision).toHaveBeenCalledTimes(1))
+  expect(api.recordDecision.mock.calls[0][1]).toBe('discarded')
+  expect(api.saveConstraints).not.toHaveBeenCalled()
+  expect(result.current.chatProposal).toBeNull()
 })
