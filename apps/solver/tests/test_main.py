@@ -92,6 +92,33 @@ def test_solve_accepts_real_http_request_and_returns_complete_placements(
     assert "diagnostics" not in body or body["diagnostics"] == []
 
 
+def test_solve_accepts_band_count_for_each_part(client: TestClient) -> None:
+    payload = solve_payload()
+    payload["parts"] = [
+        {"partId": "part-1", "sortOrder": 0, "bandCount": 5},
+        {"partId": "part-2", "sortOrder": 1, "bandCount": 5},
+    ]
+
+    response = post_solve(client, payload)
+
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize("band_count", [-1, 1.5, True, "5"])
+def test_solve_rejects_invalid_part_band_count(
+    client: TestClient, band_count: object
+) -> None:
+    payload = solve_payload()
+    payload["parts"] = [
+        {"partId": "part-1", "sortOrder": 0, "bandCount": band_count},
+    ]
+
+    response = post_solve(client, payload)
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "invalid_input"
+
+
 def test_solve_integrates_supported_constraint_types_and_parameter_branches(
     client: TestClient,
 ) -> None:
