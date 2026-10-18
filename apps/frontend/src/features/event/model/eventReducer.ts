@@ -42,6 +42,7 @@ export type EventAction =
   | { type: 'order'; id: string; value: number | null; persistent?: boolean }
   | { type: 'resize'; count: number; sectionId?: string; persistent?: boolean }
   | { type: 'fixed'; id: string; fixed: boolean }
+  | { type: 'constraints-replaced'; constraints: Constraint[] }
   | { type: 'constraint-save'; constraint: Constraint }
   | { type: 'constraint-update'; id: string; patch: ConstraintPatch }
   | { type: 'constraint-delete'; id: string }
@@ -168,6 +169,8 @@ export function eventReducer(
         '現在の位置を必須条件として固定しました。',
       )
     }
+    case 'constraints-replaced':
+      return success({ ...event, constraints: action.constraints })
     case 'constraint-save': {
       const error = validateConstraint(action.constraint, event)
       if (error) return fail(error)

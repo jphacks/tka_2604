@@ -169,17 +169,39 @@ test('real API: schedule and constraints survive reload, failures and concurrent
         ? route.fulfill({ status: 503, body: 'unavailable' })
         : route.continue(),
     )
+    let schedulePosts = 0
+    page.on('request', (request) => {
+      if (
+        request.method() === 'POST' &&
+        new URL(request.url()).pathname === `${path}/schedule`
+      )
+        schedulePosts++
+    })
+    await dragTo(
+      page,
+      page.getByRole('button', { name: 'バンドBを並べ替え', exact: true }),
+      part
+        .getByText('空き枠 · ここにドラッグして配置', { exact: true })
+        .first(),
+    )
+    await expect(
+      page.getByRole('button', { name: '出演順を保存', exact: true }),
+    ).toBeEnabled()
+    expect(
+      (
+        (await (await request.get(`${path}/schedule`)).json()) as {
+          placements: unknown[]
+        }
+      ).placements,
+    ).toEqual(beforeSchedule.placements)
+    expect(schedulePosts).toBe(0)
     await autoSave(
       page,
       `${path}/schedule`,
       () =>
-        dragTo(
-          page,
-          page.getByRole('button', { name: 'バンドBを並べ替え', exact: true }),
-          part
-            .getByText('空き枠 · ここにドラッグして配置', { exact: true })
-            .first(),
-        ),
+        page
+          .getByRole('button', { name: '出演順を保存', exact: true })
+          .click({ delay: 75 }),
       503,
     )
     await expect(page.getByRole('alert')).toContainText('503')
@@ -200,7 +222,12 @@ test('real API: schedule and constraints survive reload, failures and concurrent
       exact: true,
     })
     await unassigned.fill('3')
-    await autoSave(page, `${path}/schedule`, () => unassigned.press('Enter'))
+    await autoSave(page, `${path}/schedule`, async () => {
+      await unassigned.press('Enter')
+      await page
+        .getByRole('button', { name: '出演順を保存', exact: true })
+        .click()
+    })
     const handle = page.getByRole('button', {
       name: 'バンドBを並べ替え',
       exact: true,
@@ -211,16 +238,31 @@ test('real API: schedule and constraints survive reload, failures and concurrent
     await expect(page.getByText('移動先：バンドB（2番）')).toHaveCount(1)
     await page.keyboard.press('ArrowDown')
     await expect(page.getByText('移動先：未配置バンド（3番）')).toHaveCount(1)
-    await autoSave(page, `${path}/schedule`, () => page.keyboard.press('Space'))
+    await autoSave(page, `${path}/schedule`, async () => {
+      await page.keyboard.press('Space')
+      await page
+        .getByRole('button', { name: '出演順を保存', exact: true })
+        .click()
+    })
     await expect(unassigned).toHaveValue('2')
     await expect(
       page.getByRole('textbox', { name: 'バンドBの出演順', exact: true }),
     ).toHaveValue('3')
     await unassigned.fill('')
-    await autoSave(page, `${path}/schedule`, () => unassigned.press('Enter'))
+    await autoSave(page, `${path}/schedule`, async () => {
+      await unassigned.press('Enter')
+      await page
+        .getByRole('button', { name: '出演順を保存', exact: true })
+        .click()
+    })
     const parts = page.getByRole('textbox', { name: '部数', exact: true })
     await parts.fill('3')
-    await autoSave(page, `${path}/schedule`, () => parts.press('Enter'))
+    await autoSave(page, `${path}/schedule`, async () => {
+      await parts.press('Enter')
+      await page
+        .getByRole('button', { name: '出演順を保存', exact: true })
+        .click()
+    })
     const schedule = (await (await request.get(`${path}/schedule`)).json()) as {
       parts: unknown[]
       unassignedBandIds: string[]
@@ -508,7 +550,7 @@ for (const width of [1280, 1600]) {
     }
     await expect(
       schedule.getByRole('button', { name: '出演順を保存', exact: true }),
-    ).toHaveCount(0)
+    ).toBeVisible()
     await expect(
       constraints.getByRole('button', { name: '制約を保存', exact: true }),
     ).toHaveCount(0)
@@ -522,3 +564,299 @@ for (const width of [1280, 1600]) {
     })
   })
 }
+
+test('chat proposals require confirmation and auto-save only constraints', async ({
+  page,
+  request,
+}) => {
+  const path = '/api/events/demo-event'
+  const before = (await (await request.get(`${path}/constraints`)).json()) as {
+    updatedAt: string
+    constraints: {
+      constraint: Record<string, unknown>
+      sourceBandId: string | null
+    }[]
+  }
+  let scheduleWrites = 0
+  let solveCalls = 0
+  page.on('request', (r) => {
+    if (r.method() === 'POST') {
+      const url = new URL(r.url()).pathname
+      if (url === `${path}/schedule`) scheduleWrites++
+      if (url === `${path}/solve`) solveCalls++
+    }
+  })
+  const messages: {
+    messageId: string
+    role: string
+    text: string
+    replyToMessageId: string | null
+  }[] = []
+  await page.route(`**${path}/chat`, async (route) => {
+    if (route.request().method() === 'GET') {
+      const response = await route.fetch()
+      const data = (await response.json()) as { messages: unknown[] }
+      await route.fulfill({
+        json: { ...data, messages: [...data.messages, ...messages] },
+      })
+    } else {
+      const input = route.request().postDataJSON() as {
+        messageId: string
+        message: string
+      }
+      messages.push(
+        {
+          messageId: input.messageId,
+          role: 'user',
+          text: input.message,
+          replyToMessageId: null,
+        },
+        {
+          messageId: 'proposal-reply',
+          role: 'assistant',
+          text: 'AをBより前にする変更案です。',
+          replyToMessageId: input.messageId,
+        },
+      )
+      await route.fulfill({
+        json: {
+          reply: 'AをBより前にする変更案です。',
+          proposal: {
+            expectedUpdatedAt: before.updatedAt,
+            actions: [
+              {
+                type: 'add_constraint',
+                constraint: {
+                  type: 'before',
+                  hardness: null,
+                  priority: null,
+                  targets: {
+                    before_band_id: 'demo-band-a',
+                    after_band_id: 'demo-band-b',
+                  },
+                  params: {},
+                },
+              },
+            ],
+          },
+        },
+      })
+    }
+  })
+  try {
+    await page.goto('/event/demo-event')
+    await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+    await page
+      .getByRole('textbox', { name: 'AIへのメッセージ' })
+      .fill('AをBより前にしたい')
+    await page.getByRole('button', { name: 'メッセージを送信' }).click()
+    const proposal = page.getByRole('region', { name: 'AIの制約変更案' })
+    await expect(proposal).toBeVisible()
+    expect(
+      (
+        (await (await request.get(`${path}/constraints`)).json()) as {
+          constraints: unknown[]
+        }
+      ).constraints,
+    ).toHaveLength(before.constraints.length)
+    await expect(
+      proposal.getByRole('button', { name: '確認して反映' }),
+    ).toBeDisabled()
+    await proposal
+      .getByRole('combobox', { name: '変更案1の必須・任意' })
+      .selectOption('soft')
+    await expect(
+      proposal.getByRole('button', { name: '確認して反映' }),
+    ).toBeDisabled()
+    await proposal
+      .getByRole('combobox', { name: '変更案1の優先度' })
+      .selectOption('mid')
+    await page.route(`**${path}/constraints`, (route) =>
+      route.request().method() === 'POST'
+        ? route.fulfill({ status: 503, body: 'unavailable' })
+        : route.continue(),
+    )
+    await autoSave(
+      page,
+      `${path}/constraints`,
+      () => proposal.getByRole('button', { name: '確認して反映' }).click(),
+      503,
+    )
+    await expect(page.getByRole('alert')).toContainText('503')
+    await expect(proposal).toHaveCount(0)
+    await page.unroute(`**${path}/constraints`)
+    await autoSave(page, `${path}/constraints`, () =>
+      page.getByRole('button', { name: '保存を再試行' }).click(),
+    )
+    const saved = (await (
+      await request.get(`${path}/constraints`)
+    ).json()) as typeof before
+    expect(saved.constraints).toHaveLength(before.constraints.length + 1)
+    expect(
+      saved.constraints.find((row) => row.constraint.type === 'before')
+        ?.constraint,
+    ).toMatchObject({
+      hardness: 'soft',
+      priority: 'mid',
+      enabled: true,
+      source_text: 'AをBより前にしたい',
+    })
+    expect(scheduleWrites).toBe(0)
+    expect(solveCalls).toBe(0)
+    await page.reload()
+    await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+    await expect(
+      page.getByRole('heading', {
+        name: 'バンドAをバンドBより前にする',
+        exact: true,
+      }),
+    ).toBeVisible()
+  } finally {
+    const latest = (await (await request.get(path)).json()) as {
+      updatedAt: string
+    }
+    expect(
+      (
+        await request.post(`${path}/constraints`, {
+          data: {
+            expectedUpdatedAt: latest.updatedAt,
+            constraints: before.constraints.map((row) => row.constraint),
+          },
+        })
+      ).status(),
+    ).toBe(200)
+  }
+})
+
+test('generation saves the displayed schedule and constraints before calling solve', async ({
+  page,
+  request,
+}) => {
+  const path = '/api/events/demo-event'
+  const schedule = (await (await request.get(`${path}/schedule`)).json()) as {
+    parts: { partId: string; partName: string | null }[]
+    placements: unknown[]
+    unassignedBandIds: string[]
+  }
+  const constraints = (await (
+    await request.get(`${path}/constraints`)
+  ).json()) as { constraints: { constraint: Record<string, unknown> }[] }
+  const calls: string[] = []
+  page.on('request', (r) => {
+    const resource = new URL(r.url()).pathname
+    if (
+      r.method() === 'POST' &&
+      [`${path}/schedule`, `${path}/constraints`, `${path}/solve`].includes(
+        resource,
+      )
+    )
+      calls.push(resource.split('/').at(-1)!)
+  })
+  await page.route(`**${path}/solve`, async (route) => {
+    const savedSchedule = (await (
+      await request.get(`${path}/schedule`)
+    ).json()) as { updatedAt: string; unassignedBandIds: string[] }
+    const savedConstraints = (await (
+      await request.get(`${path}/constraints`)
+    ).json()) as {
+      updatedAt: string
+      constraints: { constraint: { enabled: boolean } }[]
+    }
+    expect(route.request().postDataJSON()).toEqual({
+      expectedUpdatedAt: savedConstraints.updatedAt,
+    })
+    expect(savedSchedule.updatedAt).toBe(savedConstraints.updatedAt)
+    expect(savedSchedule.unassignedBandIds).toContain('demo-band-b')
+    expect(
+      savedConstraints.constraints.every((row) => !row.constraint.enabled),
+    ).toBe(true)
+    await route.fulfill({
+      json: {
+        result: {
+          eventId: 'demo-event',
+          status: 'unknown',
+          placements: null,
+          unassignedBandIds: null,
+          constraintResults: null,
+        },
+        schedule: null,
+      },
+    })
+  })
+  try {
+    await page.goto('/event/demo-event')
+    await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+    const order = page.getByRole('textbox', {
+      name: 'バンドBの出演順',
+      exact: true,
+    })
+    await order.fill('')
+    await order.press('Enter')
+    expect(
+      (
+        (await (await request.get(`${path}/schedule`)).json()) as {
+          unassignedBandIds: string[]
+        }
+      ).unassignedBandIds,
+    ).not.toContain('demo-band-b')
+    await autoSave(page, `${path}/constraints`, () =>
+      page
+        .getByRole('checkbox', {
+          name: 'バンドAを1番にするを有効にする',
+          exact: true,
+        })
+        .uncheck(),
+    )
+    expect(
+      (
+        (await (await request.get(`${path}/schedule`)).json()) as {
+          unassignedBandIds: string[]
+        }
+      ).unassignedBandIds,
+    ).not.toContain('demo-band-b')
+    calls.length = 0
+    await page.route(`**${path}/schedule`, (route) =>
+      route.request().method() === 'POST'
+        ? route.fulfill({ status: 503, body: 'unavailable' })
+        : route.continue(),
+    )
+    await page.getByRole('button', { name: '自動生成', exact: true }).click()
+    await expect(page.getByRole('alert')).toContainText('503')
+    expect(calls).toEqual(['schedule'])
+    await page.unroute(`**${path}/schedule`)
+    calls.length = 0
+    await page.getByRole('button', { name: '自動生成', exact: true }).click()
+    await expect(
+      page.getByRole('status').filter({ hasText: '探索が完了していません' }),
+    ).toBeVisible()
+    expect(calls).toEqual(['schedule', 'constraints', 'solve'])
+    await expect(order).toHaveValue('')
+  } finally {
+    const latest = (await (await request.get(path)).json()) as {
+      updatedAt: string
+    }
+    const restored = await request.post(`${path}/constraints`, {
+      data: {
+        expectedUpdatedAt: latest.updatedAt,
+        constraints: constraints.constraints.map((row) => row.constraint),
+      },
+    })
+    expect(restored.status()).toBe(200)
+    const revision = (await restored.json()) as { updatedAt: string }
+    expect(
+      (
+        await request.post(`${path}/schedule`, {
+          data: {
+            expectedUpdatedAt: revision.updatedAt,
+            parts: schedule.parts.map(({ partId, partName }) => ({
+              partId,
+              partName,
+            })),
+            placements: schedule.placements,
+            unassignedBandIds: schedule.unassignedBandIds,
+          },
+        })
+      ).status(),
+    ).toBe(200)
+  }
+})

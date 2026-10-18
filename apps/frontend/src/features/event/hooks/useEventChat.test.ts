@@ -30,7 +30,7 @@ it('reuses the user ID after a lost response and restores authoritative history'
   const { result } = renderHook(() => useEventChat('a', dispatch, event, false))
   api.sendMessage
     .mockRejectedValueOnce(new Error('通信失敗'))
-    .mockResolvedValueOnce('回答')
+    .mockResolvedValueOnce({ reply: '回答' })
   act(() => result.current.setChatDraft('希望'))
   await act(() => result.current.sendMessage())
   expect(result.current.chatDraft).toBe('希望')
@@ -52,7 +52,7 @@ it('retries an unanswered persisted message using its original ID after reopenin
     text: '元の発言',
     replyToMessageId: null,
   }
-  api.sendMessage.mockResolvedValue('回答')
+  api.sendMessage.mockResolvedValue({ reply: '回答' })
   api.getMessages.mockResolvedValue([user])
   const { result } = renderHook(() =>
     useEventChat('a', vi.fn(), { ...event, messages: [user] }, false),

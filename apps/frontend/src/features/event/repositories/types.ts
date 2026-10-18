@@ -1,3 +1,5 @@
+import type { ChatResponse } from '../../../../../backend/src/services/chat/types'
+import type { SolveResponse } from '../../../shared/api/events'
 import type { ChatMessage, EventData } from '../model/types'
 
 interface EventSaveResult {
@@ -9,6 +11,7 @@ interface EventSaveResult {
 export interface EventRepository {
   getEvent(eventId: string, signal?: AbortSignal): Promise<EventData>
   getMessages(eventId: string, signal?: AbortSignal): Promise<ChatMessage[]>
+  solve(event: EventData): Promise<SolveResponse>
   saveSchedule(event: EventData): Promise<EventSaveResult>
   saveConstraints(event: EventData): Promise<EventSaveResult>
   sendMessage(
@@ -16,5 +19,5 @@ export interface EventRepository {
     message: string,
     signal?: AbortSignal,
     messageId?: string,
-  ): Promise<string>
+  ): Promise<ChatResponse>
 }

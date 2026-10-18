@@ -13,7 +13,7 @@ describe('chat HTTP adapter', () => {
     const controller = new AbortController()
     expect(
       await sendChatMessage('event-a', '本文', controller.signal, 'stable-id'),
-    ).toBe('backendの返信')
+    ).toEqual({ reply: 'backendの返信' })
     expect(fetch).toHaveBeenCalledWith(
       '/api/events/event-a/chat',
       expect.objectContaining({
@@ -49,5 +49,21 @@ describe('chat HTTP adapter', () => {
         '送信に失敗しました',
       )
     },
+  )
+})
+
+it.each([
+  { expectedUpdatedAt: 'now', actions: [] },
+  {
+    expectedUpdatedAt: 'now',
+    actions: [{ type: 'add_constraint', constraint: null }],
+  },
+])('rejects a malformed proposal without displaying it', async (proposal) => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(Response.json({ reply: '案です', proposal })),
+  )
+  await expect(sendChatMessage('event-a', '本文')).rejects.toThrow(
+    '変更案を読み取れませんでした',
   )
 })

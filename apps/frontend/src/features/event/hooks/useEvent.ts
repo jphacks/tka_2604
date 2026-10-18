@@ -8,6 +8,7 @@ import {
 import { type EventData, scheduleContent } from '../../../shared/model/event'
 import { dataSource } from '../../../shared/repositories/dataSource'
 import { workspaceRepository } from '../../../shared/repositories/workspaceRepository'
+import { applyChatProposal } from '../model/chatProposal'
 import {
   type ConstraintPatch,
   eventReducer,
@@ -15,14 +16,22 @@ import {
 } from '../model/eventReducer'
 import { exportEventCsv } from '../model/export'
 import { buildSchedule, findTarget } from '../model/schedule'
+import { applySolverSchedule, solveMessages } from '../model/solve'
 import { eventRepository } from '../repositories/eventRepository'
 import { useEventChat } from './useEventChat'
 
 export function useEvent(eventId: string) {
   const [state, dispatch] = useReducer(eventReducer, initialState)
   const [baseline, setBaseline] = useState<EventData | null>(null)
-  const [saving, setSaving] = useState(false)
+  const [savingKind, setSavingKind] = useState<
+    'schedule' | 'constraints' | null
+  >(null)
+  const saving = savingKind !== null
   const [saveError, setSaveError] = useState('')
+  const [failedKind, setFailedKind] = useState<'schedule' | 'constraints'>(
+    'constraints',
+  )
+  const [solving, setSolving] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const busy = useRef(false)
   const lifetime = useRef<AbortController | null>(null)
@@ -44,7 +53,7 @@ export function useEvent(eventId: string) {
     eventId,
     dispatch,
     event,
-    persistent && (dirty || saving || refreshing),
+    persistent && (dirty || saving || solving || refreshing),
   )
   const [loadError, setLoadError] = useState('')
   const [retry, setRetry] = useState(0)
@@ -88,25 +97,23 @@ export function useEvent(eventId: string) {
     return () => window.removeEventListener('beforeunload', warn)
   }, [dirty])
 
-  const save = useCallback(
-    async (kind: 'schedule' | 'constraints') => {
-      if (!event || busy.current || refreshing || chat.sending || !persistent)
-        return
-      busy.current = true
-      setSaving(true)
-      const signal = lifetime.current?.signal
-      dispatch({ type: 'notice', message: '' })
-      try {
-        const saved =
-          kind === 'schedule'
-            ? await eventRepository.saveSchedule(event)
-            : await eventRepository.saveConstraints(event)
-        if (signal?.aborted) return
-        const constraintSources = saved.constraintSources
+  const persist = useCallback(
+    async (snapshot: EventData, kind: 'schedule' | 'constraints') => {
+      const saved =
+        kind === 'schedule'
+          ? await eventRepository.saveSchedule(snapshot)
+          : await eventRepository.saveConstraints(snapshot)
+      const next = {
+        ...snapshot,
+        updatedAt: saved.updatedAt,
+        constraintSources:
+          saved.constraintSources ?? snapshot.constraintSources,
+      }
+      if (!lifetime.current?.signal.aborted) {
         dispatch({
           type: 'saved',
           updatedAt: saved.updatedAt,
-          constraintSources,
+          constraintSources: saved.constraintSources,
         })
         setBaseline(
           (current) =>
@@ -114,33 +121,110 @@ export function useEvent(eventId: string) {
               ...current,
               updatedAt: saved.updatedAt,
               ...(kind === 'schedule'
-                ? { sections: event.sections, unassigned: event.unassigned }
-                : { constraints: event.constraints }),
+                ? {
+                    sections: snapshot.sections,
+                    unassigned: snapshot.unassigned,
+                  }
+                : { constraints: snapshot.constraints }),
             },
         )
+      }
+      return next
+    },
+    [],
+  )
+
+  const save = useCallback(
+    async (kind: 'schedule' | 'constraints') => {
+      if (!event || busy.current || refreshing || chat.sending || !persistent)
+        return
+      busy.current = true
+      setSavingKind(kind)
+      setSaveError('')
+      dispatch({ type: 'notice', message: '' })
+      const signal = lifetime.current?.signal
+      try {
+        await persist(event, kind)
       } catch (error) {
-        if (!signal?.aborted)
+        if (!signal?.aborted) {
+          setFailedKind(kind)
           setSaveError(
             error instanceof Error ? error.message : '保存に失敗しました。',
           )
+        }
       } finally {
         busy.current = false
-        if (!signal?.aborted) setSaving(false)
+        if (!signal?.aborted) setSavingKind(null)
       }
     },
-    [event, refreshing, chat.sending, persistent],
+    [event, refreshing, chat.sending, persistent, persist],
   )
 
   useEffect(() => {
-    if (!dirty || saving || refreshing || chat.sending || saveError) return
+    if (
+      !constraintsDirty ||
+      saving ||
+      solving ||
+      refreshing ||
+      chat.sending ||
+      saveError
+    )
+      return
     let cancelled = false
     queueMicrotask(() => {
-      if (!cancelled) void save(scheduleDirty ? 'schedule' : 'constraints')
+      if (!cancelled) void save('constraints')
     })
     return () => {
       cancelled = true
     }
-  }, [dirty, scheduleDirty, saving, refreshing, chat.sending, saveError, save])
+  }, [
+    constraintsDirty,
+    saving,
+    solving,
+    refreshing,
+    chat.sending,
+    saveError,
+    save,
+  ])
+
+  async function generate() {
+    if (!event || busy.current || refreshing || chat.sending || !persistent)
+      return
+    busy.current = true
+    setSolving(true)
+    setSaveError('')
+    dispatch({ type: 'notice', message: '' })
+    const signal = lifetime.current?.signal
+    let stage: 'schedule' | 'constraints' | 'solve' = 'schedule'
+    try {
+      let current = await persist(event, 'schedule')
+      if (signal?.aborted) return
+      stage = 'constraints'
+      current = await persist(current, 'constraints')
+      if (signal?.aborted) return
+      stage = 'solve'
+      const result = await eventRepository.solve(current)
+      if (signal?.aborted) return
+      const next = applySolverSchedule(current, result)
+      dispatch({ type: 'loaded', event: next })
+      setBaseline(next)
+      dispatch({ type: 'notice', message: solveMessages[result.result.status] })
+    } catch (error) {
+      if (!signal?.aborted) {
+        const message =
+          error instanceof Error ? error.message : '計算に失敗しました。'
+        if (stage === 'solve')
+          dispatch({ type: 'notice', error: true, message })
+        else {
+          setFailedKind(stage)
+          setSaveError(message)
+        }
+      }
+    } finally {
+      busy.current = false
+      if (!signal?.aborted) setSolving(false)
+    }
+  }
   const views = event
     ? event.constraints.map((constraint) => ({
         constraint,
@@ -157,10 +241,39 @@ export function useEvent(eventId: string) {
     ...chat,
     error: state.error || saveError,
     saveFailed: Boolean(saveError),
-    retrySave: () => setSaveError(''),
+    retrySave: () => save(failedKind),
+    saveSchedule: () => save('schedule'),
+    generate,
+    solving,
+    applyProposal: () => {
+      if (
+        !event ||
+        !chat.chatProposal ||
+        chat.chatBlocked ||
+        busy.current ||
+        refreshing ||
+        chat.sending
+      )
+        return
+      try {
+        const constraints = applyChatProposal(event, chat.chatProposal)
+        dispatch({ type: 'constraints-replaced', constraints })
+        chat.dismissProposal()
+      } catch (error) {
+        dispatch({
+          type: 'notice',
+          error: true,
+          message:
+            error instanceof Error
+              ? error.message
+              : '提案を反映できませんでした。',
+        })
+      }
+    },
     loadError,
     persistent,
     saving,
+    savingSchedule: savingKind === 'schedule',
     refreshing,
     scheduleDirty,
     constraintsDirty,

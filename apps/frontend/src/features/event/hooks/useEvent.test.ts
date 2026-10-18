@@ -6,6 +6,7 @@ import type { EventRepository } from '../repositories/types'
 
 const api = vi.hoisted(() => ({
   getEvent: vi.fn(),
+  solve: vi.fn<EventRepository['solve']>(),
   saveSchedule: vi.fn<EventRepository['saveSchedule']>(),
   saveConstraints: vi.fn<EventRepository['saveConstraints']>(),
 }))
@@ -35,27 +36,26 @@ beforeEach(() => {
   api.getEvent.mockResolvedValue(structuredClone(event))
 })
 
-it('automatically persists order and constraint edits using the latest revision', async () => {
-  api.saveSchedule.mockResolvedValue({ updatedAt: '2026-10-17T00:00:00.001Z' })
+it('saves order only on explicit request and auto-saves constraints without saving order', async () => {
+  api.saveSchedule.mockResolvedValue({ updatedAt: '2026-10-17T00:00:00.002Z' })
   api.saveConstraints.mockResolvedValue({
-    updatedAt: '2026-10-17T00:00:00.002Z',
+    updatedAt: '2026-10-17T00:00:00.001Z',
     constraintSources: {},
   })
   const { result } = renderHook(() => useEvent('e'))
   await waitFor(() => expect(result.current.event).not.toBeNull())
   act(() => result.current.setOrder('b', 1))
-  await waitFor(() => expect(api.saveSchedule).toHaveBeenCalledTimes(1))
-  await waitFor(() => expect(result.current.scheduleDirty).toBe(false))
-  expect(api.saveSchedule.mock.calls[0][0].sections[0].slots).toEqual([
-    'b',
-    'a',
-  ])
+  expect(api.saveSchedule).not.toHaveBeenCalled()
   act(() => result.current.setFixed('b', true))
-  await waitFor(() => expect(api.saveConstraints).toHaveBeenCalledTimes(1))
   await waitFor(() => expect(result.current.constraintsDirty).toBe(false))
-  expect(api.saveConstraints.mock.calls[0][0].updatedAt).toBe(
+  expect(api.saveConstraints).toHaveBeenCalledTimes(1)
+  expect(api.saveSchedule).not.toHaveBeenCalled()
+  expect(result.current.scheduleDirty).toBe(true)
+  await act(() => result.current.saveSchedule())
+  expect(api.saveSchedule.mock.calls[0][0].updatedAt).toBe(
     '2026-10-17T00:00:00.001Z',
   )
+  expect(result.current.scheduleDirty).toBe(false)
 })
 
 it('keeps failed edits without a retry loop and persists them on explicit retry', async () => {
@@ -63,6 +63,7 @@ it('keeps failed edits without a retry loop and persists them on explicit retry'
   const { result } = renderHook(() => useEvent('e'))
   await waitFor(() => expect(result.current.event).not.toBeNull())
   act(() => result.current.setOrder('b', 1))
+  await act(() => result.current.saveSchedule())
   await waitFor(() => expect(result.current.error).toBe('通信失敗'))
   expect(result.current.event?.sections[0].slots).toEqual(['b', 'a'])
   expect(result.current.scheduleDirty).toBe(true)
@@ -76,7 +77,7 @@ it('keeps failed edits without a retry loop and persists them on explicit retry'
   api.saveConstraints.mockResolvedValueOnce({
     updatedAt: '2026-10-17T00:00:00.002Z',
   })
-  act(() => result.current.retrySave())
+  await act(() => result.current.retrySave())
   await waitFor(() => expect(result.current.constraintsDirty).toBe(false))
   expect(result.current.scheduleDirty).toBe(false)
   expect(api.saveSchedule.mock.calls[1][0].updatedAt).toBe(event.updatedAt)
@@ -85,9 +86,9 @@ it('keeps failed edits without a retry loop and persists them on explicit retry'
   )
 })
 
-it('preserves both edits on conflict and blocks further edits during the request', async () => {
+it('auto-saves only constraints while order is unsaved, preserving both edits on conflict', async () => {
   let reject!: (error: Error) => void
-  api.saveSchedule.mockReturnValue(
+  api.saveConstraints.mockReturnValue(
     new Promise((_resolve, fail) => {
       reject = fail
     }),
@@ -100,17 +101,13 @@ it('preserves both edits on conflict and blocks further edits during the request
   })
   await waitFor(() => expect(result.current.saving).toBe(true))
   act(() => result.current.setOrder('a', 1))
-  expect(api.saveConstraints).not.toHaveBeenCalled()
-  act(() => {
-    reject(new Error('再取得してください'))
-  })
+  act(() => reject(new Error('再取得してください')))
   await waitFor(() => expect(result.current.saveFailed).toBe(true))
+  expect(api.saveSchedule).not.toHaveBeenCalled()
   expect(result.current.scheduleDirty).toBe(true)
   expect(result.current.constraintsDirty).toBe(true)
   expect(result.current.event?.sections[0].slots).toEqual(['b', 'a'])
-  expect(result.current.event?.constraints).toHaveLength(1)
   expect(api.getEvent).toHaveBeenCalledTimes(1)
-  expect(api.saveSchedule).toHaveBeenCalledTimes(1)
 })
 
 it('retains validation errors and prevents edits during a confirmed reload after failure', async () => {
@@ -123,6 +120,7 @@ it('retains validation errors and prevents edits during a confirmed reload after
   expect(result.current.error).toContain('1〜2')
   expect(api.saveSchedule).not.toHaveBeenCalled()
   act(() => result.current.setOrder('b', 1))
+  await act(() => result.current.saveSchedule())
   await waitFor(() => expect(result.current.saveFailed).toBe(true))
   const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
   let resolve!: (value: EventData) => void
@@ -161,6 +159,7 @@ it('keeps local frame capacity without a server write, including after order sav
   expect(result.current.scheduleDirty).toBe(false)
   expect(api.saveSchedule).not.toHaveBeenCalled()
   act(() => result.current.setOrder('b', 1))
+  await act(() => result.current.saveSchedule())
   await waitFor(() => expect(api.saveSchedule).toHaveBeenCalledTimes(1))
   await waitFor(() => expect(result.current.scheduleDirty).toBe(false))
   expect(result.current.event?.sections[0].slots).toEqual([
@@ -172,3 +171,58 @@ it('keeps local frame capacity without a server write, including after order sav
     null,
   ])
 })
+
+it('persists order then constraints before invoking Solver with the last revision', async () => {
+  const calls: string[] = []
+  api.saveSchedule.mockImplementationOnce((snapshot) => {
+    calls.push('schedule')
+    expect(snapshot.sections[0].slots).toEqual(['b', 'a'])
+    return Promise.resolve({ updatedAt: '2026-10-17T00:00:00.001Z' })
+  })
+  api.saveConstraints.mockImplementationOnce((snapshot) => {
+    calls.push('constraints')
+    expect(snapshot.updatedAt).toBe('2026-10-17T00:00:00.001Z')
+    return Promise.resolve({ updatedAt: '2026-10-17T00:00:00.002Z' })
+  })
+  api.solve.mockImplementationOnce((snapshot) => {
+    calls.push('solve')
+    expect(snapshot.updatedAt).toBe('2026-10-17T00:00:00.002Z')
+    return Promise.resolve({
+      result: {
+        eventId: 'e',
+        status: 'unknown',
+        placements: null,
+        unassignedBandIds: null,
+        constraintResults: null,
+      },
+      schedule: null,
+    })
+  })
+  const { result } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
+  act(() => result.current.setOrder('b', 1))
+  await act(() => result.current.generate())
+  expect(calls).toEqual(['schedule', 'constraints', 'solve'])
+  expect(result.current.scheduleDirty).toBe(false)
+  expect(result.current.notice).toContain('探索が完了していません')
+})
+
+it.each(['schedule', 'constraints'] as const)(
+  'never invokes Solver when %s persistence fails',
+  async (kind) => {
+    api.saveSchedule.mockResolvedValue({
+      updatedAt: '2026-10-17T00:00:00.001Z',
+    })
+    api.saveConstraints.mockResolvedValue({
+      updatedAt: '2026-10-17T00:00:00.002Z',
+    })
+    const failed = kind === 'schedule' ? api.saveSchedule : api.saveConstraints
+    failed.mockRejectedValueOnce(new Error('保存競合'))
+    const { result } = renderHook(() => useEvent('e'))
+    await waitFor(() => expect(result.current.event).not.toBeNull())
+    await act(() => result.current.generate())
+    expect(api.solve).not.toHaveBeenCalled()
+    if (kind === 'schedule') expect(api.saveConstraints).not.toHaveBeenCalled()
+    expect(result.current.error).toBe('保存競合')
+  },
+)

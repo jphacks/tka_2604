@@ -17,6 +17,8 @@ export const eventRepository: EventRepository = {
       ? eventsApi.getMessages
       : async (eventId, signal) =>
           (await mockEventRepository.getEvent(eventId, signal)).messages,
+  solve: (event) =>
+    dataSource === 'api' ? eventsApi.solve(event) : unavailable(),
   saveSchedule: (event) =>
     dataSource === 'api' ? eventsApi.saveSchedule(event) : unavailable(),
   async saveConstraints(event) {

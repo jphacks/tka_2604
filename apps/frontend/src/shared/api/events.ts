@@ -8,6 +8,10 @@ type ApiDetails = InferResponseType<
   ApiClient['api']['events'][':eventId']['$get'],
   200
 >
+export type SolveResponse = InferResponseType<
+  ApiClient['api']['events'][':eventId']['solve']['$post'],
+  200
+>
 function toDetails(event: ApiDetails): EventDetails {
   return {
     id: event.eventId,
@@ -76,6 +80,16 @@ export function createEventsApi(client: ApiClient) {
       await ensureOk(response)
       if (response.status !== 200)
         throw new Error('出演順を保存できませんでした。')
+      return response.json()
+    },
+    async solve(event: EventData): Promise<SolveResponse> {
+      const response = await events[':eventId'].solve.$post({
+        param: { eventId: event.id },
+        json: { expectedUpdatedAt: revision(event) },
+      })
+      await ensureOk(response)
+      if (response.status !== 200)
+        throw new Error('出演順を計算できませんでした。')
       return response.json()
     },
     async saveConstraints(event: EventData) {

@@ -4,6 +4,7 @@ import { validator } from 'hono/validator'
 import { z } from 'zod'
 
 import { AIChatError, ChatMessageError } from '../services/chat/errors'
+import type { ChatResponse } from '../services/chat/types'
 import { EventError } from '../services/events/errors'
 
 const chatRequest = z.strictObject({
@@ -21,7 +22,7 @@ export function createChatRoutes<Bindings extends object>(
     eventId: string,
     input: { messageId: string; message: string },
     bindings: Bindings,
-  ) => Promise<{ reply: string }>,
+  ) => Promise<ChatResponse>,
 ) {
   return new Hono<{ Bindings: Bindings }>()
     .onError((error, c) => {

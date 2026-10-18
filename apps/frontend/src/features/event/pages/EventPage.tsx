@@ -57,7 +57,9 @@ function EventWorkspace({ eventId }: { eventId: string }) {
           <p>{controller.error || controller.loadError || controller.notice}</p>
           {controller.saveFailed ? (
             <>
-              <Button onClick={controller.retrySave}>保存を再試行</Button>
+              <Button onClick={() => void controller.retrySave()}>
+                保存を再試行
+              </Button>
               <Button onClick={controller.retryLoad}>最新の状態を取得</Button>
             </>
           ) : (

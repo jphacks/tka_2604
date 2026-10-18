@@ -2,6 +2,7 @@ import { type Dispatch, useEffect, useRef, useState } from 'react'
 
 import type { ChatMessage, EventData } from '../../../shared/model/event'
 import { dataSource } from '../../../shared/repositories/dataSource'
+import type { ChatProposal } from '../model/chatProposal'
 import type { EventAction } from '../model/eventReducer'
 import { eventRepository } from '../repositories/eventRepository'
 
@@ -13,6 +14,7 @@ export function useEventChat(
 ) {
   const [chatDraft, setChatDraft] = useState('')
   const [sending, setSending] = useState(false)
+  const [chatProposal, setChatProposal] = useState<ChatProposal | null>(null)
   const pending = useRef<ChatMessage | null>(null)
   const busy = useRef(false)
   const lifetime = useRef<AbortController | null>(null)
@@ -44,6 +46,12 @@ export function useEventChat(
         message.id,
       )
       if (signal?.aborted) return
+      if (reply.proposal)
+        setChatProposal({
+          ...reply.proposal,
+          messageId: message.id,
+          sourceText: text,
+        })
       if (dataSource === 'api') {
         const messages = await eventRepository.getMessages(eventId, signal)
         if (!signal?.aborted) dispatch({ type: 'messages', messages })
@@ -53,7 +61,7 @@ export function useEventChat(
           message: {
             id: crypto.randomUUID(),
             role: 'assistant',
-            text: reply,
+            text: reply.reply,
             replyToMessageId: message.id,
           },
         })
@@ -86,6 +94,26 @@ export function useEventChat(
   return {
     chatDraft,
     setChatDraft,
+    chatProposal,
+    dismissProposal: () => setChatProposal(null),
+    changeProposal: (
+      index: number,
+      patch: {
+        hardness?: 'hard' | 'soft' | null
+        priority?: 'high' | 'mid' | 'low' | null
+      },
+    ) =>
+      setChatProposal(
+        (current) =>
+          current && {
+            ...current,
+            actions: current.actions.map((action, i) =>
+              i === index && action.type !== 'delete_constraint'
+                ? { ...action, constraint: { ...action.constraint, ...patch } }
+                : action,
+            ),
+          },
+      ),
     sending,
     chatBlocked: blocked,
     unanswered,

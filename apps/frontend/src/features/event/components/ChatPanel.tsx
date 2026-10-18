@@ -4,6 +4,7 @@ import { Icon } from '../../../shared/ui/Icon'
 import { Panel } from '../../../shared/ui/Panel'
 import { useChatScroll } from '../hooks/useChatScroll'
 import type { EventController } from '../hooks/useEvent'
+import { ChatProposal } from './ChatProposal'
 
 export function ChatPanel({ controller }: { controller: EventController }) {
   const endRef = useChatScroll(
@@ -12,7 +13,14 @@ export function ChatPanel({ controller }: { controller: EventController }) {
   )
   if (!controller.event || !controller.schedule) return null
   return (
-    <Panel title="AIチャット" action={<Badge>制約適用は準備中</Badge>}>
+    <Panel
+      title="AIチャット"
+      action={
+        <Badge>
+          {controller.persistent ? '提案は確認して反映' : '制約適用は準備中'}
+        </Badge>
+      }
+    >
       <div
         ref={endRef}
         className="max-h-[55dvh] min-h-64 scrollbar-thin overflow-y-auto p-3 xl:max-h-none xl:min-h-0 xl:flex-1"
@@ -64,6 +72,7 @@ export function ChatPanel({ controller }: { controller: EventController }) {
             </div>
           )}
         </div>
+        <ChatProposal controller={controller} />
         <div className="mt-3 rounded-lg border border-line p-3">
           <h3 className="mb-2 text-xs font-semibold">現在の配置</h3>
           <p className="text-xs leading-5 text-muted">
@@ -88,6 +97,11 @@ export function ChatPanel({ controller }: { controller: EventController }) {
         }}
         className="shrink-0 border-t border-line p-3"
       >
+        {controller.persistent && controller.scheduleDirty && (
+          <p className="mb-2 text-xs text-muted">
+            出演順の変更を保存してから送信してください。
+          </p>
+        )}
         <div className="rounded-lg border border-[#cbd9ed] p-3 transition-colors focus-within:border-brand">
           <textarea
             aria-label="AIへのメッセージ"
@@ -124,7 +138,9 @@ export function ChatPanel({ controller }: { controller: EventController }) {
           </div>
         </div>
         <p className="mt-2 text-center text-[10px] text-muted/80">
-          AIが返信します。提案された制約はまだ適用されません。
+          {controller.persistent
+            ? '確認して反映した制約は自動保存されます。'
+            : 'AIが返信します。提案された制約はまだ適用されません。'}
         </p>
       </form>
     </Panel>
