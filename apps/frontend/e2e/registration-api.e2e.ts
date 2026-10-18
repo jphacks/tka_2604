@@ -57,10 +57,11 @@ test('real API and local D1: registration, replacement, unlinking, re-addition a
   await page
     .getByRole('textbox', { name: '出演名 必須' })
     .fill('ミッドナイト・セッション')
-  await page.getByRole('button', { name: '名簿から選ぶ' }).click()
-  await page
-    .getByRole('combobox', { name: 'メンバー1を名簿から選択' })
-    .selectOption(shared)
+  await page.getByRole('combobox', { name: 'メンバー1の名前' }).fill('田中')
+  await page.getByRole('option', { name: /田中 花/ }).click()
+  await expect(
+    page.getByRole('combobox', { name: 'メンバー1を名簿から選択' }),
+  ).toHaveValue(shared)
   await page.getByRole('button', { name: 'メンバーの行を追加' }).click()
   await page.getByRole('textbox', { name: 'メンバー2の名前' }).fill('田中 花')
   const screenshotDir = process.env.CAPTURE_FORM_SCREENSHOTS

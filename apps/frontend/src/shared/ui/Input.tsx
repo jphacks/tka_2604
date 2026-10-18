@@ -1,5 +1,6 @@
 import type {
   InputHTMLAttributes,
+  Ref,
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from 'react'
@@ -17,7 +18,9 @@ export function Input({
 export function Select({
   className = '',
   ...props
-}: SelectHTMLAttributes<HTMLSelectElement>) {
+}: SelectHTMLAttributes<HTMLSelectElement> & {
+  ref?: Ref<HTMLSelectElement>
+}) {
   return (
     <select
       className={`${style} h-8 px-2 text-[13px] ${className}`}

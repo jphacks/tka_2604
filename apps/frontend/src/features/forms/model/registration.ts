@@ -7,7 +7,6 @@ import type {
 export type RegistrationMode = 'create' | 'update'
 export interface MemberRow {
   key: string
-  kind: 'new' | 'existing'
   value: string
 }
 export interface RegistrationDraft {
@@ -17,8 +16,8 @@ export interface RegistrationDraft {
   description: string
   rows: MemberRow[]
 }
-export function newMemberRow(kind: MemberRow['kind'] = 'new'): MemberRow {
-  return { key: crypto.randomUUID(), kind, value: '' }
+export function newMemberRow(): MemberRow {
+  return { key: crypto.randomUUID(), value: '' }
 }
 export function emptyRegistration(): RegistrationDraft {
   return {
@@ -45,7 +44,6 @@ export function selectBand(
       .filter((item) => item.bandId === bandId)
       .map((item) => ({
         key: crypto.randomUUID(),
-        kind: 'existing',
         value: item.memberId,
       })),
   }
@@ -90,20 +88,18 @@ export function registrationInput(
   const memberIds: string[] = []
   const newMembers: { memberName: string }[] = []
   for (const row of draft.rows) {
-    if (row.kind === 'new') {
-      const memberName = row.value.trim()
-      if (!memberName || memberName.length > 40)
-        throw new Error(
-          '新しいメンバーの名前を1〜40文字で入力してください。空の行は削除してください。',
-        )
-      newMembers.push({ memberName })
-    } else {
-      if (!roster.members.some((member) => member.memberId === row.value))
-        throw new Error('登録済みのメンバーを選んでください。')
+    if (roster.members.some((member) => member.memberId === row.value)) {
       if (memberIds.includes(row.value))
         throw new Error('同じメンバーが重複しています。')
       memberIds.push(row.value)
+      continue
     }
+    const memberName = row.value.trim()
+    if (!memberName || memberName.length > 40)
+      throw new Error(
+        '新しいメンバーの名前を1〜40文字で入力してください。空の行は削除してください。',
+      )
+    newMembers.push({ memberName })
   }
   return {
     expectedUpdatedAt: roster.updatedAt,
