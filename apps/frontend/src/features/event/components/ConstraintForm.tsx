@@ -10,7 +10,7 @@ import { Button } from '../../../shared/ui/Button'
 import { Dialog } from '../../../shared/ui/Dialog'
 import { Textarea } from '../../../shared/ui/Input'
 import {
-  buildConstraint,
+  buildConstraints,
   type ConstraintDraft,
   createConstraintDraft,
 } from '../model/constraintDraft'
@@ -47,11 +47,6 @@ const choices: {
     example: 'AとBを第2部か第3部にする',
     description: '出演できる部、または順番号の範囲を指定。',
   },
-  {
-    type: 'count',
-    example: '選んだ出演枠を各部に1〜2組ずつ',
-    description: '各部の本数、または複数部の合計を指定。',
-  },
 ]
 
 export function ConstraintForm({
@@ -72,22 +67,22 @@ export function ConstraintForm({
     setDraft((value) => ({ ...value, ...patch }))
     setError('')
   }
-  const preview = buildConstraint(
+  const preview = buildConstraints(
     draft,
     event,
-    constraint?.constraint_id ?? 'preview',
+    () => constraint?.constraint_id ?? 'preview',
   )
   function submit() {
-    const result = buildConstraint(
+    const result = buildConstraints(
       draft,
       event,
-      constraint?.constraint_id ?? crypto.randomUUID(),
+      () => constraint?.constraint_id ?? crypto.randomUUID(),
     )
     if (!result.ok) {
       setError(result.error)
       return
     }
-    onSave(result.constraint)
+    for (const item of result.constraints) onSave(item)
     onClose()
   }
   return (
@@ -153,7 +148,12 @@ export function ConstraintForm({
               種類を選び直す
             </Button>
           </div>
-          <ConstraintFields event={event} draft={draft} change={change} />
+          <ConstraintFields
+            event={event}
+            draft={draft}
+            change={change}
+            allowAllMembers={!constraint}
+          />
           <fieldset className="space-y-3">
             <legend className="mb-2 text-sm font-medium">条件の強さ</legend>
             <ConstraintControls
@@ -190,7 +190,14 @@ export function ConstraintForm({
             </p>
             <p className="text-sm leading-7">
               {preview.ok
-                ? describeConstraint(preview.constraint, event)
+                ? preview.constraints.map((item) => (
+                    <span
+                      key={describeConstraint(item, event)}
+                      className="block"
+                    >
+                      {describeConstraint(item, event)}
+                    </span>
+                  ))
                 : '対象と条件を入力すると、ここに内容を表示します。'}
             </p>
             <p className="mt-2 text-xs text-muted">

@@ -3,7 +3,7 @@ import { type RefObject, useLayoutEffect, useRef } from 'react'
 import { slideFrom } from '../../../shared/ui/flip'
 
 // Remembers where each performance row sat after every render and, when
-// `trigger` changes (an approved AI reorder), slides rows from those spots.
+// `trigger` changes (an AI reorder or a solver result), slides rows from those spots.
 // Offsets are taken inside the scroll container, so scrolling in between
 // does not shift the animation. Manual drags keep their own animation.
 export function useScheduleFlip(

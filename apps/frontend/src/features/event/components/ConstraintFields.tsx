@@ -4,7 +4,11 @@ import {
   positionLimit,
 } from '../../../shared/model/event'
 import { Input, Select } from '../../../shared/ui/Input'
-import type { ConstraintDraft } from '../model/constraintDraft'
+import {
+  ALL_MULTI_MEMBERS,
+  type ConstraintDraft,
+  multiMemberIds,
+} from '../model/constraintDraft'
 import { BandPicker, BandSelect, PartPicker } from './ConstraintTargets'
 
 function NumericInput({
@@ -40,11 +44,14 @@ export function ConstraintFields({
   event,
   draft,
   change,
+  allowAllMembers = false,
 }: {
   event: EventData
   draft: ConstraintDraft
   change: (patch: Partial<ConstraintDraft>) => void
+  allowAllMembers?: boolean
 }) {
+  const multiCount = allowAllMembers ? multiMemberIds(event).length : 0
   const capacity = positionLimit(event)
   const multiple = ['min_gap_bands', 'in_range', 'count'].includes(draft.type)
   return (
@@ -60,6 +67,11 @@ export function ConstraintFields({
             }
           >
             <option value="">メンバーを選んでください</option>
+            {multiCount > 0 && (
+              <option value={ALL_MULTI_MEMBERS}>
+                掛け持ちの全員（{multiCount}人）
+              </option>
+            )}
             {event.members.map((member) => (
               <option key={member.id} value={member.id}>
                 {memberLabel(event, member)}

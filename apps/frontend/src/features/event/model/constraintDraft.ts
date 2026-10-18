@@ -233,3 +233,37 @@ export function buildConstraint(
   const error = validateConstraint(constraint, event)
   return error ? { ok: false, error } : { ok: true, constraint }
 }
+
+/** 対象のメンバーで選ぶと、掛け持ちしている全員に同じ間隔の制約を作る */
+export const ALL_MULTI_MEMBERS = '__all_multi_members__'
+
+export function multiMemberIds(event: EventData) {
+  return event.members
+    .filter(
+      (member) =>
+        event.performances.filter((band) => band.memberIds.includes(member.id))
+          .length >= 2,
+    )
+    .map((member) => member.id)
+}
+
+export function buildConstraints(
+  draft: ConstraintDraft,
+  event: EventData,
+  createId: () => string,
+): { ok: true; constraints: Constraint[] } | { ok: false; error: string } {
+  if (draft.type !== 'min_gap_member' || draft.memberId !== ALL_MULTI_MEMBERS) {
+    const result = buildConstraint(draft, event, createId())
+    return result.ok ? { ok: true, constraints: [result.constraint] } : result
+  }
+  const memberIds = multiMemberIds(event)
+  if (!memberIds.length)
+    return { ok: false, error: '掛け持ちしているメンバーがいません。' }
+  const constraints: Constraint[] = []
+  for (const memberId of memberIds) {
+    const result = buildConstraint({ ...draft, memberId }, event, createId())
+    if (!result.ok) return result
+    constraints.push(result.constraint)
+  }
+  return { ok: true, constraints }
+}

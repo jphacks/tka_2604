@@ -1,16 +1,18 @@
 @import 'tailwindcss';
+@import '@fontsource/shrikhand/latin-400.css';
 
 @theme {
   --color-brand: #256bc7;
   --color-brand-dark: #1b55a3;
   --color-ink: #27374f;
-  --color-muted: #70829f;
+  --color-muted: #5a6b88;
   --color-line: #dbe4f0;
   --color-canvas: #f3f6fb;
   --color-wash: #edf4fe;
   --font-sans:
     'Inter', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI',
     sans-serif;
+  --font-logo: 'Shrikhand', serif;
 }
 
 @layer base {

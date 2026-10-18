@@ -17,7 +17,7 @@ export function EventSettingsPage() {
   return (
     <AppFrame eventId={eventId} eventName={controller.data?.name}>
       <div className="mb-7">
-        <p className="mb-2 text-[10px] font-semibold tracking-[0.16em] text-muted">
+        <p className="mb-2 text-[11px] font-semibold tracking-[0.16em] text-muted">
           EVENT SETTINGS
         </p>
         <h1 className="text-2xl font-semibold">イベント設定</h1>
@@ -104,7 +104,7 @@ export function EventSettingsPage() {
                 </label>
               </fieldset>
               {controller.formError && (
-                <p role="alert" className="text-xs text-red-500">
+                <p role="alert" className="text-xs text-red-600">
                   {controller.formError}
                 </p>
               )}

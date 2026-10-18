@@ -51,7 +51,7 @@ export function RegistrationPage() {
                   role="status"
                   className="rounded-xl border border-line bg-white px-6 py-12 text-center"
                 >
-                  <span className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                  <span className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
                     <Icon name="check" className="size-7" />
                   </span>
                   <h1 className="text-xl font-semibold">
@@ -96,7 +96,7 @@ export function RegistrationPage() {
                 <section className="overflow-hidden rounded-xl border border-line bg-white shadow-sm">
                   <div className="h-1.5 bg-brand" />
                   <div className="border-b border-line px-5 py-6 sm:px-7">
-                    <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-wash px-2.5 py-1 text-[11px] font-medium text-brand">
+                    <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-wash px-2.5 py-1 text-xs font-medium text-brand">
                       <Icon name="users" className="size-3.5" />
                       出演者登録
                     </span>
@@ -144,7 +144,7 @@ export function RegistrationPage() {
                                     ? '初回登録'
                                     : '登録内容の更新'}
                                 </span>
-                                <span className="mt-1 block text-[11px] leading-5 text-muted">
+                                <span className="mt-1 block text-xs leading-5 text-muted">
                                   {mode === 'create'
                                     ? '新しいバンドを登録'
                                     : 'バンドを選んで編集'}
@@ -196,7 +196,7 @@ export function RegistrationPage() {
                             : '出演登録を送信'}
                         <Icon name={updating ? 'check' : 'chevron'} />
                       </Button>
-                      <p className="mt-3 text-center text-[11px] leading-5 text-muted">
+                      <p className="mt-3 text-center text-xs leading-5 text-muted">
                         {updating
                           ? controller.draft.bandId
                             ? `「${controller.data.bands.find((band) => band.bandId === controller.draft.bandId)?.bandName ?? '選択中のバンド'}」を更新します。`
@@ -207,7 +207,7 @@ export function RegistrationPage() {
                   </form>
                 </section>
               )}
-              <p className="mt-5 text-center text-[11px] leading-5 text-muted">
+              <p className="mt-5 text-center text-xs leading-5 text-muted">
                 登録内容はイベントの名簿に保存されます。
               </p>
             </>

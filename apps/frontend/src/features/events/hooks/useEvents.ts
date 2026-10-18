@@ -59,14 +59,6 @@ export function useEvents() {
           .toLowerCase()
           .includes(query.trim().toLowerCase()),
     ),
-    stats: {
-      events: events.length,
-      performances: events.reduce(
-        (sum, event) => sum + event.performanceCount,
-        0,
-      ),
-      adjusting: events.filter((event) => event.status === 'adjusting').length,
-    },
     setQuery,
     setFilter,
     create,

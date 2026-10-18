@@ -200,6 +200,7 @@ export function useEvent(eventId: string) {
       const result = await eventRepository.solve(current)
       if (signal?.aborted) return
       const next = applySolverSchedule(current, result)
+      setReorderRevision((value) => value + 1)
       dispatch({ type: 'loaded', event: next })
       setBaseline(next)
       dispatch({ type: 'notice', message: solveMessages[result.result.status] })

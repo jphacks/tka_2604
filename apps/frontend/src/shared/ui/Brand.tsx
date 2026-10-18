@@ -12,7 +12,7 @@ export function Brand({ to = '/event' }: { to?: string }) {
         alt="Setlyアイコン"
         className="size-[30px] rounded-[7px]"
       />
-      <span className="text-xl font-bold tracking-wide">Setly</span>
+      <span className="font-logo text-2xl leading-none">Setly</span>
     </Link>
   )
 }

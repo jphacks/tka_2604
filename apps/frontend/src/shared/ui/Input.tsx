@@ -5,7 +5,7 @@ import type {
 } from 'react'
 
 const style =
-  'rounded-md border border-[#cbd9ed] bg-white text-ink transition-colors placeholder:text-muted/80 focus:border-brand disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-muted'
+  'rounded-md border border-[#cbd9ed] bg-white text-ink transition-colors placeholder:text-muted focus:border-brand disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-muted'
 
 export function Input({
   className = '',

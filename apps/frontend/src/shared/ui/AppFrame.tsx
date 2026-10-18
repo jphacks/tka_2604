@@ -55,7 +55,7 @@ export function AppFrame({
         <div className="shrink-0 border-b border-line bg-white">
           <nav
             aria-label="イベント内の移動"
-            className={`mx-auto flex flex-wrap items-center gap-x-5 px-4 sm:px-6 ${width}`}
+            className="flex flex-wrap items-center gap-x-5 px-4 sm:px-6"
           >
             <Link
               to={`/event/${eventId}`}
@@ -86,7 +86,13 @@ export function AppFrame({
                   `border-b-2 py-4 text-xs ${isActive ? 'border-brand font-semibold text-brand' : 'border-transparent text-muted hover:text-brand'}`
                 }
               >
-                {item.label}
+                {/* 太字の幅を先に確保し、選択中のタブが変わっても位置がずれないようにする */}
+                <span
+                  data-label={item.label}
+                  className="inline-flex flex-col after:invisible after:h-0 after:overflow-hidden after:font-semibold after:content-[attr(data-label)]"
+                >
+                  {item.label}
+                </span>
               </NavLink>
             ))}
           </nav>
