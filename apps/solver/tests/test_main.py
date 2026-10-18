@@ -104,6 +104,52 @@ def test_solve_accepts_band_count_for_each_part(client: TestClient) -> None:
     assert response.status_code == 200
 
 
+def test_solve_respects_each_part_band_count_as_capacity(client: TestClient) -> None:
+    payload = solve_payload()
+    payload["parts"] = [
+        {"partId": "part-1", "sortOrder": 0, "bandCount": 1},
+        {"partId": "part-2", "sortOrder": 1, "bandCount": 1},
+    ]
+
+    response = post_solve(client, payload)
+
+    assert response.status_code == 200
+    placements = response.json()["placements"]
+    assert [
+        sum(placement["partId"] == part_id for placement in placements)
+        for part_id in ("part-1", "part-2")
+    ] == [1, 1]
+
+
+def test_solve_rejects_band_counts_with_insufficient_total_capacity(
+    client: TestClient,
+) -> None:
+    payload = solve_payload()
+    payload["bands"].append({"bandId": "band-c"})
+    payload["parts"] = [
+        {"partId": "part-1", "sortOrder": 0, "bandCount": 1},
+        {"partId": "part-2", "sortOrder": 1, "bandCount": 1},
+    ]
+
+    response = post_solve(client, payload)
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "invalid_input"
+
+
+def test_solve_rejects_partially_specified_band_counts(client: TestClient) -> None:
+    payload = solve_payload()
+    payload["parts"] = [
+        {"partId": "part-1", "sortOrder": 0, "bandCount": 1},
+        {"partId": "part-2", "sortOrder": 1},
+    ]
+
+    response = post_solve(client, payload)
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "invalid_input"
+
+
 @pytest.mark.parametrize("gap_type", ["min_gap_member", "min_gap_bands"])
 def test_solve_ignores_min_gap_pairs_across_parts(
     client: TestClient, gap_type: str
