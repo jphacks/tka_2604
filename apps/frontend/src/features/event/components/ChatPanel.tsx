@@ -1,4 +1,3 @@
-import { Badge } from '../../../shared/ui/Badge'
 import { Button } from '../../../shared/ui/Button'
 import { Icon } from '../../../shared/ui/Icon'
 import { Panel } from '../../../shared/ui/Panel'
@@ -14,7 +13,7 @@ export function ChatPanel({ controller }: { controller: EventController }) {
   )
   if (!controller.event || !controller.schedule) return null
   return (
-    <Panel title="AIチャット" action={<Badge>提案は確認して反映</Badge>}>
+    <Panel title="AIチャット">
       <div
         ref={endRef}
         className="max-h-[55dvh] min-h-64 scrollbar-thin overflow-y-auto p-3 xl:max-h-none xl:min-h-0 xl:flex-1"

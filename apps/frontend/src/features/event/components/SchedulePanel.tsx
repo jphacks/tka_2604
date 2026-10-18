@@ -13,7 +13,6 @@ import {
 import { ScheduleDragSurface, UnassignedDropZone } from './ScheduleDragSurface'
 
 export function SchedulePanel({ controller }: { controller: EventController }) {
-  const unassignedRef = useRef<HTMLElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   useScheduleFlip(scrollRef, controller.reorderRevision)
   const { event, schedule, setOrder, setFixed } = controller
@@ -67,20 +66,6 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
           <Button onClick={() => setEditingLive(true)} className="text-xs">
             ライブ情報の編集
           </Button>
-          {schedule.unassigned.length > 0 ? (
-            <Button
-              variant="subtle"
-              className="text-xs"
-              onClick={() =>
-                unassignedRef.current?.scrollIntoView({
-                  block: 'nearest',
-                  behavior: 'smooth',
-                })
-              }
-            >
-              未配置へ（{schedule.unassigned.length}）
-            </Button>
-          ) : undefined}
         </div>
       }
       detail={
@@ -135,7 +120,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
             </section>
           ))}
           <UnassignedDropZone>
-            <section ref={unassignedRef} aria-label="未配置">
+            <section aria-label="未配置">
               <div className="flex min-h-9 min-w-[520px] items-center gap-3 bg-slate-100 px-4 text-xs">
                 <h3 className="font-semibold">
                   未配置 · {schedule.unassigned.length}組

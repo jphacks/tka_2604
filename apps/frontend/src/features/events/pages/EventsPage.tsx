@@ -18,16 +18,8 @@ export function EventsPage() {
   const controller = useEvents()
   return (
     <AppFrame>
-      <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="mb-2 text-[10px] font-semibold tracking-[0.18em] text-muted">
-            YOUR WORKSPACE
-          </p>
-          <h1 className="text-2xl font-semibold">マイイベント</h1>
-          <p className="mt-2 text-xs text-muted">
-            次のライブの準備も、ここから。
-          </p>
-        </div>
+      <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-2xl font-semibold">マイイベント</h1>
         <Button
           variant="primary"
           onClick={controller.openCreate}
@@ -36,46 +28,6 @@ export function EventsPage() {
           <Icon name="plus" />
           イベントを作成
         </Button>
-      </div>
-      <div className="mb-7 grid gap-3 sm:grid-cols-3 sm:gap-4">
-        {[
-          {
-            label: 'イベント',
-            value: controller.stats.events,
-            suffix: '件',
-            icon: 'calendar' as const,
-          },
-          {
-            label: '登録された出演枠',
-            value: controller.stats.performances,
-            suffix: '組',
-            icon: 'users' as const,
-          },
-          {
-            label: '出演順を調整中',
-            value: controller.stats.adjusting,
-            suffix: '件',
-            icon: 'list' as const,
-          },
-        ].map((item) => (
-          <div
-            key={item.label}
-            className="flex items-center gap-4 rounded-lg border border-line bg-white px-5 py-4"
-          >
-            <span className="flex size-9 items-center justify-center rounded-md bg-canvas text-muted">
-              <Icon name={item.icon} className="size-[18px]" />
-            </span>
-            <div>
-              <p className="text-[11px] text-muted">{item.label}</p>
-              <p className="mt-1 text-2xl font-semibold tabular-nums">
-                {item.value}
-                <span className="ml-1.5 text-xs font-normal text-muted">
-                  {item.suffix}
-                </span>
-              </p>
-            </div>
-          </div>
-        ))}
       </div>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-1">
@@ -135,39 +87,6 @@ export function EventsPage() {
           )}
         </div>
       )}
-      <section className="mt-9 rounded-xl border border-line bg-white p-6">
-        <h2 className="mb-5 text-sm font-semibold">
-          ライブの準備、3つのステップ
-        </h2>
-        <div className="grid gap-5 md:grid-cols-3">
-          {[
-            {
-              title: '出演者を集める',
-              text: 'フォームで出演名とメンバーを登録。',
-            },
-            {
-              title: '条件を整理する',
-              text: '必須条件と、できれば叶えたい希望を設定。',
-            },
-            {
-              title: '出演順を調整する',
-              text: 'たたき台を見ながら、納得のいく順番に。',
-            },
-          ].map((step, index) => (
-            <div key={step.title} className="flex items-start gap-3">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-wash text-xs font-semibold text-brand">
-                {index + 1}
-              </span>
-              <div>
-                <h3 className="text-xs font-semibold">{step.title}</h3>
-                <p className="mt-1.5 text-[11px] leading-5 text-muted">
-                  {step.text}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
       {controller.creating && <CreateEventDialog controller={controller} />}
     </AppFrame>
   )
