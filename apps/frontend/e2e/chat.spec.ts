@@ -22,6 +22,7 @@ test('sends the API payload, blocks repeated sends and displays its reply', asyn
     requests++
     expect(route.request().postDataJSON()).toEqual({
       message: '出演間隔を空けたい',
+      messageId: expect.any(String),
     })
     await waiting
     await route.fulfill({ json: { reply: 'AIからの返信です。' } })

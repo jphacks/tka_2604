@@ -82,10 +82,16 @@ export function chatRepository(db: Database): ChatRepository {
         throw new ChatMessageError()
       return existing
     },
-    async saveReply(userId, eventId, messageId, text) {
+    async saveReply(
+      userId,
+      eventId,
+      messageId,
+      text,
+      replyId = crypto.randomUUID(),
+    ) {
       const [inserted] = await db.all<ChatMessage>(sql`
         INSERT INTO chat_messages (message_id, event_id, seq, role, text, reply_to_message_id)
-        SELECT ${crypto.randomUUID()}, e.event_id,
+        SELECT ${replyId}, e.event_id,
           coalesce((SELECT max(seq) + 1 FROM chat_messages WHERE event_id = e.event_id), 0),
           'assistant', ${text}, ${messageId}
         FROM events e

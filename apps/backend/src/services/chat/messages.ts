@@ -1,6 +1,6 @@
 import type { EventRepository } from '../events/types'
 import { chatService } from './service'
-import type { ChatModel, ChatRepository } from './types'
+import type { ChatModel, ChatRepository, ChatResponse } from './types'
 
 export function chatMessageService(
   eventRepository: EventRepository,
@@ -10,7 +10,10 @@ export function chatMessageService(
 ) {
   const generator = chatService(eventRepository, userId, model)
   return {
-    async send(eventId: string, input: { messageId: string; message: string }) {
+    async send(
+      eventId: string,
+      input: { messageId: string; message: string },
+    ): Promise<ChatResponse> {
       // Persist before external I/O. Failure leaves the user message available
       // for a retry with the same ID, without modifying business updatedAt.
       const user = await messages.saveUser(
@@ -26,15 +29,28 @@ export function chatMessageService(
         pendingProposal: null,
         currentMessageId: user.messageId,
       })
-      // Keep only conversational text; provider metadata, type and unapplied
-      // actions are not stored in chat history or applied as constraints.
+      // Proposals stay transient until explicitly applied through constraint saving.
+      // Only the request that inserted this answer may return its proposal.
+      const replyId = crypto.randomUUID()
       const assistant = await messages.saveReply(
         userId,
         eventId,
         user.messageId,
         generated.output.message,
+        replyId,
       )
-      return { reply: assistant.text }
+      return {
+        reply: assistant.text,
+        ...(generated.output.type === 'approval_required' &&
+        assistant.messageId === replyId
+          ? {
+              proposal: {
+                expectedUpdatedAt: generated.updatedAt,
+                actions: generated.output.actions,
+              },
+            }
+          : {}),
+      }
     },
   }
 }

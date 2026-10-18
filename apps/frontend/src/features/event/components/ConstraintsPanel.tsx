@@ -23,6 +23,12 @@ export function ConstraintsPanel({
   if (!event) return null
   return (
     <Panel
+      inert={
+        controller.saving ||
+        controller.solving ||
+        controller.refreshing ||
+        controller.sending
+      }
       title="制約"
       detail={
         <span className="text-xs text-muted">{event.constraints.length}件</span>

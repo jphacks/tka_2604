@@ -7,12 +7,18 @@ import type {
   PerformanceDraft,
   RegistrationData,
   Session,
+  Submission,
 } from '../model/workspace'
 
 export interface WorkspaceRepository {
   getSession(): Promise<Session | null>
   signIn(email: string): Promise<Session>
   signOut(): Promise<void>
+  getRoster(
+    id: string,
+    signal?: AbortSignal,
+  ): Promise<{ data: EventData; submissions: Submission[] | null }>
+  getDetails(id: string, signal?: AbortSignal): Promise<EventDetails>
   listEvents(signal?: AbortSignal): Promise<EventSummary[]>
   createEvent(draft: EventDraft): Promise<EventDetails>
   updateDetails(
