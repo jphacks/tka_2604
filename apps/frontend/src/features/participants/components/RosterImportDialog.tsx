@@ -113,14 +113,14 @@ export function RosterImportDialog({
           </section>
         )}
         {plan && plan.ambiguous.length > 0 && (
-          <p role="alert" className="mt-3 text-xs text-red-500">
+          <p role="alert" className="mt-3 text-xs text-red-600">
             同名の登録済みメンバーが複数いるため、どの人か決められません：
             {names(plan.ambiguous)}
             。CSVの名前を区別できるように直すか、出演枠を個別に追加してください。
           </p>
         )}
         {roster.error && (
-          <p role="alert" className="mt-3 text-xs text-red-500">
+          <p role="alert" className="mt-3 text-xs text-red-600">
             {roster.error}
           </p>
         )}

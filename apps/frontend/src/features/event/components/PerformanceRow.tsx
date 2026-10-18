@@ -106,10 +106,8 @@ export function EmptyPerformanceRow({ row }: { row: Row }) {
     >
       <span />
       <span />
-      <span className="pl-2 text-muted/60 tabular-nums">
-        {row.order ?? '—'}
-      </span>
-      <span className="col-span-3 text-xs text-muted/70">
+      <span className="pl-2 text-muted tabular-nums">{row.order ?? '—'}</span>
+      <span className="col-span-3 text-xs text-muted">
         空き枠 · ここにドラッグして配置
       </span>
     </div>

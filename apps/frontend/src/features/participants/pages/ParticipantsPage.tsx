@@ -17,7 +17,7 @@ export function ParticipantsPage() {
     <AppFrame eventId={eventId} eventName={controller.data?.name}>
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="mb-2 text-[10px] font-semibold tracking-[0.16em] text-muted">
+          <p className="mb-2 text-[11px] font-semibold tracking-[0.16em] text-muted">
             PERFORMANCES & MEMBERS
           </p>
           <h1 className="text-2xl font-semibold">出演枠・メンバー</h1>
@@ -50,7 +50,7 @@ export function ParticipantsPage() {
             key={item.label}
             className="rounded-lg border border-line bg-white px-5 py-4"
           >
-            <p className="text-[11px] text-muted">{item.label}</p>
+            <p className="text-xs text-muted">{item.label}</p>
             <p className="mt-2 text-2xl font-semibold tabular-nums">
               {item.value ?? '—'}
               <span className="ml-1.5 text-xs font-normal text-muted">
@@ -94,7 +94,7 @@ export function ParticipantsPage() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[800px] text-left text-xs">
-              <thead className="border-b border-line bg-canvas/50 text-[11px] font-normal text-muted">
+              <thead className="border-b border-line bg-canvas/50 text-xs font-normal text-muted">
                 <tr>
                   <th className="px-5 py-3 font-normal">出演名</th>
                   <th className="py-3 font-normal">メンバー</th>
@@ -122,7 +122,7 @@ export function ParticipantsPage() {
                     </td>
                     <td className="py-4 pr-5 whitespace-nowrap">
                       <span
-                        className={`rounded px-2 py-1 text-[10px] ${row.position ? 'bg-wash text-brand' : 'bg-canvas text-muted'}`}
+                        className={`rounded px-2 py-1 text-[11px] ${row.position ? 'bg-wash text-brand' : 'bg-canvas text-muted'}`}
                       >
                         {row.position
                           ? `${row.position.section} · ${row.position.order}番`

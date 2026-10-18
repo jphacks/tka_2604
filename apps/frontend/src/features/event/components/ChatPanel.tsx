@@ -117,9 +117,7 @@ export function ChatPanel({ controller }: { controller: EventController }) {
             className="w-full resize-none bg-transparent text-[13px] leading-6 placeholder:text-muted focus-visible:ring-0"
           />
           <div className="mt-1 flex items-center justify-between">
-            <span className="text-[11px] text-muted">
-              Ctrl / ⌘ + Enterで送信
-            </span>
+            <span className="text-xs text-muted">Ctrl / ⌘ + Enterで送信</span>
             <Button
               variant="primary"
               type="submit"
@@ -131,7 +129,7 @@ export function ChatPanel({ controller }: { controller: EventController }) {
             </Button>
           </div>
         </div>
-        <p className="mt-2 text-center text-[10px] text-muted/80">
+        <p className="mt-2 text-center text-[11px] text-muted">
           確認して反映した制約は自動保存されます。
         </p>
       </form>

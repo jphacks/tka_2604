@@ -8,7 +8,7 @@ const variants = {
   subtle: 'border-line bg-white text-brand hover:border-brand/40 hover:bg-wash',
   ghost: 'border-transparent text-muted hover:bg-wash hover:text-brand',
   danger:
-    'border-line bg-white text-red-500 hover:border-red-200 hover:bg-red-50',
+    'border-line bg-white text-red-600 hover:border-red-200 hover:bg-red-50',
 }
 
 export function Button({

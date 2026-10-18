@@ -22,7 +22,7 @@ export function ConfirmDialog({
     <Dialog title={title} onClose={onCancel} busy={busy}>
       <p className="text-sm leading-7">{message}</p>
       {error && (
-        <p role="alert" className="mt-4 text-xs text-red-500">
+        <p role="alert" className="mt-4 text-xs text-red-600">
           {error}
         </p>
       )}

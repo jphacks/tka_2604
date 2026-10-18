@@ -84,7 +84,7 @@ export function ReorderDialog({ controller }: { controller: EventController }) {
         tone="border-line bg-wash text-ink"
       />
       {error && (
-        <p role="alert" className="mt-4 text-xs text-red-500">
+        <p role="alert" className="mt-4 text-xs text-red-600">
           {error}
         </p>
       )}

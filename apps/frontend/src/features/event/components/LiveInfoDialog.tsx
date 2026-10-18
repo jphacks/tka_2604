@@ -33,7 +33,7 @@ export function LiveInfoDialog({
           適用後、出演順の「保存」で変更を保存してください。
         </p>
         {error && (
-          <p role="alert" className="text-xs text-red-500">
+          <p role="alert" className="text-xs text-red-600">
             {error}
           </p>
         )}
