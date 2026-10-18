@@ -2,7 +2,11 @@ import { useCallback, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 
 import { useResource } from '../../../shared/hooks/useResource'
-import type { EventDraft, EventStatus } from '../../../shared/model/workspace'
+import {
+  defaultEventName,
+  type EventDraft,
+  type EventStatus,
+} from '../../../shared/model/workspace'
 import { workspaceRepository } from '../../../shared/repositories/workspaceRepository'
 
 const emptyDraft: EventDraft = {
@@ -29,14 +33,13 @@ export function useEvents() {
   const events = resource.data ?? []
   async function create() {
     if (busy) return
-    if (!draft.name.trim()) {
-      setError('イベント名を入力してください。')
-      return
-    }
     setBusy(true)
     setError('')
     try {
-      const event = await workspaceRepository.createEvent(draft)
+      const event = await workspaceRepository.createEvent({
+        ...draft,
+        name: draft.name.trim() || defaultEventName(new Date()),
+      })
       await navigate(`/event/${event.id}`)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '作成に失敗しました。')

@@ -22,14 +22,14 @@ export function CreateEventDialog({
         className="space-y-4"
       >
         <label className="block text-xs font-medium">
-          イベント名 <span className="text-brand">必須</span>
+          イベント名
           <Input
             value={controller.draft.name}
             onChange={(event) =>
               controller.setDraft({ name: event.target.value })
             }
             maxLength={80}
-            placeholder="例：スプリングライブ 2027"
+            placeholder="空欄なら作成日時の名前になります"
             className="mt-2 w-full"
           />
         </label>
