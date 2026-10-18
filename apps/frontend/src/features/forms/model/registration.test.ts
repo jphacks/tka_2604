@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest'
 import type { FormRoster } from '../repositories/types'
 import {
   applySavedBand,
+  emptyRegistration,
   memberOptionLabel,
   registrationInput,
+  selectBand,
 } from './registration'
 
 const roster: FormRoster = {
@@ -29,6 +31,7 @@ describe('registration input and roster', () => {
     const draft = {
       bandId: '',
       bandName: 'A',
+      description: '',
       rows: Array.from({ length: 20 }, (_, i) => ({
         key: `${i}`,
         kind: 'new' as const,
@@ -66,6 +69,42 @@ describe('registration input and roster', () => {
         roster,
       ),
     ).toThrow('重複')
+  })
+  it('sends descriptions, normalizes blanks, and enforces the API length limit', () => {
+    const draft = {
+      ...selectBand(roster, 'a'),
+      description: '  ロック\n盛り上がる曲  ',
+    }
+    expect(registrationInput('update', draft, roster).description).toBe(
+      'ロック\n盛り上がる曲',
+    )
+    expect(
+      registrationInput('update', { ...draft, description: '  ' }, roster)
+        .description,
+    ).toBeNull()
+    expect(
+      registrationInput(
+        'update',
+        { ...draft, description: 'あ'.repeat(500) },
+        roster,
+      ).description,
+    ).toHaveLength(500)
+    expect(() =>
+      registrationInput(
+        'update',
+        { ...draft, description: 'あ'.repeat(501) },
+        roster,
+      ),
+    ).toThrow('500文字')
+  })
+  it('restores the selected description and starts new registrations blank', () => {
+    const data = {
+      ...roster,
+      bands: [{ ...roster.bands[0], description: 'ジャズ' }, roster.bands[1]],
+    }
+    expect(selectBand(data, 'a').description).toBe('ジャズ')
+    expect(selectBand(data, 'b').description).toBe('')
+    expect(emptyRegistration().description).toBe('')
   })
   it('retains unlinked people and other bands after clearing a band', () => {
     const next = applySavedBand(roster, {

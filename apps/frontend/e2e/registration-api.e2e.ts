@@ -261,3 +261,98 @@ test('production flow: create an event, open its form, register and update DB me
     await request.delete(`/api/events/${eventId}`)
   }
 })
+
+test('band descriptions persist through form creation, editing, reload and clearing in local D1', async ({
+  page,
+  request,
+}) => {
+  const created = await request.post('/api/events', {
+    data: { title: 'バンド紹介の保存確認' },
+  })
+  expect(created.status()).toBe(201)
+  const { eventId } = (await created.json()) as { eventId: string }
+  const formUrl = `/event/${eventId}/forms`
+  const description = 'アップテンポなロック\n明るく盛り上がるバンドです。'
+  const field = page.getByRole('textbox', { name: 'バンド紹介（任意）' })
+  const readBand = async (bandId: string) => {
+    const response = await request.get(`/api/events/${eventId}/form`)
+    expect(response.status()).toBe(200)
+    const roster = (await response.json()) as FormRoster
+    return roster.bands.find((band) => band.bandId === bandId)
+  }
+  const submit = async (name: string, heading: string) => {
+    await page.getByRole('button', { name, exact: true }).click()
+    await expect(page.getByRole('heading', { name: heading })).toBeVisible()
+  }
+  try {
+    await page.goto(formUrl)
+    await page
+      .getByRole('textbox', { name: 'バンド名 必須' })
+      .fill('紹介付きバンド')
+    await page.getByRole('textbox', { name: 'メンバー1の名前' }).fill('出演者')
+    await field.fill(description)
+    await expect(field).toHaveAttribute('maxlength', '500')
+    const savedResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith(`/api/events/${eventId}/form/bands`) &&
+        response.request().method() === 'POST',
+    )
+    await submit('出演登録を送信', '出演登録を受け付けました')
+    const response = await savedResponse
+    expect(response.status()).toBe(201)
+    const saved = (await response.json()) as SavedFormBand
+    const bandId = saved.band.bandId
+    expect(saved.band.description).toBe(description)
+    expect((await readBand(bandId))?.description).toBe(description)
+
+    await page.goto(`${formUrl}?bandId=${bandId}`)
+    await expect(field).toHaveValue(description)
+    await page.setViewportSize({ width: 390, height: 844 })
+    await expect(field).toBeVisible()
+    await page.screenshot({
+      path: 'test-results/description-mobile.png',
+      fullPage: true,
+    })
+    await field.fill('ジャズ中心の落ち着いた雰囲気')
+    await submit('変更を保存', '登録内容を更新しました')
+    expect((await readBand(bandId))?.description).toBe(
+      'ジャズ中心の落ち着いた雰囲気',
+    )
+    await page.reload()
+    await expect(field).toHaveValue('ジャズ中心の落ち着いた雰囲気')
+
+    // Editing other fields must keep the saved introduction.
+    await page
+      .getByRole('textbox', { name: 'バンド名 必須' })
+      .fill('紹介を保持するバンド')
+    await submit('変更を保存', '登録内容を更新しました')
+    expect((await readBand(bandId))?.description).toBe(
+      'ジャズ中心の落ち着いた雰囲気',
+    )
+    await page.reload()
+    await field.fill('   ')
+    await submit('変更を保存', '登録内容を更新しました')
+    expect((await readBand(bandId))?.description).toBeNull()
+    await page.reload()
+    await expect(field).toHaveValue('')
+
+    await page.getByRole('radio', { name: /初回登録/ }).check()
+    await expect(field).toHaveValue('')
+    await page
+      .getByRole('textbox', { name: 'バンド名 必須' })
+      .fill('紹介なしバンド')
+    await page
+      .getByRole('textbox', { name: 'メンバー1の名前' })
+      .fill('別の出演者')
+    await submit('出演登録を送信', '出演登録を受け付けました')
+    const roster = (await (
+      await request.get(`/api/events/${eventId}/form`)
+    ).json()) as FormRoster
+    expect(
+      roster.bands.find((band) => band.bandName === '紹介なしバンド')
+        ?.description,
+    ).toBeNull()
+  } finally {
+    expect((await request.delete(`/api/events/${eventId}`)).ok()).toBe(true)
+  }
+})

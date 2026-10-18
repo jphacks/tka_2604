@@ -13,13 +13,14 @@ export interface MemberRow {
 export interface RegistrationDraft {
   bandId: string
   bandName: string
+  description: string
   rows: MemberRow[]
 }
 export function newMemberRow(kind: MemberRow['kind'] = 'new'): MemberRow {
   return { key: crypto.randomUUID(), kind, value: '' }
 }
 export function emptyRegistration(): RegistrationDraft {
-  return { bandId: '', bandName: '', rows: [newMemberRow()] }
+  return { bandId: '', bandName: '', description: '', rows: [newMemberRow()] }
 }
 export function selectBand(
   roster: FormRoster,
@@ -29,6 +30,8 @@ export function selectBand(
     bandId,
     bandName:
       roster.bands.find((band) => band.bandId === bandId)?.bandName ?? '',
+    description:
+      roster.bands.find((band) => band.bandId === bandId)?.description ?? '',
     rows: roster.memberships
       .filter((item) => item.bandId === bandId)
       .map((item) => ({
@@ -66,6 +69,9 @@ export function registrationInput(
   const bandName = draft.bandName.trim()
   if (!bandName || bandName.length > 80)
     throw new Error('バンド名を1〜80文字で入力してください。')
+  const description = draft.description.trim()
+  if (description.length > 500)
+    throw new Error('バンド紹介は500文字以内で入力してください。')
   if (draft.rows.length < (mode === 'create' ? 1 : 0) || draft.rows.length > 20)
     throw new Error(
       mode === 'create'
@@ -93,6 +99,7 @@ export function registrationInput(
   return {
     expectedUpdatedAt: roster.updatedAt,
     bandName,
+    description: description || null,
     memberIds,
     newMembers,
   }

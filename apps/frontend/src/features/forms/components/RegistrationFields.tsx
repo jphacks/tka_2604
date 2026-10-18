@@ -1,6 +1,6 @@
 import { Button } from '../../../shared/ui/Button'
 import { Icon } from '../../../shared/ui/Icon'
-import { Input, Select } from '../../../shared/ui/Input'
+import { Input, Select, Textarea } from '../../../shared/ui/Input'
 import type { PublicRegistrationController } from '../hooks/usePublicRegistration'
 import {
   memberOptionLabel,
@@ -64,6 +64,24 @@ export function RegistrationFields({
               placeholder="例：サンセット・レコード"
               className="mt-2 h-11 w-full text-sm"
             />
+          </label>
+          <label className="block text-sm font-medium">
+            バンド紹介（任意）
+            <Textarea
+              value={draft.description}
+              onChange={(event) => change({ description: event.target.value })}
+              maxLength={500}
+              rows={4}
+              placeholder="例：アップテンポなロックを中心に演奏する、明るく盛り上がるバンドです。"
+              className="mt-2 w-full text-sm"
+              aria-describedby="band-description-help"
+            />
+            <span
+              id="band-description-help"
+              className="mt-2 block text-xs leading-6 font-normal text-muted"
+            >
+              ジャンルや雰囲気などを500文字以内で入力してください。AIによる並べ替えの参考にします。
+            </span>
           </label>
           <section aria-labelledby="members-heading">
             <div className="mb-2 flex items-center justify-between gap-3">
