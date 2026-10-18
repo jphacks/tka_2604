@@ -77,7 +77,7 @@ test('real API: create, failed save, retry, reload, conflict and delete', async 
     await page.getByRole('button', { name: '変更を保存' }).click()
     await expect(page.getByText('イベントの設定を更新しました。')).toBeVisible()
     await page.reload()
-    // Authentication is still the in-memory demo session (#59).
+    // Authentication is still the temporary workspace session (#59).
     await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
     await expect(name).toHaveValue('RPC保存確認')
     const revision = (await (await request.get(apiPath)).json()) as {
@@ -518,9 +518,7 @@ test('chat contract: retry uses the same ID after reopening, with no duplicate m
 })
 
 for (const width of [1280, 1600]) {
-  test(`API preserves the original mock layout at ${width}px`, async ({
-    page,
-  }) => {
+  test(`API preserves the workspace layout at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 })
     await page.goto('/event/demo-event')
     await page.getByRole('button', { name: 'ワークスペースを開く' }).click()

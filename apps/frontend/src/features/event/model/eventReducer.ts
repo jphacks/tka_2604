@@ -10,11 +10,7 @@ import {
   movePersistedPerformance,
   setPersistedOrder,
 } from './persistedSchedule'
-import {
-  movePerformance,
-  resizeSchedule,
-  setPerformanceOrder,
-} from './schedule'
+import { resizeSchedule } from './schedule'
 import type { MoveTarget } from './types'
 
 export interface EventState {
@@ -33,14 +29,10 @@ export type EventAction =
       constraintSources?: EventData['constraintSources']
     }
   | { type: 'messages'; messages: ChatMessage[] }
-  | {
-      type: 'performances-updated'
-      event: Pick<EventData, 'members' | 'performances'>
-    }
   | { type: 'notice'; message: string; error?: boolean }
-  | { type: 'move'; id: string; target: MoveTarget; persistent?: boolean }
-  | { type: 'order'; id: string; value: number | null; persistent?: boolean }
-  | { type: 'resize'; count: number; sectionId?: string; persistent?: boolean }
+  | { type: 'move'; id: string; target: MoveTarget }
+  | { type: 'order'; id: string; value: number | null }
+  | { type: 'resize'; count: number; sectionId?: string }
   | { type: 'fixed'; id: string; fixed: boolean }
   | { type: 'constraints-replaced'; constraints: Constraint[] }
   | { type: 'constraint-save'; constraint: Constraint }
@@ -84,37 +76,15 @@ export function eventReducer(
     case 'messages':
       return { ...state, event: { ...event, messages: action.messages } }
 
-    case 'performances-updated':
-      return success(
-        {
-          ...event,
-          members: action.event.members,
-          performances: action.event.performances,
-        },
-        '出演枠を更新しました。',
-      )
     case 'move':
     case 'order':
     case 'resize': {
       const result =
         action.type === 'move'
-          ? (action.persistent ? movePersistedPerformance : movePerformance)(
-              event,
-              action.id,
-              action.target,
-            )
+          ? movePersistedPerformance(event, action.id, action.target)
           : action.type === 'order'
-            ? (action.persistent ? setPersistedOrder : setPerformanceOrder)(
-                event,
-                action.id,
-                action.value,
-              )
-            : resizeSchedule(
-                event,
-                action.count,
-                action.sectionId,
-                action.persistent,
-              )
+            ? setPersistedOrder(event, action.id, action.value)
+            : resizeSchedule(event, action.count, action.sectionId)
       return result.error ? fail(result.error) : success(result.event)
     }
     case 'fixed': {

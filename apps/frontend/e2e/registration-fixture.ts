@@ -5,7 +5,7 @@ import type {
   FormRoster,
 } from '../src/features/forms/repositories/types'
 
-// HTTP-only fixture: the public form never reads the administrator mock store.
+// HTTP fixture for isolated form validation and failure tests.
 export async function mockRegistrationApi(page: Page, eventId = 'public-live') {
   const roster: FormRoster = {
     eventId,

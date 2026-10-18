@@ -6,8 +6,6 @@ import {
   evaluateConstraint,
 } from '../../../shared/model/constraints'
 import { type EventData, scheduleContent } from '../../../shared/model/event'
-import { dataSource } from '../../../shared/repositories/dataSource'
-import { workspaceRepository } from '../../../shared/repositories/workspaceRepository'
 import { applyChatProposal } from '../model/chatProposal'
 import {
   type ConstraintPatch,
@@ -35,16 +33,13 @@ export function useEvent(eventId: string) {
   const [refreshing, setRefreshing] = useState(false)
   const busy = useRef(false)
   const lifetime = useRef<AbortController | null>(null)
-  const persistent = dataSource === 'api'
   const event = state.event
   const scheduleDirty =
-    persistent &&
     !!event &&
     !!baseline &&
     JSON.stringify(scheduleContent(event)) !==
       JSON.stringify(scheduleContent(baseline))
   const constraintsDirty =
-    persistent &&
     !!event &&
     !!baseline &&
     JSON.stringify(event.constraints) !== JSON.stringify(baseline.constraints)
@@ -53,7 +48,7 @@ export function useEvent(eventId: string) {
     eventId,
     dispatch,
     event,
-    persistent && (dirty || saving || solving || refreshing),
+    dirty || saving || solving || refreshing,
   )
   const [loadError, setLoadError] = useState('')
   const [retry, setRetry] = useState(0)
@@ -82,10 +77,6 @@ export function useEvent(eventId: string) {
       })
     return () => controller.abort()
   }, [eventId, retry])
-
-  useEffect(() => {
-    if (state.event) workspaceRepository.rememberEvent(state.event)
-  }, [state.event])
 
   useEffect(() => {
     if (!dirty) return
@@ -136,8 +127,7 @@ export function useEvent(eventId: string) {
 
   const save = useCallback(
     async (kind: 'schedule' | 'constraints') => {
-      if (!event || busy.current || refreshing || chat.sending || !persistent)
-        return
+      if (!event || busy.current || refreshing || chat.sending) return
       busy.current = true
       setSavingKind(kind)
       setSaveError('')
@@ -157,7 +147,7 @@ export function useEvent(eventId: string) {
         if (!signal?.aborted) setSavingKind(null)
       }
     },
-    [event, refreshing, chat.sending, persistent, persist],
+    [event, refreshing, chat.sending, persist],
   )
 
   useEffect(() => {
@@ -188,8 +178,7 @@ export function useEvent(eventId: string) {
   ])
 
   async function generate() {
-    if (!event || busy.current || refreshing || chat.sending || !persistent)
-      return
+    if (!event || busy.current || refreshing || chat.sending) return
     busy.current = true
     setSolving(true)
     setSaveError('')
@@ -271,7 +260,6 @@ export function useEvent(eventId: string) {
       }
     },
     loadError,
-    persistent,
     saving,
     savingSchedule: savingKind === 'schedule',
     refreshing,
@@ -311,22 +299,20 @@ export function useEvent(eventId: string) {
       setRefreshing(true)
       setRetry((value) => value + 1)
     },
-    applyPerformanceEdits: (event: EventData) =>
-      dispatch({ type: 'performances-updated', event }),
     dismissNotice: () => {
       setLoadError('')
       dispatch({ type: 'notice', message: '' })
     },
     setOrder: (id: string, value: number | null) =>
-      edit({ type: 'order', id, value, persistent }),
+      edit({ type: 'order', id, value }),
     setFixed: (id: string, fixed: boolean) =>
       edit({ type: 'fixed', id, fixed }),
     resize: (count: number, sectionId?: string) =>
-      edit({ type: 'resize', count, sectionId, persistent }),
+      edit({ type: 'resize', count, sectionId }),
     move: (id: string, overId: string) => {
       if (!event || id === overId) return
       const target = findTarget(event, overId)
-      if (target) edit({ type: 'move', id, target, persistent })
+      if (target) edit({ type: 'move', id, target })
     },
     saveConstraint: (constraint: Constraint) =>
       edit({ type: 'constraint-save', constraint }),
