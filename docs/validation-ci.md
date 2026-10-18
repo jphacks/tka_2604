@@ -87,7 +87,7 @@ it('外部通信の成功・HTTPエラー・通信失敗を差し替える', asy
 
 - 実LLM／Solver通信は、接続先・起動手順を対応Issueで定めて別実行する。FE・BEのE2EはローカルD1と外部通信の差し替えでCIでも確認する。check・pre-commit・CIは外部サービスや資格情報に依存させない。
 - 個別機能のテストは各実装Issue、認証・権限のテストは認証導入時に追加する。DB内部関数の所有者確認だけで、HTTPの認証を確認済みにしない。
-- Pythonテストは#21、計算APIテストは#27の担当範囲を維持する。追加するCIの範囲は担当間で確認し、現時点のcheckにPythonテストは含めない。
+- Pythonテストは#21、計算APIテストは#27の担当範囲を維持する。`npm run check`にはPythonテストを含めず、CIのQuality checks内で `uv run --locked pytest` を別途実行する。
 
 ## フロントエンドのブラウザテスト
 
@@ -116,7 +116,7 @@ E2Eの型検査は `npm run typecheck` に含む。ブラウザテストの実�
 
 ## GitHub Actions
 
-正本は[ci.yml](../.github/workflows/ci.yml)。pushとpull_requestを契機に、UbuntuでNode・uv・Pythonを準備し、`npm ci` → `npm run check`を実行する。
+正本は[ci.yml](../.github/workflows/ci.yml)。pushとpull_requestを契機に、UbuntuでNode・uv・Pythonを準備し、`npm ci` → `npm run check` → Python Solverの `uv run --locked pytest` を実行する。
 
 - `Quality checks`（上限10分）と`E2E (api)`（上限15分）を並列実行する。同じイベント・refの古い実行は中止する。
 - CIではHuskyを無効化する。E2EジョブはNode・npm依存・ChromiumとOS依存を準備する。API版はジョブ内のローカルD1を初期化し、リモートDBやSecretは使わない。

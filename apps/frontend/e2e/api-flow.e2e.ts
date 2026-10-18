@@ -829,7 +829,7 @@ test('generation saves the displayed schedule and constraints before calling sol
 }) => {
   const path = '/api/events/demo-event'
   const schedule = (await (await request.get(`${path}/schedule`)).json()) as {
-    parts: { partId: string; partName: string | null }[]
+    parts: { partId: string; partName: string | null; bandCount: number }[]
     placements: unknown[]
     unassignedBandIds: string[]
   }
@@ -859,6 +859,10 @@ test('generation saves the displayed schedule and constraints before calling sol
     }
     expect(route.request().postDataJSON()).toEqual({
       expectedUpdatedAt: savedConstraints.updatedAt,
+      parts: [
+        { partId: 'demo-part-1', bandCount: 5 },
+        { partId: 'demo-part-2', bandCount: 7 },
+      ],
     })
     expect(savedSchedule.updatedAt).toBe(savedConstraints.updatedAt)
     expect(savedSchedule.unassignedBandIds).toContain('demo-band-b')
@@ -887,6 +891,23 @@ test('generation saves the displayed schedule and constraints before calling sol
     })
     await order.fill('')
     await order.press('Enter')
+    await page
+      .getByRole('button', { name: 'ライブ情報の編集', exact: true })
+      .click()
+    const dialog = page.getByRole('dialog', { name: 'ライブ情報の編集' })
+    for (const [part, count] of [
+      [1, 5],
+      [2, 7],
+    ]) {
+      const capacity = dialog.getByRole('spinbutton', {
+        name: `第${part}部の組数`,
+        exact: true,
+      })
+      await capacity.fill(String(count))
+      await expect(capacity).toHaveValue(String(count))
+    }
+    await dialog.getByRole('button', { name: '適用', exact: true }).click()
+    await expect(dialog).toHaveCount(0)
     expect(
       (
         (await (await request.get(`${path}/schedule`)).json()) as {
@@ -943,9 +964,10 @@ test('generation saves the displayed schedule and constraints before calling sol
         await request.post(`${path}/schedule`, {
           data: {
             expectedUpdatedAt: revision.updatedAt,
-            parts: schedule.parts.map(({ partId, partName }) => ({
+            parts: schedule.parts.map(({ partId, partName, bandCount }) => ({
               partId,
               partName,
+              bandCount,
             })),
             placements: schedule.placements,
             unassignedBandIds: schedule.unassignedBandIds,

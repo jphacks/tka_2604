@@ -86,7 +86,13 @@ export function createEventsApi(client: ApiClient) {
     async solve(event: EventData): Promise<SolveResponse> {
       const response = await events[':eventId'].solve.$post({
         param: { eventId: event.id },
-        json: { expectedUpdatedAt: revision(event) },
+        json: {
+          expectedUpdatedAt: revision(event),
+          parts: event.sections.map((part) => ({
+            partId: part.id,
+            bandCount: part.slots.length,
+          })),
+        },
       })
       await ensureOk(response)
       if (response.status !== 200)

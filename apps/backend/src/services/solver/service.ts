@@ -1,3 +1,5 @@
+import type { z } from 'zod'
+
 import { invalid, SchedulingError } from '../scheduling/errors'
 import {
   constraintsResponse,
@@ -11,6 +13,7 @@ import {
   validateSchedule,
 } from '../scheduling/validation'
 import {
+  type solveInputSchema,
   type SolverClient,
   type SolverRequest,
   solverResultSchema,
@@ -79,7 +82,8 @@ export function solverService(
   userId: string,
   client: SolverClient,
 ) {
-  return async (eventId: string, expectedUpdatedAt: string) => {
+  return async (eventId: string, request: z.infer<typeof solveInputSchema>) => {
+    const { expectedUpdatedAt, parts } = request
     const snapshot = await repository.load(userId, eventId)
     if (!snapshot) throw new SchedulingError('event_not_found')
     if (snapshot.event.updatedAt !== expectedUpdatedAt)
@@ -98,15 +102,24 @@ export function solverService(
     })
     if (snapshot.parts.some((part, index) => part.sortOrder !== index))
       invalid('/parts', '部のsortOrderは0から連続である必要があります。')
+    const bandCounts = new Map(
+      parts.map(({ partId, bandCount }) => [partId, bandCount]),
+    )
+    if (
+      bandCounts.size !== parts.length ||
+      parts.length !== snapshot.parts.length ||
+      snapshot.parts.some(({ partId }) => !bandCounts.has(partId))
+    )
+      invalid('/parts', '保存済みの全ての部を重複なく指定してください。')
     const input: SolverRequest = {
       eventId,
       bands: snapshot.bands.map(({ bandId }) => ({ bandId })),
       members: snapshot.members.map(({ memberId }) => ({ memberId })),
       memberships: snapshot.memberships,
-      parts: snapshot.parts.map(({ partId, sortOrder, bandCount }) => ({
+      parts: snapshot.parts.map(({ partId, sortOrder }) => ({
         partId,
         sortOrder,
-        bandCount,
+        bandCount: bandCounts.get(partId)!,
       })),
       constraints,
       // Vacant display slots are not bands; Solver hints use dense band ranks.

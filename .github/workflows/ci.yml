@@ -33,6 +33,9 @@ jobs:
         working-directory: apps/solver
       - run: npm ci
       - run: npm run check
+      - name: Run Python Solver tests
+        run: uv run --locked pytest
+        working-directory: apps/solver
 
   e2e:
     name: E2E (api)
