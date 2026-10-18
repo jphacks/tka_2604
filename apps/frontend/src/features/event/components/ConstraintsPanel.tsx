@@ -91,7 +91,7 @@ export function ConstraintsPanel({
                 }
               />
               <p
-                className={`mt-3 text-xs leading-6 ${status === 'met' ? 'text-emerald-700' : status === 'unmet' || status === 'invalid' ? 'text-red-700' : 'text-muted'}`}
+                className={`mt-3 text-xs leading-6 ${status === 'met' ? 'text-emerald-700' : status === 'unmet' || status === 'invalid' ? (constraint.hardness === 'hard' ? 'text-red-700' : 'text-amber-800') : 'text-muted'}`}
               >
                 {status === 'met' ? '✓ ' : ''}
                 {detail}

@@ -45,7 +45,7 @@ export function PerformanceRow({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       data-performance={performance.id}
-      className={`${rowColumns} relative min-h-[42px] border-b border-line/55 transition-colors ${violation === 'hard' ? 'bg-red-50 hover:bg-red-100' : violation === 'soft' ? 'bg-amber-50 hover:bg-amber-100' : 'bg-white hover:bg-canvas/65'} ${isDragging ? 'z-10 bg-wash opacity-35' : ''}`}
+      className={`${rowColumns} relative min-h-[42px] border-b border-line/55 transition-colors ${violation === 'hard' ? 'bg-red-100/70 shadow-[inset_4px_0_0_var(--color-red-500)] hover:bg-red-100' : violation === 'soft' ? 'bg-amber-100/70 shadow-[inset_4px_0_0_var(--color-amber-400)] hover:bg-amber-100' : 'bg-white hover:bg-canvas/65'} ${isDragging ? 'z-10 bg-wash opacity-35' : ''}`}
     >
       <button
         ref={setActivatorNodeRef}
