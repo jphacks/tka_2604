@@ -149,7 +149,7 @@ export function LoginPage() {
                   id="password-help"
                   className="-mt-2 mb-4 text-xs leading-5 text-muted"
                 >
-                  15文字以上128文字以内。他のサービスで使っていない、長いパスワードを設定してください。
+                  他のサービスで使っていないパスワードを設定してください。
                 </p>
                 <label className="mb-5 flex flex-col gap-2 text-sm font-medium">
                   パスワード（確認）
