@@ -93,6 +93,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
             <span>順</span>
             <span>出演名</span>
             <span>メンバー</span>
+            <span>紹介</span>
           </div>
           {schedule.sections.map((section) => (
             <section key={section.id} aria-label={section.name}>

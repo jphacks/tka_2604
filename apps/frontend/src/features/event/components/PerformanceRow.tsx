@@ -6,7 +6,7 @@ import { NumberField } from '../../../shared/ui/NumberField'
 import type { PerformanceRow as Row, PerformanceView } from '../model/types'
 
 export const rowColumns =
-  'grid min-w-[520px] grid-cols-[36px_45px_62px_minmax(140px,1fr)_minmax(140px,1.1fr)] items-center gap-1 px-3'
+  'grid min-w-[680px] grid-cols-[36px_45px_62px_minmax(140px,1fr)_minmax(120px,0.8fr)_minmax(160px,1.4fr)] items-center gap-1 px-3'
 
 export function PerformanceRow({
   row,
@@ -84,6 +84,12 @@ export function PerformanceRow({
       >
         {performance.members.join('・')}
       </span>
+      <span
+        className="min-w-0 truncate text-[13px] text-muted"
+        title={performance.description ?? undefined}
+      >
+        {performance.description}
+      </span>
     </div>
   )
 }
@@ -103,7 +109,7 @@ export function EmptyPerformanceRow({ row }: { row: Row }) {
       <span className="pl-2 text-muted/60 tabular-nums">
         {row.order ?? '—'}
       </span>
-      <span className="col-span-2 text-xs text-muted/70">
+      <span className="col-span-3 text-xs text-muted/70">
         空き枠 · ここにドラッグして配置
       </span>
     </div>
