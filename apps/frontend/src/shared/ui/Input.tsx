@@ -1,5 +1,6 @@
 import type {
   InputHTMLAttributes,
+  Ref,
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from 'react'
@@ -10,14 +11,16 @@ const style =
 export function Input({
   className = '',
   ...props
-}: InputHTMLAttributes<HTMLInputElement>) {
+}: InputHTMLAttributes<HTMLInputElement> & { ref?: Ref<HTMLInputElement> }) {
   return <input className={`${style} h-9 px-2.5 ${className}`} {...props} />
 }
 
 export function Select({
   className = '',
   ...props
-}: SelectHTMLAttributes<HTMLSelectElement>) {
+}: SelectHTMLAttributes<HTMLSelectElement> & {
+  ref?: Ref<HTMLSelectElement>
+}) {
   return (
     <select
       className={`${style} h-8 px-2 text-[13px] ${className}`}
