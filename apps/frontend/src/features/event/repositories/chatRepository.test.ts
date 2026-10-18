@@ -67,3 +67,48 @@ it.each([
     '変更案を読み取れませんでした',
   )
 })
+
+const reorder = {
+  expectedUpdatedAt: '2026-10-17T00:00:00.000Z',
+  source: 'solver',
+  placements: [{ bandId: 'a', partId: 'p1', order: 0 }],
+  results: [
+    {
+      constraintId: 'c1',
+      hardness: 'hard',
+      priority: null,
+      before: 'met',
+      after: 'met',
+      violations: [],
+      explanations: [],
+    },
+  ],
+}
+
+it('accepts a judged reorder proposal', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(Response.json({ reply: '案です', reorder })),
+  )
+  expect(await sendChatMessage('event-a', '本文')).toEqual({
+    reply: '案です',
+    reorder,
+  })
+})
+
+it.each([
+  { ...reorder, placements: [] },
+  { ...reorder, source: 'model' },
+  { ...reorder, placements: [{ bandId: 'a', partId: 'p1', order: 0.5 }] },
+  { ...reorder, results: [{ ...reorder.results[0], explanations: [1] }] },
+])('rejects a malformed reorder without displaying it', async (value) => {
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn()
+      .mockResolvedValue(Response.json({ reply: '案です', reorder: value })),
+  )
+  await expect(sendChatMessage('event-a', '本文')).rejects.toThrow(
+    '並べ替え案を読み取れませんでした',
+  )
+})

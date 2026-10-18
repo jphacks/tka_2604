@@ -9,6 +9,8 @@ const api = vi.hoisted(() => ({
   solve: vi.fn<EventRepository['solve']>(),
   saveSchedule: vi.fn<EventRepository['saveSchedule']>(),
   saveConstraints: vi.fn<EventRepository['saveConstraints']>(),
+  sendMessage: vi.fn<EventRepository['sendMessage']>(),
+  getMessages: vi.fn<EventRepository['getMessages']>(),
 }))
 
 vi.mock('../../../shared/api/events', () => ({ eventsApi: api }))
@@ -221,3 +223,62 @@ it.each(['schedule', 'constraints'] as const)(
     expect(result.current.error).toBe('保存競合')
   },
 )
+
+async function receiveReorder(result: {
+  current: ReturnType<typeof useEvent>
+}) {
+  api.sendMessage.mockResolvedValue({
+    reply: '盛り上がる順にしました。',
+    reorder: {
+      expectedUpdatedAt: event.updatedAt!,
+      source: 'llm',
+      placements: [
+        { bandId: 'b', partId: 'p1', order: 0 },
+        { bandId: 'a', partId: 'p1', order: 1 },
+      ],
+      results: [],
+    },
+  })
+  api.getMessages.mockResolvedValue([])
+  act(() => result.current.setChatDraft('盛り上げて'))
+  await act(() => result.current.sendMessage())
+  expect(result.current.chatReorder?.reply).toBe('盛り上がる順にしました。')
+}
+
+it('saves an approved reorder through the schedule API and keeps the order on rejection', async () => {
+  api.saveSchedule.mockResolvedValue({ updatedAt: '2026-10-17T00:00:00.001Z' })
+  const { result } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
+  await receiveReorder(result)
+  act(() => result.current.dismissReorder())
+  expect(result.current.event?.sections[0].slots).toEqual(['a', 'b'])
+  expect(api.saveSchedule).not.toHaveBeenCalled()
+
+  await receiveReorder(result)
+  await act(() => result.current.applyReorder())
+  expect(api.saveSchedule.mock.calls[0][0].sections[0].slots).toEqual([
+    'b',
+    'a',
+  ])
+  expect(result.current.chatReorder).toBeNull()
+  expect(result.current.scheduleDirty).toBe(false)
+  expect(result.current.notice).toBe('並べ替え案を出演順に保存しました。')
+})
+
+it('does not apply a reorder proposed for an older version', async () => {
+  const { result } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
+  await receiveReorder(result)
+  api.getEvent.mockResolvedValue({
+    ...structuredClone(event),
+    updatedAt: '2026-10-18T00:00:00.000Z',
+  })
+  act(() => result.current.retryLoad())
+  await waitFor(() =>
+    expect(result.current.event?.updatedAt).toBe('2026-10-18T00:00:00.000Z'),
+  )
+  await act(() => result.current.applyReorder())
+  expect(api.saveSchedule).not.toHaveBeenCalled()
+  expect(result.current.error).toContain('イベントが更新されました')
+  expect(result.current.event?.sections[0].slots).toEqual(['a', 'b'])
+})
