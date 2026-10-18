@@ -60,10 +60,10 @@ test('real API and local D1: registration, replacement, unlinking, re-addition a
   await page.getByRole('combobox', { name: 'メンバー1の名前' }).fill('田中')
   await page.getByRole('option', { name: /田中 花/ }).click()
   await expect(
-    page.getByRole('combobox', { name: 'メンバー1を名簿から選択' }),
-  ).toHaveValue(shared)
+    page.getByRole('combobox', { name: 'メンバー1の名前' }),
+  ).toHaveValue(/田中 花（/)
   await page.getByRole('button', { name: 'メンバーの行を追加' }).click()
-  await page.getByRole('textbox', { name: 'メンバー2の名前' }).fill('田中 花')
+  await page.getByRole('combobox', { name: 'メンバー2の名前' }).fill('田中 花')
   const screenshotDir = process.env.CAPTURE_FORM_SCREENSHOTS
     ? path.resolve('../../docs/screenshots/issue-82')
     : null
@@ -102,14 +102,10 @@ test('real API and local D1: registration, replacement, unlinking, re-addition a
     .getByRole('combobox', { name: '更新する出演枠' })
     .selectOption(a.band.bandId)
   await expect(
-    page.getByRole('combobox', { name: `メンバー${sharedRow}を名簿から選択` }),
-  ).toHaveValue(shared)
+    page.getByRole('combobox', { name: `メンバー${sharedRow}の名前` }),
+  ).toHaveValue(/田中 花（/)
   await page
-    .getByRole('button', { name: '新しい人を入力して差し替え' })
-    .nth(replacedRow - 1)
-    .click()
-  await page
-    .getByRole('textbox', { name: `メンバー${replacedRow}の名前` })
+    .getByRole('combobox', { name: `メンバー${replacedRow}の名前` })
     .fill('佐藤 凛')
   if (screenshotDir)
     await page.screenshot({
@@ -152,10 +148,8 @@ test('real API and local D1: registration, replacement, unlinking, re-addition a
     .getByRole('combobox', { name: '更新する出演枠' })
     .selectOption(a.band.bandId)
   await page.getByRole('button', { name: 'メンバーの行を追加' }).click()
-  await page.getByRole('button', { name: '名簿から選ぶ' }).click()
-  await page
-    .getByRole('combobox', { name: 'メンバー1を名簿から選択' })
-    .selectOption(shared)
+  await page.getByRole('combobox', { name: 'メンバー1の名前' }).fill('田中')
+  await page.getByRole('option', { name: /田中 花（ブルーノート/ }).click()
   await page.getByRole('button', { name: '変更を保存' }).click()
   await expect(
     page.getByRole('heading', { name: '登録内容を更新しました' }),
@@ -166,8 +160,8 @@ test('real API and local D1: registration, replacement, unlinking, re-addition a
     .getByRole('combobox', { name: '更新する出演枠' })
     .selectOption(a.band.bandId)
   await expect(
-    page.getByRole('combobox', { name: 'メンバー1を名簿から選択' }),
-  ).toHaveValue(shared)
+    page.getByRole('combobox', { name: 'メンバー1の名前' }),
+  ).toHaveValue(/田中 花（/)
   const final = await get()
   expect(final.memberships).toContainEqual({
     bandId: a.band.bandId,
@@ -212,7 +206,7 @@ test('production flow: create an event, open its form, register and update DB me
       .getByRole('textbox', { name: '出演名 必須' })
       .fill('保存する出演枠')
     await page
-      .getByRole('textbox', { name: 'メンバー1の名前' })
+      .getByRole('combobox', { name: 'メンバー1の名前' })
       .fill('実利用メンバー')
     await page.getByRole('button', { name: '出演登録を送信' }).click()
     await expect(
@@ -291,7 +285,7 @@ test('band descriptions persist through form creation, editing, reload and clear
     await page
       .getByRole('textbox', { name: '出演名 必須' })
       .fill('紹介付き出演枠')
-    await page.getByRole('textbox', { name: 'メンバー1の名前' }).fill('出演者')
+    await page.getByRole('combobox', { name: 'メンバー1の名前' }).fill('出演者')
     await field.fill(description)
     const requestField = page.getByRole('textbox', {
       name: '制約の希望（任意）',
@@ -360,7 +354,7 @@ test('band descriptions persist through form creation, editing, reload and clear
       .getByRole('textbox', { name: '出演名 必須' })
       .fill('紹介なし出演枠')
     await page
-      .getByRole('textbox', { name: 'メンバー1の名前' })
+      .getByRole('combobox', { name: 'メンバー1の名前' })
       .fill('別の出演者')
     await submit('出演登録を送信', '出演登録を受け付けました')
     const roster = (await (

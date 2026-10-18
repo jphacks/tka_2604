@@ -10,7 +10,14 @@ const roster: FormRoster = {
   eventId: 'event',
   eventTitle: 'ライブ',
   updatedAt: '2026-10-19T00:00:00.000Z',
-  bands: [{ bandId: 'band', bandName: 'バンドA', description: null }],
+  bands: [
+    {
+      bandId: 'band',
+      bandName: 'バンドA',
+      description: null,
+      requestText: null,
+    },
+  ],
   members: Array.from({ length: 7 }, (_, index) => ({
     memberId: `m${index + 1}`,
     memberName: index < 6 ? `田中 ${index + 1}` : '佐藤',
@@ -22,12 +29,14 @@ function Harness({
   onSelect = vi.fn(),
   disabled = false,
   excludedIds = [],
+  initialValue = '',
 }: {
   onSelect?: (memberId: string, fromKeyboard?: boolean) => void
   disabled?: boolean
   excludedIds?: string[]
+  initialValue?: string
 }) {
-  const [value, setValue] = useState('')
+  const [value, setValue] = useState(initialValue)
   return (
     <form onSubmit={(event) => event.preventDefault()}>
       <MemberNameInput
@@ -37,7 +46,10 @@ function Harness({
         excludedIds={excludedIds}
         disabled={disabled}
         onValueChange={setValue}
-        onSelect={onSelect}
+        onSelect={(memberId, fromKeyboard) => {
+          onSelect(memberId, fromKeyboard)
+          setValue(memberId)
+        }}
       />
       <button type="submit">送信</button>
       <button type="button">欄外</button>
@@ -58,6 +70,26 @@ describe('MemberNameInput', () => {
     expect(onSelect).not.toHaveBeenCalled()
     await user.click(screen.getByRole('option', { name: /田中 1（バンドA/ }))
     expect(onSelect).toHaveBeenCalledWith('m1', false)
+    expect(input).toHaveValue('田中 1（バンドA）')
+  })
+
+  it('renders the selected member name instead of its ID', async () => {
+    const user = userEvent.setup()
+    render(<Harness initialValue="m1" />)
+    const input = screen.getByRole('combobox', { name: 'メンバー1の名前' })
+    expect(input).toHaveValue('田中 1（バンドA）')
+    await user.click(input)
+    expect(input).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getAllByRole('option')).toHaveLength(roster.members.length)
+  })
+
+  it('opens the full roster list when an empty input receives focus', async () => {
+    const user = userEvent.setup()
+    render(<Harness />)
+    const input = screen.getByRole('combobox', { name: 'メンバー1の名前' })
+    await user.click(input)
+    expect(input).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getAllByRole('option')).toHaveLength(roster.members.length)
   })
 
   it('supports arrow and Enter selection without submitting the form', async () => {
@@ -108,15 +140,12 @@ describe('MemberNameInput', () => {
     expect(onSelect).not.toHaveBeenCalled()
   })
 
-  it('shows at most five results and responds to exclusions and disabled state', async () => {
+  it('shows all matching results and responds to exclusions and disabled state', async () => {
     const user = userEvent.setup()
     const { rerender } = render(<Harness />)
     const input = screen.getByRole('combobox', { name: 'メンバー1の名前' })
     await user.type(input, '田中')
-    expect(screen.getAllByRole('option')).toHaveLength(5)
-    expect(
-      screen.getByText('候補は先頭5件です。名前を追加して絞り込めます。'),
-    ).toBeVisible()
+    expect(screen.getAllByRole('option')).toHaveLength(6)
     rerender(<Harness excludedIds={['m1']} />)
     await waitFor(() =>
       expect(

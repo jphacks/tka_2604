@@ -36,11 +36,21 @@ export function MemberNameInput({
   const composing = useRef(false)
   const [open, setOpen] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
-  const suggestions = useMemo(
-    () => findMemberSuggestions(roster.members, value, excludedIds),
-    [roster.members, value, excludedIds],
+  const selectedMember = roster.members.find(
+    (member) => member.memberId === value,
   )
-  const visible = suggestions.slice(0, 5)
+  const inputValue = selectedMember
+    ? memberOptionLabel(roster, selectedMember.memberId)
+    : value
+  const suggestions = useMemo(() => {
+    const query = selectedMember ? '' : value
+    if (!query.trim()) {
+      const excluded = new Set(excludedIds)
+      return roster.members.filter((member) => !excluded.has(member.memberId))
+    }
+    return findMemberSuggestions(roster.members, query, excludedIds)
+  }, [roster.members, selectedMember, value, excludedIds])
+  const visible = suggestions
   const activeIndex = visible.findIndex(
     (member) => member.memberId === activeId,
   )
@@ -102,7 +112,7 @@ export function MemberNameInput({
   }
 
   const descriptionId = `${listId}-description`
-  const listVisible = open && !disabled && value.trim().length > 0
+  const listVisible = open && !disabled
   return (
     <div ref={wrapper} onBlur={handleBlur}>
       <div className="relative">
@@ -116,14 +126,14 @@ export function MemberNameInput({
             listVisible && active ? `${listId}-${active.memberId}` : undefined
           }
           aria-describedby={descriptionId}
-          value={value}
+          value={inputValue}
           onChange={(event) => {
             onValueChange(event.target.value)
             setActiveId(null)
             setOpen(true)
           }}
           onFocus={() => {
-            if (value.trim()) setOpen(true)
+            setOpen(true)
           }}
           onKeyDown={handleKeyDown}
           onCompositionStart={() => {
@@ -174,11 +184,6 @@ export function MemberNameInput({
               ))
             )}
           </ul>
-          {suggestions.length > 5 && (
-            <p className="mt-1 rounded bg-white px-2 py-1 text-xs text-muted shadow-sm">
-              候補は先頭5件です。名前を追加して絞り込めます。
-            </p>
-          )}
         </div>
       </div>
       <p id={descriptionId} className="mt-2 text-xs leading-5 text-muted">
