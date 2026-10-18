@@ -35,7 +35,7 @@ export function FormEditorPage() {
     <div className="mx-auto max-w-3xl">
       <h1 className="mb-3 text-2xl font-semibold">出演者フォーム</h1>
       <p className="mb-7 text-sm text-muted">
-        回答フォームからバンドとメンバーを登録・更新できます。
+        回答フォームから出演枠とメンバーを登録・更新できます。
       </p>
       {resource.loading || resource.error ? (
         <PageState error={resource.error} onRetry={resource.refresh} />
@@ -47,7 +47,7 @@ export function FormEditorPage() {
                 {resource.data.eventTitle} 出演登録
               </h2>
               <p className="mt-2 text-sm text-muted">
-                登録済みのバンド：{resource.data.bands.length}組・メンバー：
+                登録済みの出演枠：{resource.data.bands.length}組・メンバー：
                 {resource.data.members.length}人
               </p>
             </div>

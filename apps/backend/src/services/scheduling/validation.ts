@@ -49,7 +49,7 @@ export function validateSchedule(snapshot: Snapshot, input: ScheduleInput) {
   )
     invalid(
       '/placements',
-      '配置と未配置で、このイベントの全バンドを重複なく指定してください。',
+      '配置と未配置で、このイベントの全出演枠を重複なく指定してください。',
     )
   const partIds = input.parts.map((p) => p.partId)
   if (
@@ -115,7 +115,7 @@ export function validateConstraints(
       c.type === 'before' &&
       c.targets.before_band_id === c.targets.after_band_id
     )
-      invalid(path, '前後関係には別のバンドを指定してください。')
+      invalid(path, '前後関係には別の出演枠を指定してください。')
     if (c.type === 'count' && c.params.min > c.params.max)
       invalid(path, 'minはmax以下にしてください。')
     if (
@@ -152,6 +152,6 @@ export function validateConstraints(
         c.params.kind === 'positions' &&
         c.params.position_to >= bandIds.length)
     )
-      invalid(path, '位置がバンド数の範囲外です。')
+      invalid(path, '位置が組数の範囲外です。')
   }
 }

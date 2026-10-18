@@ -27,6 +27,7 @@ const change = (id: string) => ({
   bandId: id,
   bandName: id,
   description: null,
+  requestText: null,
   create: true,
   memberIds: ['a-m1'],
   newMembers: [],
@@ -45,15 +46,22 @@ describe('form repository with D1', () => {
       bandId: 'new',
       bandName: 'new',
       description: 'メロコア',
+      requestText: null,
     })
     await formRepository(db).save(seed.event.eventId, created.updatedAt, {
       ...change('new'),
       create: false,
       description: null,
+      requestText: null,
     })
     expect(
       (await formRepository(db).get(seed.event.eventId))?.bands,
-    ).toContainEqual({ bandId: 'new', bandName: 'new', description: null })
+    ).toContainEqual({
+      bandId: 'new',
+      bandName: 'new',
+      description: null,
+      requestText: null,
+    })
   })
 
   it('commits a new band and advances the event token', async () => {
@@ -67,7 +75,12 @@ describe('form repository with D1', () => {
     )
     expect(
       (await formRepository(db).get(seed.event.eventId))?.bands,
-    ).toContainEqual({ bandId: 'new', bandName: 'new', description: null })
+    ).toContainEqual({
+      bandId: 'new',
+      bandName: 'new',
+      description: null,
+      requestText: null,
+    })
   })
 
   it('allows only one simultaneous save with the same token', async () => {
@@ -100,6 +113,7 @@ describe('form repository with D1', () => {
         bandId: 'a-b1',
         bandName: 'should roll back',
         description: 'should roll back',
+        requestText: null,
         create: false,
         newMembers: [
           { memberId: 'new-member', memberName: 'should roll back' },
@@ -121,6 +135,7 @@ describe('form repository with D1', () => {
         bandId: 'other-b1',
         bandName: 'wrong event',
         description: null,
+        requestText: null,
         create: false,
         memberIds: [],
         newMembers: [],

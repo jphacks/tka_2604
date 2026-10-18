@@ -108,7 +108,7 @@ function RosterFields({ controller }: { controller: EventsController }) {
     <fieldset className="space-y-2 rounded-lg border border-line p-3">
       <legend className="px-1 text-xs font-medium">名簿CSV（任意）</legend>
       <p className="text-xs leading-5 text-muted">
-        取り込むと出演枠とメンバーをまとめて登録し、部のバンド数も組数に合わせます。
+        取り込むと出演枠とメンバーをまとめて登録し、部の組数も組数に合わせます。
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <Select

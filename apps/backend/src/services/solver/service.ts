@@ -89,7 +89,7 @@ export function solverService(
     if (snapshot.event.updatedAt !== expectedUpdatedAt)
       throw new SchedulingError('event_save_conflict')
     if (!snapshot.bands.length || !snapshot.parts.length)
-      invalid('/bands', '計算にはバンドと部が各1件以上必要です。')
+      invalid('/bands', '計算には出演枠と部が各1件以上必要です。')
     const constraints = constraintsResponse(snapshot).constraints.map(
       (row) => row.constraint,
     )

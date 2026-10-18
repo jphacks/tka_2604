@@ -13,6 +13,28 @@ const valid = {
 }
 
 describe('form validation', () => {
+  it('accepts a separate request and normalizes blank requests', () => {
+    expect(
+      createFormBandSchema.parse({
+        ...valid,
+        description: 'ロック',
+        requestText: ' 第2部に出演したい ',
+      }),
+    ).toMatchObject({ description: 'ロック', requestText: '第2部に出演したい' })
+    expect(
+      updateFormBandSchema.parse({
+        expectedUpdatedAt: valid.expectedUpdatedAt,
+        requestText: '  ',
+      }),
+    ).toMatchObject({ requestText: null })
+    expect(
+      updateFormBandSchema.safeParse({
+        expectedUpdatedAt: valid.expectedUpdatedAt,
+        requestText: 42,
+      }).success,
+    ).toBe(false)
+  })
+
   it('requires a member on create and permits no members on update', () => {
     expect(
       createFormBandSchema.safeParse({ ...valid, memberIds: [] }).success,
@@ -62,7 +84,7 @@ describe('form validation', () => {
     { memberIds: ['m1'] },
     { newMembers: [] },
     { bandName: null },
-    { memberName: '全バンドで変更しない' },
+    { memberName: '全出演枠で変更しない' },
   ])('rejects invalid partial updates: %j', (patch) => {
     expect(
       updateFormBandSchema.safeParse({

@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest'
 import type { FormRoster } from '../repositories/types'
 import {
   applySavedBand,
+  emptyRegistration,
   memberOptionLabel,
   registrationInput,
+  selectBand,
 } from './registration'
 
 const roster: FormRoster = {
@@ -12,8 +14,8 @@ const roster: FormRoster = {
   eventTitle: 'E',
   updatedAt: 'read',
   bands: [
-    { bandId: 'a', bandName: 'A', description: null },
-    { bandId: 'b', bandName: 'B', description: null },
+    { bandId: 'a', bandName: 'A', description: null, requestText: null },
+    { bandId: 'b', bandName: 'B', description: null, requestText: null },
   ],
   members: [
     { memberId: '1', memberName: '田中' },
@@ -29,6 +31,8 @@ describe('registration input and roster', () => {
     const draft = {
       bandId: '',
       bandName: 'A',
+      description: '',
+      requestText: '',
       rows: Array.from({ length: 20 }, (_, i) => ({
         key: `${i}`,
         kind: 'new' as const,
@@ -67,6 +71,74 @@ describe('registration input and roster', () => {
       ),
     ).toThrow('重複')
   })
+  it('sends descriptions, normalizes blanks, and enforces the API length limit', () => {
+    const draft = {
+      ...selectBand(roster, 'a'),
+      description: '  ロック\n盛り上がる曲  ',
+      requestText: '',
+    }
+    expect(registrationInput('update', draft, roster).description).toBe(
+      'ロック\n盛り上がる曲',
+    )
+    expect(
+      registrationInput('update', { ...draft, description: '  ' }, roster)
+        .description,
+    ).toBeNull()
+    expect(
+      registrationInput(
+        'update',
+        { ...draft, description: 'あ'.repeat(500) },
+        roster,
+      ).description,
+    ).toHaveLength(500)
+    expect(() =>
+      registrationInput(
+        'update',
+        { ...draft, description: 'あ'.repeat(501) },
+        roster,
+      ),
+    ).toThrow('500文字')
+  })
+  it('restores the selected description and starts new registrations blank', () => {
+    const data = {
+      ...roster,
+      bands: [
+        { ...roster.bands[0], description: 'ジャズ', requestText: null },
+        roster.bands[1],
+      ],
+    }
+    expect(selectBand(data, 'a').description).toBe('ジャズ')
+    expect(selectBand(data, 'b').description).toBe('')
+    expect(emptyRegistration().description).toBe('')
+  })
+  it('keeps introduction and request drafts separate when selecting and sending', () => {
+    const data = {
+      ...roster,
+      bands: [
+        {
+          ...roster.bands[0],
+          description: 'ロック',
+          requestText: '第2部を希望',
+        },
+      ],
+    }
+    const draft = selectBand(data, 'a')
+    expect(draft).toMatchObject({
+      description: 'ロック',
+      requestText: '第2部を希望',
+    })
+    expect(
+      registrationInput(
+        'update',
+        { ...draft, description: '', requestText: ' 前半を希望 ' },
+        data,
+      ),
+    ).toMatchObject({ description: null, requestText: '前半を希望' })
+    expect(
+      registrationInput('update', { ...draft, requestText: '  ' }, data),
+    ).toMatchObject({ description: 'ロック', requestText: null })
+    expect(emptyRegistration().requestText).toBe('')
+  })
   it('retains unlinked people and other bands after clearing a band', () => {
     const next = applySavedBand(roster, {
       eventId: 'e',
@@ -75,6 +147,7 @@ describe('registration input and roster', () => {
         bandId: 'a',
         bandName: 'A更新',
         description: 'メタル',
+        requestText: null,
         memberIds: [],
       },
       members: [],

@@ -1,6 +1,6 @@
 import { Button } from '../../../shared/ui/Button'
 import { Icon } from '../../../shared/ui/Icon'
-import { Input, Select } from '../../../shared/ui/Input'
+import { Input, Select, Textarea } from '../../../shared/ui/Input'
 import type { PublicRegistrationController } from '../hooks/usePublicRegistration'
 import {
   memberOptionLabel,
@@ -30,13 +30,13 @@ export function RegistrationFields({
       {mode === 'update' && !fixedBand && (
         <div className="mb-7 rounded-lg bg-wash p-4">
           <label className="block text-sm font-medium">
-            更新するバンド
+            更新する出演枠
             <Select
               className="mt-2 h-11 w-full bg-white"
               value={draft.bandId}
               onChange={(event) => controller.chooseBand(event.target.value)}
             >
-              <option value="">バンドを選んでください</option>
+              <option value="">出演枠を選んでください</option>
               {data.bands.map((band) => (
                 <option key={band.bandId} value={band.bandId}>
                   {band.bandName}
@@ -50,7 +50,7 @@ export function RegistrationFields({
           </label>
           {!data.bands.length && (
             <p className="mt-3 text-xs text-muted">
-              登録済みのバンドがありません。初回登録から追加してください。
+              登録済みの出演枠がありません。初回登録から追加してください。
             </p>
           )}
         </div>
@@ -58,7 +58,7 @@ export function RegistrationFields({
       {(mode === 'create' || draft.bandId) && (
         <div className="space-y-7">
           <label className="block text-sm font-medium">
-            バンド名 <span className="ml-1 text-xs text-brand">必須</span>
+            出演名 <span className="ml-1 text-xs text-brand">必須</span>
             <Input
               value={draft.bandName}
               onChange={(event) => change({ bandName: event.target.value })}
@@ -66,6 +66,41 @@ export function RegistrationFields({
               placeholder="例：サンセット・レコード"
               className="mt-2 h-11 w-full text-sm"
             />
+          </label>
+          <label className="block text-sm font-medium">
+            紹介（任意）
+            <Textarea
+              value={draft.description}
+              onChange={(event) => change({ description: event.target.value })}
+              maxLength={500}
+              rows={4}
+              placeholder="例：アップテンポなロックを中心に、明るく盛り上がる演奏をします。"
+              className="mt-2 w-full text-sm"
+              aria-describedby="band-description-help"
+            />
+            <span
+              id="band-description-help"
+              className="mt-2 block text-xs leading-6 font-normal text-muted"
+            >
+              ジャンルや雰囲気などを500文字以内で入力してください。AIによる並べ替えの参考にします。
+            </span>
+          </label>
+          <label className="block text-sm font-medium">
+            制約の希望（任意）
+            <Textarea
+              value={draft.requestText}
+              onChange={(event) => change({ requestText: event.target.value })}
+              rows={4}
+              placeholder="例：第2部の出演を希望します。"
+              className="mt-2 w-full text-sm"
+              aria-describedby="request-text-help"
+            />
+            <span
+              id="request-text-help"
+              className="mt-2 block text-xs leading-6 font-normal text-muted"
+            >
+              出演順や時間帯などの希望を入力してください。制約に反映するには、主催者による確認が必要です。
+            </span>
           </label>
           <section aria-labelledby="members-heading">
             <div className="mb-2 flex items-center justify-between gap-3">
