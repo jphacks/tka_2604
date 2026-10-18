@@ -342,9 +342,10 @@ test('real API: schedule and constraints survive reload, failures and concurrent
     await page.getByRole('button', { name: '手動追加' }).click()
     const dialog = page.getByRole('dialog', { name: '制約を手動追加' })
     await dialog.getByRole('button', { name: /出演位置を指定する/ }).click()
+    await dialog.getByRole('combobox', { name: '位置を指定する出演枠' }).click()
     await dialog
-      .getByRole('combobox', { name: '位置を指定する出演枠' })
-      .selectOption('demo-band-c')
+      .getByRole('option', { name: '未配置バンド', exact: true })
+      .click()
     await dialog.getByRole('spinbutton', { name: '出演位置（番）' }).fill('3')
     await autoSave(page, `${path}/constraints`, () =>
       dialog.getByRole('button', { name: 'この条件を追加' }).click(),

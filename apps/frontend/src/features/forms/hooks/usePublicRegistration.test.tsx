@@ -68,8 +68,8 @@ describe('public registration', () => {
     act(() =>
       result.current.change({
         rows: [
-          { key: '1', kind: 'existing', value: 'm1' },
-          { key: '2', kind: 'new', value: ' 田中 ' },
+          { key: '1', value: 'm1' },
+          { key: '2', value: ' 田中 ' },
         ],
       }),
     )
@@ -127,7 +127,7 @@ describe('public registration', () => {
         bandName: '保持',
         description: '保持する紹介',
         requestText: '保持する希望',
-        rows: [{ key: '1', kind: 'existing', value: 'm1' }],
+        rows: [{ key: '1', value: 'm1' }],
       }),
     )
     await act(() => result.current.submit())
@@ -165,7 +165,7 @@ describe('public registration', () => {
         bandName: '保持',
         description: '保持する紹介',
         requestText: '保持する希望',
-        rows: [{ key: '1', kind: 'new', value: '佐藤' }],
+        rows: [{ key: '1', value: '佐藤' }],
       }),
     )
     await act(() => result.current.submit())
