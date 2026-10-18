@@ -11,10 +11,6 @@ test('real API and local D1: registration, replacement, unlinking, re-addition a
   page,
   request,
 }) => {
-  test.skip(
-    !process.env.FORM_API_E2E,
-    'Set FORM_API_E2E=1 with a seeded local backend on port 8787.',
-  )
   const created = await request.post('/api/events', {
     data: { title: '春ライブ 2026' },
   })
@@ -180,4 +176,87 @@ test('real API and local D1: registration, replacement, unlinking, re-addition a
     bandId: b.band.bandId,
     memberId: shared,
   })
+})
+
+test('production flow: create an event, open its form, register and update DB members from the normal screens', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/login')
+  await expect(page.locator('body')).not.toContainText('デモ')
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await page
+    .getByRole('button', { name: 'イベントを作成', exact: true })
+    .first()
+    .click()
+  await page
+    .getByRole('textbox', { name: 'イベント名' })
+    .fill('実利用の登録フロー')
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'イベントを作成', exact: true })
+    .click()
+  await expect(
+    page.getByRole('heading', { name: '実利用の登録フロー', exact: true }),
+  ).toBeVisible()
+  const eventId = new URL(page.url()).pathname.split('/')[2]
+  try {
+    await page.getByRole('link', { name: 'フォーム管理', exact: true }).click()
+    await expect(
+      page.getByRole('textbox', { name: '回答フォームのリンク' }),
+    ).toHaveValue(new RegExp(`/event/${eventId}/forms$`))
+    await page.getByRole('link', { name: '回答フォームを開く' }).click()
+    await page
+      .getByRole('textbox', { name: 'バンド名 必須' })
+      .fill('保存するバンド')
+    await page
+      .getByRole('textbox', { name: 'メンバー1の名前' })
+      .fill('実利用メンバー')
+    await page.getByRole('button', { name: '出演登録を送信' }).click()
+    await expect(
+      page.getByRole('heading', { name: '出演登録を受け付けました' }),
+    ).toBeVisible()
+    await page.getByRole('link', { name: 'フォーム管理へ' }).click()
+    await page.getByRole('link', { name: '回答・出演枠を確認' }).click()
+    await expect(
+      page.getByText('保存するバンド', { exact: true }),
+    ).toBeVisible()
+    await page
+      .getByRole('link', { name: '保存するバンドを編集', exact: true })
+      .click()
+    await expect(
+      page.getByRole('radio', { name: /登録内容の更新/ }),
+    ).toBeChecked()
+    await expect(
+      page.getByRole('textbox', { name: 'バンド名 必須' }),
+    ).toHaveValue('保存するバンド')
+    await page
+      .getByRole('textbox', { name: 'バンド名 必須' })
+      .fill('更新を保存するバンド')
+    await page.getByRole('button', { name: '変更を保存' }).click()
+    await expect(
+      page.getByRole('heading', { name: '登録内容を更新しました' }),
+    ).toBeVisible()
+    await page.reload()
+    await expect(
+      page.getByRole('textbox', { name: 'バンド名 必須' }),
+    ).toHaveValue('更新を保存するバンド')
+    await expect(page.locator('body')).not.toContainText('デモ')
+    const roster = (await (
+      await request.get(`/api/events/${eventId}/form`)
+    ).json()) as FormRoster
+    expect(roster.bands.map((band) => band.bandName)).toContain(
+      '更新を保存するバンド',
+    )
+    expect(roster.members.map((member) => member.memberName)).toContain(
+      '実利用メンバー',
+    )
+    await page.goto(`/event/${eventId}/forms/demo`)
+    await expect(page).toHaveURL(new RegExp(`/event/${eventId}/forms$`))
+    await expect(
+      page.getByRole('heading', { name: '実利用の登録フロー 出演登録' }),
+    ).toBeVisible()
+  } finally {
+    await request.delete(`/api/events/${eventId}`)
+  }
 })

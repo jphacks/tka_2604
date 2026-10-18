@@ -51,7 +51,7 @@ healthの200応答・Content-Type・JSON本文、仕様JSONの配信、RPC型共
 | APIのリクエストテスト    | `app.request()`または`hono/testing`で入力検証、ステータス、応答内容。不正入力・権限エラー時に保存されないこと       |
 | D1との結合テスト         | テスト用D1に実際のマイグレーションを適用し、Drizzleによる保存・再取得・DB制約を確認する。テスト間のデータを分離する |
 | API仕様との契約確認      | 手書きOpenAPIの応答スキーマと実レスポンスのステータス・Content-Type・JSON本文を照合する。RPCの型検査も行う          |
-| FE・BEのE2E              | 画面から業務API・DBまで接続し、登録→保存→再読込などを通す。現状は未導入                                             |
+| FE・BEのE2E              | 画面から業務API・ローカルD1へ接続し、登録→保存→再読込などを確認。`npm run test:e2e:api`で実行                       |
 
 契約テストの最小例は`test/openapi.test.ts`。healthの実レスポンスをAjvで検証し、項目欠落・型・enum・ステータス・Content-Typeの不一致を検出する。[API手順](../apps/backend/docs/api/README.md)を参照。APIと手書き仕様は同じ変更で更新し、入力・エラー・権限などはAPIの動作テストで確認する。仕様のレビューとSwagger UIでの確認も続ける。
 
@@ -85,7 +85,7 @@ it('外部通信の成功・HTTPエラー・通信失敗を差し替える', asy
 
 ### 別実行・後続Issueでの確認
 
-- 実LLM／Solver通信とFE・BEのE2Eは、接続先・起動手順を対応Issueで定めて別実行する。通常のcheck・pre-commit・CIは外部サービスや資格情報に依存させない。
+- 実LLM／Solver通信は、接続先・起動手順を対応Issueで定めて別実行する。FE・BEのE2EはローカルD1と外部通信の差し替えでCIでも確認する。check・pre-commit・CIは外部サービスや資格情報に依存させない。
 - 個別機能のテストは各実装Issue、認証・権限のテストは認証導入時に追加する。DB内部関数の所有者確認だけで、HTTPの認証を確認済みにしない。
 - Pythonテストは#21、計算APIテストは#27の担当範囲を維持する。追加するCIの範囲は担当間で確認し、現時点のcheckにPythonテストは含めない。
 
@@ -95,9 +95,14 @@ it('外部通信の成功・HTTPエラー・通信失敗を差し替える', asy
 
 デモ開始・登録・設定・画面間の共有、番号入力・ドラッグ・キーボード操作、6種類の制約入力と達成判定、同名メンバーの区別、モバイル幅、CSV出力を確認する。各テストは別のブラウザコンテキストで実行し、ブラウザの未処理エラーも失敗にする。
 
-ポート5174でViteを起動する。ローカルでは既存の同ポートのサーバーを再利用でき、CIでは再利用しない。結果・スクリーンショット・失敗時のtraceは `apps/frontend/test-results/` に出力し、Gitには含めない。
+ポート5174でViteを起動する。ローカルでは既存の同ポートのサーバーを再利用でき、CIでは再利用しない。結果・スクリーンショット・失敗時のtraceは `apps/frontend/test-results/` に出力し、Gitには含めない。CIでは1 workerで実行し、HTMLレポートも生成する。`test.only`が含まれると失敗させる。
 
-E2Eの型検査は `npm run typecheck` に含む。ブラウザテストの実行は `npm run check`・pre-commit・既存CIには含めず、画面変更時に別途実行する。API・DB・ソルバーとの結合動作を保証するテストではない。
+E2Eの型検査は `npm run typecheck` に含む。ブラウザテストの実行は `npm run check`・pre-commitには含めず、画面変更時に別途実行する。CIでは以下の独立ジョブで実行する。
+
+- `npm run test:e2e`：モックモードの画面操作。外部チャット応答は差し替える。
+- `npm run test:e2e:api`：実装済みAPIとローカルD1を通す。事前にfrontendビルド・ローカルmigration・seedを実行する。専用Workersの8789と画面の5175を使い、通常開発のサーバーは再利用しない。新規LLM生成・Solver応答は差し替え、公開サービスは呼ばない。
+
+API版のローカル準備は[環境構築](setup.md#frontendをapiモードで起動する19)を参照。
 
 ## commit時
 
@@ -114,8 +119,9 @@ E2Eの型検査は `npm run typecheck` に含む。ブラウザテストの実�
 
 正本は[ci.yml](../.github/workflows/ci.yml)。pushとpull_requestを契機に、UbuntuでNode・uv・Pythonを準備し、`npm ci` → `npm run check`を実行する。
 
-- ジョブ名は`Quality checks`、上限10分。同じイベント・refの古い実行は中止する。
-- CIではHuskyを無効化し、上記チェックを直接実行する。
+- `Quality checks`（上限10分）と`E2E (mock)`・`E2E (api)`（各上限15分）を並列実行する。同じイベント・refの古い実行は中止する。
+- CIではHuskyを無効化する。E2EジョブはNode・npm依存・ChromiumとOS依存を準備する。API版はジョブ内のローカルD1を初期化し、リモートDBやSecretは使わない。
+- E2Eの失敗はジョブの失敗とする。片方が失敗してももう片方は完走する。終了時は成功・失敗ともHTMLレポートとテスト結果を`playwright-mock`・`playwright-api` artifactへ保存する（保持7日、キャンセル時は保存しない）。失敗した操作はスクリーンショット・traceで確認できる。
 - デプロイ・本番DB変更は行わない。
 - CI成功の必須化はGitHub側のブランチ保護設定が必要。このworkflowだけではマージを制限しない。リモートの設定状態は未確認。
 

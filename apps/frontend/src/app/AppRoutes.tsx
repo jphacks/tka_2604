@@ -13,10 +13,7 @@ import { EventPage } from '../features/event/pages/EventPage'
 import { EventSettingsPage } from '../features/events/pages/EventSettingsPage'
 import { EventsPage } from '../features/events/pages/EventsPage'
 import { FormEditorPage } from '../features/forms/pages/FormEditorPage'
-import {
-  DemoRegistrationPage,
-  RegistrationPage,
-} from '../features/forms/pages/RegistrationPage'
+import { RegistrationPage } from '../features/forms/pages/RegistrationPage'
 import { ParticipantsPage } from '../features/participants/pages/ParticipantsPage'
 import { Brand } from '../shared/ui/Brand'
 import { LinkButton } from '../shared/ui/LinkButton'
@@ -51,6 +48,11 @@ function EventScopedRoute({ component: Page }: { component: ComponentType }) {
   return <Page key={eventId} />
 }
 
+function LegacyFormRedirect() {
+  const { eventId = '' } = useParams()
+  return <Navigate to={`/event/${eventId}/forms`} replace />
+}
+
 function NotFoundPage() {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-5 px-6 text-center">
@@ -78,7 +80,7 @@ export function AppRoutes() {
       />
       <Route
         path="/event/:eventId/forms/demo"
-        element={<EventScopedRoute component={DemoRegistrationPage} />}
+        element={<LegacyFormRedirect />}
       />
       <Route element={<ProtectedRoutes />}>
         <Route

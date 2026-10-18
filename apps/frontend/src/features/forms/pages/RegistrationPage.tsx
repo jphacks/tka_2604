@@ -1,7 +1,6 @@
-import { useParams } from 'react-router'
+import { useParams, useSearchParams } from 'react-router'
 
 import { useSession } from '../../../app/sessionContext'
-import { mockRegistrationRepository } from '../../../mock/registrationRepository'
 import { Brand } from '../../../shared/ui/Brand'
 import { Button } from '../../../shared/ui/Button'
 import { Icon } from '../../../shared/ui/Icon'
@@ -10,15 +9,13 @@ import { PageState } from '../../../shared/ui/PageState'
 import { RegistrationFields } from '../components/RegistrationFields'
 import { usePublicRegistration } from '../hooks/usePublicRegistration'
 
-export function DemoRegistrationPage() {
-  return <RegistrationPage demo />
-}
-
-export function RegistrationPage({ demo = false }: { demo?: boolean }) {
+export function RegistrationPage() {
   const { eventId = '' } = useParams()
+  const [params] = useSearchParams()
   const controller = usePublicRegistration(
     eventId,
-    demo ? mockRegistrationRepository : undefined,
+    undefined,
+    params.get('bandId') ?? undefined,
   )
   const { session } = useSession()
   const updating = controller.mode === 'update'
@@ -35,14 +32,6 @@ export function RegistrationPage({ demo = false }: { demo?: boolean }) {
         )}
       </header>
       <main className="mx-auto max-w-[680px] px-4 py-8 sm:px-6 sm:py-10">
-        {demo && (
-          <aside className="mb-5 rounded-lg border border-brand/20 bg-wash p-4 text-xs leading-6 text-brand">
-            <p className="font-semibold">デモ用フォーム</p>
-            <p>
-              このタブのデモ名簿に反映されます。再読み込みすると初期状態に戻ります。
-            </p>
-          </aside>
-        )}
         {controller.loading || controller.error ? (
           <PageState
             error={controller.error}
@@ -219,9 +208,7 @@ export function RegistrationPage({ demo = false }: { demo?: boolean }) {
                 </section>
               )}
               <p className="mt-5 text-center text-[11px] leading-5 text-muted">
-                {demo
-                  ? '登録・更新はこのタブのデモ名簿だけに反映されます。'
-                  : '登録内容はイベントの名簿に保存されます。'}
+                登録内容はイベントの名簿に保存されます。
               </p>
             </>
           )

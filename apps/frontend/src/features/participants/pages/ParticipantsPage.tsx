@@ -16,7 +16,7 @@ export function ParticipantsPage() {
   const { eventId = '' } = useParams()
   const controller = useParticipants(eventId)
   return (
-    <AppFrame eventId={eventId} eventName={controller.data?.event.name}>
+    <AppFrame eventId={eventId} eventName={controller.data?.data.name}>
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="mb-2 text-[10px] font-semibold tracking-[0.16em] text-muted">
@@ -28,18 +28,34 @@ export function ParticipantsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <LinkButton to={`/event/${eventId}/forms/demo`}>
+          <LinkButton to={`/event/${eventId}/forms`}>
             <Icon name="form" />
             回答フォーム
           </LinkButton>
-          <Button onClick={controller.openImport} disabled={!controller.data}>
-            <Icon name="list" />
-            CSVを取り込む
-          </Button>
-          <Button variant="primary" onClick={() => controller.openEditor()}>
-            <Icon name="plus" />
-            出演枠を追加
-          </Button>
+          {controller.canEdit && (
+            <Button
+              onClick={controller.openImport}
+              disabled={!controller.canEdit || !controller.data}
+            >
+              <Icon name="list" />
+              CSVを取り込む
+            </Button>
+          )}
+          {controller.canEdit ? (
+            <Button
+              variant="primary"
+              disabled={!controller.canEdit}
+              onClick={() => controller.openEditor()}
+            >
+              <Icon name="plus" />
+              出演枠を追加
+            </Button>
+          ) : (
+            <LinkButton primary to={`/event/${eventId}/forms`}>
+              <Icon name="plus" />
+              出演枠を追加
+            </LinkButton>
+          )}
         </div>
       </div>
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
@@ -59,7 +75,7 @@ export function ParticipantsPage() {
           >
             <p className="text-[11px] text-muted">{item.label}</p>
             <p className="mt-2 text-2xl font-semibold tabular-nums">
-              {item.value}
+              {item.value ?? '—'}
               <span className="ml-1.5 text-xs font-normal text-muted">
                 {item.unit}
               </span>
@@ -141,26 +157,40 @@ export function ParticipantsPage() {
                       </span>
                     </td>
                     <td className="max-w-56 py-4 pr-5 leading-6 text-muted">
-                      {row.submission?.requests || '—'}
+                      {row.requestText || row.submission?.requests || '—'}
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          className="min-h-6 p-1"
-                          aria-label={`${row.name}を編集`}
-                          onClick={() => controller.openEditor(row.id)}
-                        >
-                          <Icon name="edit" className="size-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          className="min-h-6 p-1 hover:text-red-500"
-                          aria-label={`${row.name}を削除`}
-                          onClick={() => controller.requestDelete(row.id)}
-                        >
-                          <Icon name="trash" className="size-3.5" />
-                        </Button>
+                        {controller.canEdit ? (
+                          <Button
+                            variant="ghost"
+                            className="min-h-6 p-1"
+                            disabled={!controller.canEdit}
+                            aria-label={`${row.name}を編集`}
+                            onClick={() => controller.openEditor(row.id)}
+                          >
+                            <Icon name="edit" className="size-3.5" />
+                          </Button>
+                        ) : (
+                          <LinkButton
+                            className="min-h-6 p-1"
+                            aria-label={`${row.name}を編集`}
+                            to={`/event/${eventId}/forms?bandId=${encodeURIComponent(row.id)}`}
+                          >
+                            <Icon name="edit" className="size-3.5" />
+                          </LinkButton>
+                        )}
+                        {controller.canEdit && (
+                          <Button
+                            variant="ghost"
+                            className="min-h-6 p-1 hover:text-red-500"
+                            disabled={!controller.canEdit}
+                            aria-label={`${row.name}を削除`}
+                            onClick={() => controller.requestDelete(row.id)}
+                          >
+                            <Icon name="trash" className="size-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>

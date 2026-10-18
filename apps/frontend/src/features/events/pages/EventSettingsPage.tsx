@@ -15,7 +15,7 @@ export function EventSettingsPage() {
   const deletion = useEventDeletion(eventId)
   const settings = controller.settings
   return (
-    <AppFrame eventId={eventId} eventName={controller.data?.event.name}>
+    <AppFrame eventId={eventId} eventName={controller.data?.name}>
       <div className="mb-7">
         <p className="mb-2 text-[10px] font-semibold tracking-[0.16em] text-muted">
           EVENT SETTINGS

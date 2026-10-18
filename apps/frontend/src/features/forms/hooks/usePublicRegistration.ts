@@ -19,10 +19,13 @@ import {
 export function usePublicRegistration(
   eventId: string,
   repository: RegistrationRepository = registrationRepository,
+  initialBandId?: string,
 ) {
   const [data, setData] = useState<FormRoster | null>(null)
   const [error, setError] = useState('')
-  const [mode, setModeState] = useState<RegistrationMode>('create')
+  const [mode, setModeState] = useState<RegistrationMode>(
+    initialBandId ? 'update' : 'create',
+  )
   const [draft, setDraft] = useState(emptyRegistration)
   const [busy, setBusy] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
@@ -38,7 +41,14 @@ export function usePublicRegistration(
     repository
       .get(eventId, controller.signal)
       .then((roster) => {
-        if (!controller.signal.aborted) setData(roster)
+        if (!controller.signal.aborted) {
+          setData(roster)
+          if (
+            initialBandId &&
+            roster.bands.some((band) => band.bandId === initialBandId)
+          )
+            setDraft(selectBand(roster, initialBandId))
+        }
       })
       .catch((cause: unknown) => {
         if (!controller.signal.aborted)
@@ -49,7 +59,7 @@ export function usePublicRegistration(
           )
       })
     return () => controller.abort()
-  }, [eventId, repository])
+  }, [eventId, repository, initialBandId])
 
   async function refresh() {
     if (locked.current) return

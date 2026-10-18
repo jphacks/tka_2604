@@ -5,7 +5,7 @@ import { RegistrationError, type RegistrationRepository } from './types'
 
 const client = hc<FormAppType>('/api/events')
 
-async function read<T>(response: Response): Promise<T> {
+async function read<T>(response: Pick<Response, 'ok' | 'json'>): Promise<T> {
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as {
       error?: {
@@ -25,7 +25,7 @@ async function read<T>(response: Response): Promise<T> {
         .join(' ') || '通信に失敗しました。時間をおいて再試行してください。',
     )
   }
-  return response.json() as Promise<T>
+  return response.json<T>()
 }
 
 // Public form transport, shared with future form integrations (#59).

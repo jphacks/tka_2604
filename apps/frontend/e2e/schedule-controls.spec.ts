@@ -4,7 +4,7 @@ test('drag preview and committed order skip fixed rows across parts in both dire
   page,
 }) => {
   await page.goto('/event/spring-live-2026')
-  await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
   await page.getByRole('checkbox', { name: 'VPSを固定', exact: true }).check()
   const fixed = ['p1', 'p3', 'p5'].map((id) =>
     page.locator(`[data-performance="${id}"]`),
@@ -90,15 +90,17 @@ test('drag preview and committed order skip fixed rows across parts in both dire
 
 test('keyboard movement skips fixed slots across parts', async ({ page }) => {
   await page.goto('/event/spring-live-2026')
-  await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
   await page.getByRole('checkbox', { name: 'VPSを固定', exact: true }).check()
   const handle = page.getByRole('button', {
     name: 'Pretenderを並べ替え',
     exact: true,
   })
   await handle.focus()
-  await page.keyboard.press('Space')
+  await page.keyboard.press('Space', { delay: 50 })
   await expect(handle).toHaveAttribute('aria-pressed', 'true')
+  // Wait for the initial collision measurement before sending movement keys.
+  await expect(page.getByText('移動先：Pretender（2番）')).toHaveCount(1)
   await page.keyboard.press('ArrowDown')
   await expect(page.getByText('移動先：青と夏（4番）')).toHaveCount(1)
   await page.keyboard.press('ArrowDown')
@@ -122,13 +124,13 @@ test('keyboard handle supports cancel and commit while keeping focus and fixed r
   page,
 }) => {
   await page.goto('/event/spring-live-2026')
-  await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
   const handle = page.getByRole('button', {
     name: 'Pretenderを並べ替え',
     exact: true,
   })
   await handle.focus()
-  await page.keyboard.press('Space')
+  await page.keyboard.press('Space', { delay: 50 })
   await expect(handle).toHaveAttribute('aria-pressed', 'true')
   await page.keyboard.press('ArrowDown')
   await expect(page.getByText('移動先：VPS（3番）')).toHaveCount(1)
@@ -137,7 +139,7 @@ test('keyboard handle supports cancel and commit while keeping focus and fixed r
     page.getByRole('textbox', { name: 'Pretenderの出演順', exact: true }),
   ).toHaveValue('2')
   await expect(handle).toBeFocused()
-  await page.keyboard.press('Space')
+  await page.keyboard.press('Space', { delay: 50 })
   await expect(handle).toHaveAttribute('aria-pressed', 'true')
   await page.keyboard.press('ArrowDown')
   await expect(page.getByText('移動先：VPS（3番）')).toHaveCount(1)
@@ -158,7 +160,7 @@ test('invalid capacity has a short error and keeps the existing section size', a
   page,
 }) => {
   await page.goto('/event/spring-live-2026')
-  await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
   const capacity = page.getByRole('textbox', {
     name: '第1部の組数',
     exact: true,

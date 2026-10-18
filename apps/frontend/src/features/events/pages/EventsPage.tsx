@@ -123,6 +123,16 @@ export function EventsPage() {
               ? '別のキーワードで検索してください。'
               : '出演者と条件を集めて、ライブの準備を始められます。'}
           </p>
+          {!controller.query && controller.filter === 'all' && (
+            <Button
+              variant="primary"
+              className="mt-5"
+              onClick={controller.openCreate}
+            >
+              <Icon name="plus" />
+              イベントを作成
+            </Button>
+          )}
         </div>
       )}
       <section className="mt-9 rounded-xl border border-line bg-white p-6">

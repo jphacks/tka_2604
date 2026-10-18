@@ -63,9 +63,9 @@ export function LoginPage() {
           <span className="mb-5 inline-flex size-11 items-center justify-center rounded-xl bg-wash text-brand">
             <Icon name="lock" className="size-5" />
           </span>
-          <h2 className="text-2xl font-semibold">デモをはじめる</h2>
+          <h2 className="text-2xl font-semibold">出演順づくりをはじめる</h2>
           <p className="mt-2 mb-8 text-sm text-muted">
-            サンプルデータで、出演順づくりを体験できます。
+            イベントを作成して、出演者の登録と出演順の調整を始めましょう。
           </p>
           {login.error && (
             <p role="alert" className="mb-4 text-red-600">
@@ -79,12 +79,10 @@ export function LoginPage() {
             onClick={() => void login.login()}
           >
             <Icon name="sparkle" />
-            デモアカウントで試す
+            ワークスペースを開く
           </Button>
           <p className="mt-5 text-center text-[11px] leading-5 text-muted">
-            このプレビューでは、実際の認証は行いません。
-            <br />
-            データはこのタブ内で共有し、再読み込みすると初期状態に戻ります。
+            イベントの情報は保存され、再読み込み後も残ります。
           </p>
         </div>
       </main>

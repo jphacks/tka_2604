@@ -4,7 +4,7 @@ import { expect, test } from './fixtures'
 
 async function openEvent(page: Page) {
   await page.goto('/event/spring-live-2026')
-  await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
   await expect(
     page.getByRole('heading', { name: '春ライブ 2026', exact: true, level: 1 }),
   ).toBeVisible()

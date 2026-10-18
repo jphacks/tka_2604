@@ -1,5 +1,5 @@
 import type { Constraint } from '../../generated/constraint'
-import { type EventData, positions } from './event'
+import { type EventData, positionLimit, positions } from './event'
 
 export const constraintLabels: Record<Constraint['type'], string> = {
   min_gap_member: 'メンバーの出演間隔を空ける',
@@ -58,10 +58,7 @@ export function validateConstraint(
     ids.length < (constraint.type === 'min_gap_bands' ? 2 : 1)
   )
     return '対象の出演枠を選んでください。'
-  const capacity = event.sections.reduce(
-    (sum, section) => sum + section.slots.length,
-    0,
-  )
+  const capacity = positionLimit(event)
   const validPosition = (value: number) =>
     Number.isInteger(value) && value >= 0 && value < capacity
   const validParts = (parts: number[]) =>

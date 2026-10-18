@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
     route.fulfill({ json: { reply: 'AIからの返信です。' } }),
   )
   await page.goto('/event/spring-live-2026')
-  await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
 })
 
 test('sends the API payload, blocks repeated sends and displays its reply', async ({
@@ -22,6 +22,7 @@ test('sends the API payload, blocks repeated sends and displays its reply', asyn
     requests++
     expect(route.request().postDataJSON()).toEqual({
       message: '出演間隔を空けたい',
+      messageId: expect.any(String),
     })
     await waiting
     await route.fulfill({ json: { reply: 'AIからの返信です。' } })

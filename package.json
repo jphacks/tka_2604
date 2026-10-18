@@ -11,10 +11,10 @@
     "codegen:check": "node scripts/codegen-check.mjs",
     "codegen:ts": "json2ts -i apps/schema/constraint.schema.json -o apps/frontend/src/generated/constraint.ts --cwd apps/schema && json2ts -i apps/schema/constraint.schema.json -o apps/backend/src/generated/constraint.ts --cwd apps/schema",
     "codegen:py": "uv --directory apps/solver run datamodel-codegen",
-    "dev": "npm run build --workspace=@jphack-2026/frontend && concurrently --kill-others --names frontend,backend \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev": "npm run cf:typegen && npm run build --workspace=@jphack-2026/frontend && concurrently --kill-others --names frontend,backend \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "npm run dev --workspace=@jphack-2026/frontend",
     "dev:backend": "wrangler dev --env develop",
-    "build": "npm run build --workspace=@jphack-2026/frontend && npm run build:workers",
+    "build": "npm run cf:typegen && npm run build --workspace=@jphack-2026/frontend && npm run build:workers",
     "build:workers": "npm run build:workers:develop && npm run build:workers:main",
     "build:workers:develop": "wrangler deploy --env develop --dry-run --outdir apps/backend/dist/develop",
     "build:workers:main": "wrangler deploy --env main --dry-run --outdir apps/backend/dist/main",
@@ -39,9 +39,11 @@
     "test:coverage": "vitest run --coverage",
     "test:frontend": "vitest run --project frontend",
     "test:backend": "vitest run --project backend",
-    "test:e2e": "npm run test:e2e --workspace=@jphack-2026/frontend",
+    "test:e2e": "npm run test:e2e --workspace=@jphack-2026/frontend --",
+    "test:e2e:api": "npm run test:e2e:api --workspace=@jphack-2026/frontend --",
     "db:generate": "npm run db:generate --workspace=@jphack-2026/backend --",
-    "db:seed:local": "wrangler d1 execute DB --env develop --local --file apps/backend/db/seed.sql"
+    "db:seed:local": "wrangler d1 execute DB --env develop --local --file apps/backend/db/seed.sql",
+    "db:prepare:e2e": "wrangler d1 migrations apply DB --env develop --local --persist-to .wrangler/e2e-api && wrangler d1 execute DB --env develop --local --persist-to .wrangler/e2e-api --file apps/backend/db/seed.sql"
   },
   "lint-staged": {
     "*.{js,mjs,cjs,jsx,ts,tsx}": "eslint --max-warnings=0 --no-warn-ignored",

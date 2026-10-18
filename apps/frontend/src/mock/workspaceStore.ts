@@ -159,45 +159,6 @@ export function createMockWorkspaceStore() {
         throw new Error('フォーム名を入力してください。')
       get(id).form = structuredClone(settings)
     },
-    saveFormBand(
-      id: string,
-      bandId: string | null,
-      draft: {
-        name: string
-        memberIds: string[]
-        newMembers: { id: string; name: string }[]
-      },
-    ) {
-      const record = get(id)
-      const existing = record.data.performances.find(
-        (band) => band.id === bandId,
-      )
-      if (bandId && !existing)
-        throw new Error('更新するバンドが見つかりません。')
-      const performance = {
-        id: bandId ?? crypto.randomUUID(),
-        name: draft.name,
-        memberIds: [
-          ...draft.memberIds,
-          ...draft.newMembers.map((member) => member.id),
-        ],
-      }
-      record.data.members.push(...draft.newMembers)
-      if (existing) Object.assign(existing, performance)
-      else {
-        record.data.performances.push(performance)
-        record.data.unassigned.push(performance.id)
-        record.submissions.push({
-          id: crypto.randomUUID(),
-          source: 'form',
-          performanceId: performance.id,
-          requests: '',
-          contact: '',
-          createdAt: new Date().toISOString(),
-        })
-      }
-      return performance.id
-    },
     submitPerformance(id: string, draft: PerformanceDraft) {
       const record = get(id)
       if (!record.form.accepting)

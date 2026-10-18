@@ -15,6 +15,14 @@ export const mockWorkspaceRepository: WorkspaceRepository = {
     await delay(0)
     store.signOut()
   },
+  async getRoster(id, signal) {
+    await delay(0, signal)
+    return store.getRegistration(id)
+  },
+  async getDetails(id, signal) {
+    await delay(0, signal)
+    return store.getRegistration(id).event
+  },
   async listEvents(signal) {
     await delay(150, signal)
     return store.listEvents()

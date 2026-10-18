@@ -6,9 +6,9 @@ import type {
 } from '../src/features/forms/repositories/types'
 
 // HTTP-only fixture: the public form never reads the administrator mock store.
-export async function mockRegistrationApi(page: Page) {
+export async function mockRegistrationApi(page: Page, eventId = 'public-live') {
   const roster: FormRoster = {
-    eventId: 'public-live',
+    eventId,
     eventTitle: '春ライブ 2026',
     updatedAt: '2026-10-18T00:00:00.000Z',
     bands: [
@@ -32,7 +32,7 @@ export async function mockRegistrationApi(page: Page) {
     body: CreateFormBandInput
   }[] = []
   let failure = 0
-  await page.route('**/api/events/public-live/form**', async (route) => {
+  await page.route(`**/api/events/${eventId}/form**`, async (route) => {
     const request = route.request()
     if (request.method() === 'GET') return route.fulfill({ json: roster })
     if (failure)

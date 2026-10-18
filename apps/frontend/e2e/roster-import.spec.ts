@@ -7,7 +7,7 @@ test('imports a roster CSV after a preview, treating the same name as one person
   page,
 }) => {
   await page.goto('/login')
-  await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
   await page
     .getByRole('link', { name: 'ウィンターライブ 2026', exact: true })
     .click()
@@ -50,7 +50,7 @@ test('imports a roster CSV after a preview, treating the same name as one person
 
 test('downloads a template that can be imported as is', async ({ page }) => {
   await page.goto('/login')
-  await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
   await page
     .getByRole('link', { name: 'ウィンターライブ 2026', exact: true })
     .click()

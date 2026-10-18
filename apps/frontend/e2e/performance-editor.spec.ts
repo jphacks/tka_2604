@@ -4,7 +4,7 @@ test('backdrop dismisses edits like the close button and restores focus', async 
   page,
 }) => {
   await page.goto('/event/spring-live-2026')
-  await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
   const opener = page
     .getByRole('region', { name: '出演順', exact: true })
     .getByRole('button', { name: 'Pretenderを編集', exact: true })
@@ -37,7 +37,7 @@ test('edits assigned and unassigned performances without losing schedule or cond
   page,
 }) => {
   await page.goto('/event/spring-live-2026')
-  await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
   const schedule = page.getByRole('region', { name: '出演順', exact: true })
   await schedule
     .getByRole('button', { name: '気分上々↑↑を編集', exact: true })
@@ -97,6 +97,7 @@ test('edits assigned and unassigned performances without losing schedule or cond
     '佐藤',
   )
 
+  await page.getByRole('button', { name: '通知を閉じる', exact: true }).click()
   await schedule.getByRole('button', { name: /未配置へ/ }).click()
   await schedule
     .getByRole('button', { name: '源泉掛け流しを編集', exact: true })
@@ -132,7 +133,7 @@ test('membership edits immediately reevaluate member constraints', async ({
   page,
 }) => {
   await page.goto('/event/spring-live-2026')
-  await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
   const schedule = page.getByRole('region', { name: '出演順', exact: true })
   await schedule
     .getByRole('button', { name: 'Pretenderを編集', exact: true })

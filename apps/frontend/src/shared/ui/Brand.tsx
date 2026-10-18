@@ -1,6 +1,5 @@
 import { Link } from 'react-router'
 
-import { Badge } from './Badge'
 import { Icon } from './Icon'
 
 export function Brand({ to = '/event' }: { to?: string }) {
@@ -14,7 +13,6 @@ export function Brand({ to = '/event' }: { to?: string }) {
         <Icon name="list" className="size-[19px]" />
       </span>
       <span className="text-xl font-bold tracking-wide">セトリ</span>
-      <Badge>デモ</Badge>
     </Link>
   )
 }

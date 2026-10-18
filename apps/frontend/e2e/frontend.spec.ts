@@ -1,10 +1,11 @@
 import type { Page } from '@playwright/test'
 
 import { expect, test } from './fixtures'
+import { mockRegistrationApi } from './registration-fixture'
 
 async function login(page: Page) {
   await page.goto('/login')
-  await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
   await expect(
     page.getByRole('heading', { name: 'マイイベント' }),
   ).toBeVisible()
@@ -32,7 +33,7 @@ test('mock login, event creation, manual registration, editing and schedule are 
 }) => {
   await page.goto('/')
   await expect(page).toHaveURL(/\/login$/)
-  await page.getByRole('button', { name: 'デモアカウントで試す' }).click()
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
   await expect(
     page.getByRole('heading', { name: 'マイイベント' }),
   ).toBeVisible()
@@ -64,6 +65,8 @@ test('mock login, event creation, manual registration, editing and schedule are 
   await order.fill('1')
   await order.press('Enter')
   await expect(order).toHaveValue('1')
+  const createdId = new URL(page.url()).pathname.split('/')[2]
+  await mockRegistrationApi(page, createdId)
   await page
     .getByRole('navigation', { name: 'イベント内の移動' })
     .getByRole('link', { name: 'フォーム管理', exact: true })
@@ -72,7 +75,7 @@ test('mock login, event creation, manual registration, editing and schedule are 
     page.getByRole('heading', { name: '出演者フォーム', exact: true }),
   ).toBeVisible()
   await expect(
-    page.getByRole('textbox', { name: 'フォーム名', exact: true }),
+    page.getByRole('textbox', { name: '回答フォームのリンク', exact: true }),
   ).toBeVisible()
   await page.getByRole('link', { name: '出演順', exact: true }).click()
   await expect(
@@ -83,29 +86,23 @@ test('mock login, event creation, manual registration, editing and schedule are 
   ).toHaveValue('1')
 })
 
-test('mock form configuration is saved and reflected in its preview', async ({
+test('form management opens the persisted public form URL without demo settings', async ({
   page,
 }) => {
+  await mockRegistrationApi(page, 'spring-live-2026')
   await login(page)
   await page.getByRole('link', { name: '春ライブ 2026', exact: true }).click()
   await page
     .getByRole('navigation', { name: 'イベント内の移動' })
     .getByRole('link', { name: 'フォーム管理', exact: true })
     .click()
-  await page
-    .getByRole('textbox', { name: 'フォーム名', exact: true })
-    .fill('変更したフォーム')
-  await page.getByRole('checkbox', { name: '連絡先メール 任意' }).uncheck()
-  await page.getByRole('checkbox', { name: '出演に関する希望 任意' }).uncheck()
-  await page.getByRole('checkbox', { name: /回答を受け付ける/ }).uncheck()
-  await page.getByRole('button', { name: '設定を保存' }).click()
-  await expect(page.getByRole('status')).toContainText('設定を更新しました')
   await expect(
-    page.getByText('変更したフォーム', { exact: true }),
-  ).toBeVisible()
-  await page.getByRole('checkbox', { name: /回答を受け付ける/ }).check()
-  await page.getByRole('button', { name: '設定を保存' }).click()
-  await expect(page.getByRole('status')).toContainText('設定を更新しました')
+    page.getByRole('textbox', { name: '回答フォームのリンク' }),
+  ).toHaveValue(/\/forms$/)
+  await expect(page.getByRole('textbox', { name: 'フォーム名' })).toHaveCount(0)
+  await page.getByRole('link', { name: '回答フォームを開く' }).click()
+  await expect(page.getByRole('radio', { name: /初回登録/ })).toBeChecked()
+  await expect(page.locator('body')).not.toContainText('デモ')
 })
 
 test('schedule edits persist during navigation and pointer dragging works', async ({
