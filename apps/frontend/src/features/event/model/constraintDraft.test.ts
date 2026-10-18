@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
 import { eventFixture } from '../../../test/fixtures/event'
-import { buildConstraint, createConstraintDraft } from './constraintDraft'
+import {
+  ALL_MULTI_MEMBERS,
+  buildConstraint,
+  buildConstraints,
+  createConstraintDraft,
+  multiMemberIds,
+} from './constraintDraft'
 
 describe('structured manual constraint input', () => {
   it('converts human order and between counts to schema positions and differences', () => {
@@ -125,4 +131,27 @@ describe('structured manual constraint input', () => {
       ).ok,
     ).toBe(false)
   })
+})
+
+it('creates one member gap constraint for every member in multiple bands', () => {
+  const draft = {
+    ...createConstraintDraft(),
+    type: 'min_gap_member' as const,
+    memberId: ALL_MULTI_MEMBERS,
+    between: '1',
+  }
+  let id = 0
+  const result = buildConstraints(draft, eventFixture, () => `c${++id}`)
+  const expected = multiMemberIds(eventFixture)
+  expect(expected.length).toBeGreaterThan(1)
+  expect(result).toMatchObject({ ok: true })
+  if (!result.ok) return
+  expect(result.constraints.map((item) => item.constraint_id)).toEqual(
+    expected.map((_, index) => `c${index + 1}`),
+  )
+  expect(
+    result.constraints.map((item) =>
+      item.type === 'min_gap_member' ? item.targets.member_id : null,
+    ),
+  ).toEqual(expected)
 })
