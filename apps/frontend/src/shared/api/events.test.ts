@@ -291,3 +291,39 @@ it('does not retry a conflicting save with a freshly fetched revision', async ()
   expect(event.updatedAt).toBe(details.updatedAt)
   expect(fetcher).toHaveBeenCalledTimes(1)
 })
+
+it('deletes only the selected band using the revision captured for confirmation', async () => {
+  const saved = {
+    eventId: 'event-1',
+    bandId: 'band-1',
+    updatedAt: '2026-10-18T00:01:00.000Z',
+  }
+  const { api, fetcher } = setup([json(saved)])
+  await expect(
+    api.deleteBand('event-1', 'band-1', details.updatedAt),
+  ).resolves.toEqual(saved)
+  expect(fetcher.mock.calls[0][0]).toBe(
+    'http://localhost/api/events/event-1/bands/band-1',
+  )
+  expect(fetcher.mock.calls[0][1]?.method).toBe('DELETE')
+  expect(JSON.parse(requestBody(fetcher.mock.calls[0][1])) as unknown).toEqual({
+    expectedUpdatedAt: details.updatedAt,
+  })
+})
+it('reports delete conflicts without presenting the deletion as successful', async () => {
+  const { api } = setup([
+    json(
+      {
+        error: {
+          code: 'event_save_conflict',
+          message: 'conflict',
+          details: [],
+        },
+      },
+      409,
+    ),
+  ])
+  await expect(
+    api.deleteBand('event-1', 'band-1', details.updatedAt),
+  ).rejects.toThrow('対象を確認してから削除')
+})

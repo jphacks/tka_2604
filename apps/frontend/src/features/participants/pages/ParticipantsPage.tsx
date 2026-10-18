@@ -1,6 +1,8 @@
 import { useParams } from 'react-router'
 
 import { AppFrame } from '../../../shared/ui/AppFrame'
+import { Button } from '../../../shared/ui/Button'
+import { ConfirmDialog } from '../../../shared/ui/ConfirmDialog'
 import { Icon } from '../../../shared/ui/Icon'
 import { Input, Select } from '../../../shared/ui/Input'
 import { LinkButton } from '../../../shared/ui/LinkButton'
@@ -129,6 +131,16 @@ export function ParticipantsPage() {
                         >
                           <Icon name="edit" className="size-3.5" />
                         </LinkButton>
+                        <Button
+                          variant="ghost"
+                          className="min-h-6 p-1 text-red-600 hover:text-red-700"
+                          aria-label={`${row.name}を削除`}
+                          disabled={controller.deleteBusy}
+                          onClick={() => controller.requestDelete(row.id)}
+                        >
+                          <Icon name="trash" className="size-3.5" />
+                          削除
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -150,6 +162,25 @@ export function ParticipantsPage() {
             </div>
           )}
         </section>
+      )}
+      {controller.notice && (
+        <p
+          role="status"
+          className="mt-5 rounded-lg border border-brand/20 bg-wash px-4 py-3 text-sm text-brand"
+        >
+          {controller.notice}
+        </p>
+      )}
+      {controller.deleteTarget && (
+        <ConfirmDialog
+          title="バンドを削除"
+          message={`「${controller.deleteTarget.name}」を削除しますか？所属・配置と希望も削除し、残る出演順を詰めます。メンバー名簿と他バンドの所属は残ります。この操作は取り消せません。`}
+          error={controller.deleteError}
+          busy={controller.deleteBusy}
+          onCancel={controller.cancelDelete}
+          onConfirm={() => void controller.confirmDelete()}
+          onRefresh={() => void controller.refreshDeleteTarget()}
+        />
       )}
     </AppFrame>
   )

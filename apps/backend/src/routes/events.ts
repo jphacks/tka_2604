@@ -5,8 +5,11 @@ import type { z } from 'zod'
 
 import { createDb } from '../db/index'
 import { solverClient } from '../integrations/solver'
+import { bandsRepository } from '../repositories/bands'
 import { eventsRepository } from '../repositories/events'
 import { schedulingRepository } from '../repositories/scheduling'
+import { BandError } from '../services/bands/errors'
+import { bandService, deleteBandSchema } from '../services/bands/service'
 import { EventError } from '../services/events/errors'
 import { eventService } from '../services/events/service'
 import {
@@ -29,6 +32,7 @@ type EventEnv = {
     eventService: ReturnType<typeof eventService>
     scheduling: ReturnType<typeof schedulingService>
     solve: ReturnType<typeof solverService>
+    bands: ReturnType<typeof bandService>
   }
 }
 
@@ -49,6 +53,20 @@ function jsonInput<T extends z.ZodType>(schema: T) {
 
 export const eventRoutes = new Hono<EventEnv>()
   .onError((error, c) => {
+    if (error instanceof BandError)
+      return c.json(
+        {
+          error: {
+            code: error.code,
+            message:
+              error.code === 'band_not_found'
+                ? 'バンドが見つかりません。'
+                : '制約から参照されています。制約一覧で対象・生成元・位置範囲を確認し、先に制約を変更・削除してください。',
+            details: error.details,
+          },
+        },
+        error.code === 'band_not_found' ? 404 : 409,
+      )
     if (error instanceof SolverError)
       return c.json(
         {
@@ -137,6 +155,7 @@ export const eventRoutes = new Hono<EventEnv>()
         }),
       ),
     )
+    c.set('bands', bandService(bandsRepository(db), userId))
     await next()
   })
   .get('/', async (c) =>
@@ -239,6 +258,17 @@ export const eventRoutes = new Hono<EventEnv>()
       await c.var.scheduling.saveConstraints(
         c.req.param('eventId'),
         c.req.valid('json'),
+      ),
+      200,
+    ),
+  )
+
+  .delete('/:eventId/bands/:bandId', jsonInput(deleteBandSchema), async (c) =>
+    c.json(
+      await c.var.bands.remove(
+        c.req.param('eventId'),
+        c.req.param('bandId'),
+        c.req.valid('json').expectedUpdatedAt,
       ),
       200,
     ),

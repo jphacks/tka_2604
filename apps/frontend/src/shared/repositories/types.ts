@@ -19,4 +19,9 @@ export interface WorkspaceRepository {
     patch: Partial<Omit<EventDetails, 'id'>>,
   ): Promise<EventDetails>
   deleteEvent(id: string): Promise<void>
+  deleteBand(
+    eventId: string,
+    bandId: string,
+    expectedUpdatedAt: string,
+  ): Promise<{ eventId: string; bandId: string; updatedAt: string }>
 }

@@ -3,7 +3,7 @@
   "info": {
     "title": "JPHACKS 出演順作成 API",
     "version": "0.0.0",
-    "description": "実装済みのAPIは16操作です。イベント一覧・作成・設定変更・論理削除、出演順と制約の取得・保存、チャット履歴・送信、保存済みデータからの計算、公開フォームの名簿取得・バンド登録・更新を提供します。\n\n公開フォーム（Form）はURLを知る人が認証なしで利用できます。その他のイベント操作も認証APIは未接続で、現在はサーバー側の仮所有者demo-ownerを使います。固定のモックイベントを返すAPIではなく、配信環境のD1を読み書きします。\n\nバンド本体・メンバー本体の削除APIは未実装です。更新フォームでの削除はバンドとメンバーの所属解除であり、バンド・メンバーのレコードは残ります。\n\n更新系APIのexpectedUpdatedAtには編集元データのGET応答に含まれるupdatedAtを指定してください。更新競合は409です。Try it outでの保存・計算・イベント削除は、この配信環境のDBへ反映されます。"
+    "description": "実装済みのAPIは17操作です。イベント一覧・作成・設定変更・論理削除、出演順と制約の取得・保存、チャット履歴・送信、保存済みデータからの計算、公開フォームの名簿取得・バンド登録・更新を提供します。\n\n公開フォーム（Form）はURLを知る人が認証なしで利用できます。その他のイベント操作も認証APIは未接続で、現在はサーバー側の仮所有者demo-ownerを使います。固定のモックイベントを返すAPIではなく、配信環境のD1を読み書きします。\n\nバンド本体の削除は管理用DELETE /api/events/{eventId}/bands/{bandId}を使います。メンバー本体の削除APIは未実装です。更新フォームでの削除はバンドとメンバーの所属解除であり、バンド・メンバーのレコードは残ります。\n\n更新系APIのexpectedUpdatedAtには編集元データのGET応答に含まれるupdatedAtを指定してください。更新競合は409です。Try it outでの保存・計算・イベント削除は、この配信環境のDBへ反映されます。"
   },
   "servers": [
     {
@@ -4014,7 +4014,7 @@
         "summary": "バンド名と所属を更新する（追加・差し替え・所属解除）",
         "tags": ["Form"],
         "security": [],
-        "description": "URLを知る人が認証なしで利用できる。削除済みイベントは対象外。公開応答はID・名前・所属と更新日時だけで、希望・連絡先・回答・制約・配置は含めない。 保存時にexpectedUpdatedAtを再確認し、Band・Member・所属・Event.updatedAtを同じD1 batchで保存する。希望・制約・配置は保持し、LLM・Solverは呼ばない。 bandNameだけの更新も可能です。所属を変更する場合はmemberIdsとnewMembersを両方指定し、更新後の所属全体（合計0〜20人）を送ります。両方を空配列にすると全員の所属を解除しますが、バンド本体やメンバー本体は削除しません。他バンドの所属・元の人の名前は保持します。バンドを削除するDELETE APIは未実装です。",
+        "description": "URLを知る人が認証なしで利用できる。削除済みイベントは対象外。公開応答はID・名前・所属と更新日時だけで、希望・連絡先・回答・制約・配置は含めない。 保存時にexpectedUpdatedAtを再確認し、Band・Member・所属・Event.updatedAtを同じD1 batchで保存する。希望・制約・配置は保持し、LLM・Solverは呼ばない。 bandNameだけの更新も可能です。所属を変更する場合はmemberIdsとnewMembersを両方指定し、更新後の所属全体（合計0〜20人）を送ります。両方を空配列にすると全員の所属を解除しますが、バンド本体やメンバー本体は削除しません。他バンドの所属・元の人の名前は保持します。バンド本体を削除する場合は管理用DELETE /api/events/{eventId}/bands/{bandId}を使います。",
         "responses": {
           "200": {
             "description": "更新成功",
@@ -4280,6 +4280,309 @@
                     "expectedUpdatedAt": "2026-10-18T00:00:00.000Z",
                     "memberIds": [],
                     "newMembers": []
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{eventId}/bands/{bandId}": {
+      "parameters": [
+        {
+          "name": "eventId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "name": "bandId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      ],
+      "delete": {
+        "operationId": "deleteEventBand",
+        "summary": "バンド本体を削除する",
+        "tags": ["Events"],
+        "security": [],
+        "description": "現在は仮所有者demo-ownerの未削除イベントに限定する管理用API。公開フォームの所属解除とは別。expectedUpdatedAtで競合を検出し、バンド本体・希望・所属・配置とイベント更新日時を同じD1 batchで変更する。残る配置は削除した部だけorderを0から詰める。メンバー名簿、他バンドの所属、部、制約、チャットを保持する。有効・無効を問わず対象またはsourceBandIdとして参照されるバンドと、残る制約の位置が登録バンド数の範囲外になる削除は409。制約を先に変更・削除する。残る制約を自動変更せず、配置変化による達成状況は再評価する。最後のバンドも削除できる。取得時の更新日時から変更があれば409、別所有者・削除済みイベント・別イベントのバンドは404。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["expectedUpdatedAt"],
+                "properties": {
+                  "expectedUpdatedAt": {
+                    "type": "string",
+                    "description": "確認対象を取得した時点のUTC ISO 8601日時"
+                  }
+                }
+              },
+              "example": {
+                "expectedUpdatedAt": "2026-10-18T00:00:00.000Z"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "バンド本体・所属・配置の削除成功。再取得に使う更新日時を返す。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["eventId", "bandId", "updatedAt"],
+                  "properties": {
+                    "eventId": {
+                      "type": "string"
+                    },
+                    "bandId": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "eventId": "event-1",
+                  "bandId": "band-1",
+                  "updatedAt": "2026-10-18T00:01:00.000Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSONの形式が不正",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "イベントまたは対象バンドが存在しない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["event_not_found", "band_not_found"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "更新競合、または制約の参照・削除後の位置範囲が使えなくなる。何も削除しない。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "event_save_conflict",
+                            "band_constraint_conflict"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "不正入力・別イベント参照。保存しない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["invalid_input"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "保存・取得失敗。内部情報を公開せず、部分保存しない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": ["code", "message", "details"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": ["internal_error"]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": ["path", "reason"],
+                            "additionalProperties": false,
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -5759,11 +6062,11 @@
     },
     {
       "name": "Events",
-      "description": "イベント一覧・作成・基本情報・設定変更・イベント全体の論理削除。バンド本体の削除は未実装です。"
+      "description": "イベント一覧・作成・基本情報・設定変更・イベント全体の論理削除と、確認後のバンド本体削除。"
     },
     {
       "name": "Form",
-      "description": "公開フォームの名簿取得・バンド初回登録・所属編集。新規は1〜20人、更新は0〜20人。所属解除してもバンドとメンバーは名簿に残ります。"
+      "description": "公開フォームの名簿取得・バンド初回登録・所属編集。新規は1〜20人、更新は0〜20人。所属解除してもバンドとメンバーは名簿に残ります。バンド本体削除はEventsの管理用DELETEを使います。"
     },
     {
       "name": "Schedule",

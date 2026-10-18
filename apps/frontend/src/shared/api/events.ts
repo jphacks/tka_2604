@@ -151,6 +151,23 @@ export function createEventsApi(client: ApiClient) {
         throw new Error('設定を保存できませんでした。')
       return toDetails(await response.json())
     },
+    async deleteBand(
+      eventId: string,
+      bandId: string,
+      expectedUpdatedAt: string,
+    ) {
+      const response = await events[':eventId'].bands[':bandId'].$delete({
+        param: { eventId, bandId },
+        json: { expectedUpdatedAt },
+      })
+      await ensureOk(
+        response,
+        'イベントが更新されました。「最新の状態を取得」で一覧を更新し、対象を確認してから削除してください。',
+      )
+      if (response.status !== 200)
+        throw new Error('バンドを削除できませんでした。')
+      return response.json()
+    },
     async deleteEvent(id: string) {
       const response = await events[':eventId'].$delete({
         param: { eventId: id },

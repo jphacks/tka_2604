@@ -12,6 +12,7 @@ export type ApiClient = ReturnType<typeof createApiClient>
 
 export async function ensureOk(
   response: Pick<Response, 'ok' | 'status' | 'json'>,
+  conflictMessage = 'イベントが更新されました。未保存の編集は保持しています。「最新の状態を取得」から再取得してください。',
 ) {
   if (response.ok) return
   let body: unknown
@@ -29,9 +30,7 @@ export async function ensureOk(
       typeof error.message === 'string'
     ) {
       if ('code' in error && error.code === 'event_save_conflict')
-        throw new Error(
-          'イベントが更新されました。未保存の編集は保持しています。「最新の状態を取得」から再取得してください。',
-        )
+        throw new Error(conflictMessage)
       throw new Error(error.message)
     }
   }
