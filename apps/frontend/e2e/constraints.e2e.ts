@@ -11,7 +11,7 @@ async function openEvent(page: Page, eventId: string) {
 }
 async function choose(page: Page, name: RegExp) {
   await expect(
-    page.getByRole('textbox', { name: '部数', exact: true }),
+    page.getByRole('button', { name: 'ライブ情報の編集', exact: true }),
   ).toBeEnabled()
   await page.getByRole('button', { name: '手動追加' }).click()
   const dialog = page.getByRole('dialog', { name: '制約を手動追加' })

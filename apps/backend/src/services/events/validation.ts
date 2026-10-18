@@ -7,7 +7,10 @@ const settings = {
   description: z.string().nullable().optional(),
 }
 
-export const createEventSchema = z.strictObject(settings)
+export const createEventSchema = z.strictObject({
+  ...settings,
+  bandCounts: z.array(z.number().int().min(1).max(20)).min(1).max(8).optional(),
+})
 export const updateEventSchema = z
   .strictObject({
     ...settings,

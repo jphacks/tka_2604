@@ -7,28 +7,37 @@ export function applySolverSchedule(
 ): EventData {
   const schedule = response.schedule
   if (!schedule) return event
+  if (
+    schedule.parts.length !== event.sections.length ||
+    schedule.parts.some(
+      (part) => !event.sections.some((current) => current.id === part.partId),
+    ) ||
+    event.sections.some(
+      (part) =>
+        schedule.placements.filter((item) => item.partId === part.id).length >
+        part.slots.length,
+    )
+  )
+    throw new Error('生成結果が設定された部・枠数を超えています。')
   return {
     ...event,
     updatedAt: schedule.updatedAt,
-    sections: schedule.parts
-      .toSorted((a, b) => a.sortOrder - b.sortOrder)
-      .map((part) => {
-        const bands = schedule.placements
-          .filter((item) => item.partId === part.partId)
-          .toSorted((a, b) => a.order - b.order)
-          .map((item) => item.bandId)
-        const capacity =
-          event.sections.find((section) => section.id === part.partId)?.slots
-            .length ?? 4
-        return {
-          id: part.partId,
-          name: part.partName,
-          slots: Array.from(
-            { length: Math.max(capacity, bands.length) },
-            (_, index) => bands[index] ?? null,
-          ),
-        }
-      }),
+    sections: event.sections.map((part) => {
+      const bands = schedule.placements
+        .filter((item) => item.partId === part.id)
+        .toSorted((a, b) => a.order - b.order)
+        .map((item) => item.bandId)
+      return {
+        ...part,
+        name:
+          schedule.parts.find((saved) => saved.partId === part.id)?.partName ??
+          part.name,
+        slots: Array.from(
+          { length: part.slots.length },
+          (_, index) => bands[index] ?? null,
+        ),
+      }
+    }),
     unassigned: schedule.unassignedBandIds,
   }
 }

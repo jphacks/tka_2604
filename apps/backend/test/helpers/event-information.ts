@@ -46,8 +46,8 @@ export async function seedEventInformation(
     memberId: people[0].memberId,
   }))
   const sections = [
-    { partId: `${prefix}-p2`, partName: null, sortOrder: 1 },
-    { partId: `${prefix}-p1`, partName: '昼の部', sortOrder: 0 },
+    { partId: `${prefix}-p2`, partName: null, bandCount: 4, sortOrder: 1 },
+    { partId: `${prefix}-p1`, partName: '昼の部', bandCount: 4, sortOrder: 0 },
   ]
   const placements = [
     { bandId: `${prefix}-b1`, partId: `${prefix}-p1`, order: 0 },

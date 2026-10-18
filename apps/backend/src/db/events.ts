@@ -83,14 +83,20 @@ export async function createEvent(
   input: Pick<
     typeof events.$inferInsert,
     'title' | 'date' | 'venue' | 'description'
-  >,
+  > & { bandCounts?: number[] },
 ) {
+  const { bandCounts = [4], ...settings } = input
   const eventId = crypto.randomUUID()
   await db.batch([
-    db.insert(events).values({ ...input, eventId, createdUserId: userId }),
-    db
-      .insert(parts)
-      .values({ partId: crypto.randomUUID(), eventId, sortOrder: 0 }),
+    db.insert(events).values({ ...settings, eventId, createdUserId: userId }),
+    db.insert(parts).values(
+      bandCounts.map((bandCount, sortOrder) => ({
+        partId: crypto.randomUUID(),
+        eventId,
+        sortOrder,
+        bandCount,
+      })),
+    ),
   ])
   const saved = await loadEvent(db, userId, eventId)
   if (!saved) throw new Error('event_not_found')

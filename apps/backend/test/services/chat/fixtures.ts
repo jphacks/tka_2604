@@ -88,7 +88,7 @@ export function snapshot(): ChatEventSnapshot {
       })),
       members: state.members,
       memberships: state.memberships,
-      parts: state.parts,
+      parts: state.parts.map((part) => ({ ...part, bandCount: 4 })),
       placements: state.currentPlacements,
       unassignedBandIds: ['band-b'],
     },

@@ -56,6 +56,28 @@ const solved = () => ({
   constraintResults: [{ constraintId: 'demo-constraint', status: 'met' }],
 })
 
+it('rejects a Solver result that overflows configured part counts without changing settings or placements', async () => {
+  await local.binding
+    .prepare(
+      "UPDATE band_order SET part_id='demo-part-2', \"order\"=0 WHERE band_id='demo-band-b'",
+    )
+    .run()
+  await local.binding.prepare('UPDATE parts SET band_count=1').run()
+  const before = (await snapshot())!
+  const client = vi.fn().mockResolvedValue(solved())
+  vi.spyOn(integration, 'solverClient').mockReturnValueOnce(client)
+  expect(
+    (await request({ expectedUpdatedAt: before.event.updatedAt })).status,
+  ).toBe(502)
+  expect(client.mock.calls[0][0]).toMatchObject({
+    parts: [
+      { partId: 'demo-part-1', bandCount: 1 },
+      { partId: 'demo-part-2', bandCount: 1 },
+    ],
+  })
+  expect(await snapshot()).toEqual(before)
+})
+
 describe('solve from persisted event data', () => {
   it.each(['soft', 'disabled'])(
     'accepts %s constraints while keeping their original JSON',
@@ -201,9 +223,10 @@ describe('solve from persisted event data', () => {
     const sent: unknown = JSON.parse(sentBody)
     expect(sent).toEqual({
       eventId: 'demo-event',
-      parts: before.parts.map(({ partId, sortOrder }) => ({
+      parts: before.parts.map(({ partId, sortOrder, bandCount }) => ({
         partId,
         sortOrder,
+        bandCount,
       })),
       bands: before.bands.map(({ bandId }) => ({ bandId })),
       members: before.members.map(({ memberId }) => ({ memberId })),
@@ -408,6 +431,7 @@ describe('solve from persisted event data', () => {
 })
 
 it('normalizes vacant display slots only in Solver hints', async () => {
+  await local.binding.prepare('UPDATE parts SET band_count = 12').run()
   await local.binding
     .prepare('UPDATE band_order SET "order" = "order" + 10')
     .run()

@@ -129,3 +129,7 @@ Cloudflareの `workers.dev` URLで公開します。frontendとbackendは同じW
 招待先に応じた権限を選択してください。
 
 参考：[Drizzle KitのSQL生成](https://orm.drizzle.team/docs/drizzle-kit-generate)、[D1のmigration](https://developers.cloudflare.com/d1/reference/migrations/)、[D1 batchの原子性](https://developers.cloudflare.com/d1/worker-api/d1-database/#batch)。
+
+### 部の設定枠数（#91）
+
+0004はDrizzle生成の`band_count`列追加。0005はカスタムSQLで既存の最大配置位置＋1以上かつ4以上を初期値として一度だけ設定し、正の整数を保証するトリガーを追加する。テーブルの再作成は行わず、既存の外部キー・部削除トリガー・配置を保持する。これ以降、配置保存・Solver結果では設定値を自動変更しない。移行はローカルD1で検証し、リモート適用は別依頼とする。

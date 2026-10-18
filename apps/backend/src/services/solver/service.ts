@@ -103,9 +103,10 @@ export function solverService(
       bands: snapshot.bands.map(({ bandId }) => ({ bandId })),
       members: snapshot.members.map(({ memberId }) => ({ memberId })),
       memberships: snapshot.memberships,
-      parts: snapshot.parts.map(({ partId, sortOrder }) => ({
+      parts: snapshot.parts.map(({ partId, sortOrder, bandCount }) => ({
         partId,
         sortOrder,
+        bandCount,
       })),
       constraints,
       // Vacant display slots are not bands; Solver hints use dense band ranks.

@@ -14,8 +14,7 @@ class InputModel(BaseModel):
 class Part(InputModel):
     partId: str = Field(min_length=1)
     sortOrder: int = Field(ge=0)
-    # Optional until BE starts sending it; validate the future contract when present.
-    bandCount: int | None = Field(default=None, ge=0)
+    bandCount: int | None = Field(default=None, ge=1)
 
 
 class Band(InputModel):

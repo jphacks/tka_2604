@@ -103,7 +103,7 @@ export const bandMembers = sqliteTable(
   (table) => [primaryKey({ columns: [table.bandId, table.memberId] })],
 )
 
-// 部：イベントの区切り。各部のバンド数は配置件数から求める。
+// 部：イベントの区切り。設定枠数は配置件数とは独立して保持する。
 export const parts = sqliteTable(
   'parts',
   {
@@ -117,6 +117,7 @@ export const parts = sqliteTable(
     sortOrder: integer('sort_order').notNull(),
     // 部名（任意）。未入力時の表示は「第n部」。
     partName: text('part_name'),
+    bandCount: integer('band_count').notNull().default(4),
   },
   (table) => [
     uniqueIndex('parts_event_sort_order').on(table.eventId, table.sortOrder),

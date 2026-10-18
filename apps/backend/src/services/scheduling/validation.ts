@@ -21,9 +21,11 @@ export const saveScheduleSchema = z.strictObject({
       z.strictObject({
         partId: id,
         partName: z.string().nullable().default(null),
+        bandCount: z.number().int().min(1).optional(),
       }),
     )
-    .min(1),
+    .min(1)
+    .max(8),
   placements: z.array(placementSchema),
   unassignedBandIds: z.array(id),
 })
@@ -55,15 +57,15 @@ export function validateSchedule(snapshot: Snapshot, input: ScheduleInput) {
     input.placements.some((p) => !partIds.includes(p.partId))
   )
     invalid('/parts', '部IDの重複または不正な配置先があります。')
-  // Bound vacant slots while allowing existing schedules and larger band rosters.
-  const positionCapacity = Math.max(
-    20,
-    bandIds.length,
-    ...snapshot.placements.map((placement) => placement.order + 1),
-  )
-  if (input.placements.some((placement) => placement.order >= positionCapacity))
-    invalid('/placements', '部内のorderが保存可能な枠数を超えています。')
-  for (const part of input.parts)
+  for (const part of input.parts) {
+    const oldCount =
+      snapshot.parts.find((p) => p.partId === part.partId)?.bandCount ?? 4
+    const count = part.bandCount ?? oldCount
+    if (
+      (count > 20 && count !== oldCount) ||
+      input.placements.filter((p) => p.partId === part.partId).length > count
+    )
+      invalid('/parts', '各部の組数は1〜20組で、配置数以上にしてください。')
     if (
       !unique(
         input.placements
@@ -72,6 +74,11 @@ export function validateSchedule(snapshot: Snapshot, input: ScheduleInput) {
       )
     )
       invalid('/placements', '部内のorderは重複なく指定してください。')
+    if (
+      input.placements.some((p) => p.partId === part.partId && p.order >= count)
+    )
+      invalid('/placements', '部内のorderが設定枠数を超えています。')
+  }
   for (const part of snapshot.parts.filter((p) => !partIds.includes(p.partId)))
     if (
       snapshot.constraints.some((row) => {
