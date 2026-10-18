@@ -59,7 +59,7 @@ export function LoginPage() {
           Setly — ライブの出演順づくりを支えるワークスペース
         </p>
       </section>
-      <main className="flex items-center justify-center bg-white px-6 py-6 md:px-8">
+      <main className="flex items-start justify-center bg-white px-6 py-6 md:px-8 md:pt-[max(1.5rem,calc((100dvh-34rem)/2))]">
         <div className="w-full max-w-[380px]">
           <fieldset className="mb-6 grid grid-cols-2 gap-1 rounded-lg bg-canvas p-1">
             <legend className="sr-only">認証方法</legend>
