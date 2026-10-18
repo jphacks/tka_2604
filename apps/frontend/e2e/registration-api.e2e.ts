@@ -60,8 +60,8 @@ test('real API and local D1: registration, replacement, unlinking, re-addition a
   await page.getByRole('combobox', { name: 'メンバー1の名前' }).fill('田中')
   await page.getByRole('option', { name: /田中 花/ }).click()
   await expect(
-    page.getByRole('combobox', { name: 'メンバー1の名前' }),
-  ).toHaveValue(/田中 花（/)
+    page.getByRole('button', { name: 'メンバー1の名前の選択を解除' }),
+  ).toBeVisible()
   await page.getByRole('button', { name: 'メンバーの行を追加' }).click()
   await page.getByRole('combobox', { name: 'メンバー2の名前' }).fill('田中 花')
   const screenshotDir = process.env.CAPTURE_FORM_SCREENSHOTS
@@ -102,8 +102,13 @@ test('real API and local D1: registration, replacement, unlinking, re-addition a
     .getByRole('combobox', { name: '更新する出演枠' })
     .selectOption(a.band.bandId)
   await expect(
-    page.getByRole('combobox', { name: `メンバー${sharedRow}の名前` }),
-  ).toHaveValue(/田中 花（/)
+    page.getByRole('button', {
+      name: `メンバー${sharedRow}の名前の選択を解除`,
+    }),
+  ).toBeVisible()
+  await page
+    .getByRole('button', { name: `メンバー${replacedRow}の名前の選択を解除` })
+    .click()
   await page
     .getByRole('combobox', { name: `メンバー${replacedRow}の名前` })
     .fill('佐藤 凛')
@@ -160,8 +165,8 @@ test('real API and local D1: registration, replacement, unlinking, re-addition a
     .getByRole('combobox', { name: '更新する出演枠' })
     .selectOption(a.band.bandId)
   await expect(
-    page.getByRole('combobox', { name: 'メンバー1の名前' }),
-  ).toHaveValue(/田中 花（/)
+    page.getByRole('button', { name: 'メンバー1の名前の選択を解除' }),
+  ).toBeVisible()
   const final = await get()
   expect(final.memberships).toContainEqual({
     bandId: a.band.bandId,

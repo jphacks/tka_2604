@@ -37,11 +37,11 @@ test('public registration adds name rows, reuses existing IDs, distinguishes sam
     '新しい出演枠',
   )
   await expect(
-    page.getByRole('combobox', { name: 'メンバー1の名前' }),
-  ).toHaveValue(memberOptionLabel(roster, 'm1'))
+    page.getByText(memberOptionLabel(roster, 'm1'), { exact: true }),
+  ).toBeVisible()
   await expect(
-    page.getByRole('combobox', { name: 'メンバー2の名前' }),
-  ).toHaveValue(memberOptionLabel(roster, 'person-1-0'))
+    page.getByText(memberOptionLabel(roster, 'person-1-0'), { exact: true }),
+  ).toBeVisible()
 })
 
 test('updates only the chosen band, removes everyone and re-adds the same ID', async ({
