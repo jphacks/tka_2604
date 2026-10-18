@@ -764,6 +764,10 @@ test('generation saves the displayed schedule and constraints before calling sol
     }
     expect(route.request().postDataJSON()).toEqual({
       expectedUpdatedAt: savedConstraints.updatedAt,
+      parts: [
+        { partId: 'demo-part-1', bandCount: 5 },
+        { partId: 'demo-part-2', bandCount: 7 },
+      ],
     })
     expect(savedSchedule.updatedAt).toBe(savedConstraints.updatedAt)
     expect(savedSchedule.unassignedBandIds).toContain('demo-band-b')
@@ -792,6 +796,18 @@ test('generation saves the displayed schedule and constraints before calling sol
     })
     await order.fill('')
     await order.press('Enter')
+    for (const [part, count] of [
+      [1, 5],
+      [2, 7],
+    ]) {
+      const capacity = page.getByRole('textbox', {
+        name: `第${part}部の組数`,
+        exact: true,
+      })
+      await capacity.fill(String(count))
+      await capacity.press('Enter')
+      await expect(capacity).toHaveValue(String(count))
+    }
     expect(
       (
         (await (await request.get(`${path}/schedule`)).json()) as {
