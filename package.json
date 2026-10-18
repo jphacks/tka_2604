@@ -30,7 +30,7 @@
     "preview": "npm run preview --workspace=@jphack-2026/frontend",
     "deploy": "npm run deploy:develop",
     "deploy:develop": "npm run build && wrangler deploy --env develop --secrets-file .env.develop",
-    "deploy:main": "SITE_URL=https://main.jphack-2026.workers.dev npm run build && wrangler deploy --env main --secrets-file .env.main",
+    "deploy:main": "SITE_URL=https://setly.jphack-2026.workers.dev npm run build && wrangler deploy --env main --secrets-file .env.main",
     "db:migrate:local": "wrangler d1 migrations apply DB --env develop --local",
     "db:migrate:develop": "wrangler d1 migrations apply DB --env develop --remote",
     "db:migrate:main": "wrangler d1 migrations apply DB --env main --remote",

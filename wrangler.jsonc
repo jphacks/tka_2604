@@ -35,7 +35,7 @@
       ],
     },
     "main": {
-      "name": "main",
+      "name": "setly",
       "secrets": {
         "required": [
           "SOLVER_API_URL",
