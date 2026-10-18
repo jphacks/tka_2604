@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Link, NavLink } from 'react-router'
 
 import { useSession } from '../../app/sessionContext'
-import { Brand } from './Brand'
+import { AppHeader } from './AppHeader'
 import { Button } from './Button'
 import { Icon } from './Icon'
 
@@ -27,34 +27,32 @@ export function AppFrame({
         workspace ? 'flex h-dvh flex-col overflow-hidden' : 'min-h-dvh'
       }
     >
-      <header className="flex min-h-12 shrink-0 items-center justify-between gap-2 border-b border-line bg-white px-3 py-1.5 sm:min-h-16 sm:px-4 sm:py-3">
-        <div className="flex min-w-0 items-center gap-3 sm:gap-8">
-          <Brand />
+      <AppHeader
+        navigation={
           <Link
             to="/event"
             className="shrink-0 text-xs whitespace-nowrap text-muted hover:text-brand"
           >
             マイイベント
           </Link>
-        </div>
-        <div className="flex shrink-0 items-center gap-3">
-          <span className="hidden size-7 items-center justify-center rounded-full bg-wash text-xs font-semibold text-brand sm:flex">
-            運
-          </span>
-          <span className="hidden max-w-32 truncate text-xs sm:inline">
-            {session?.name}
-          </span>
-          <Button
-            variant="ghost"
-            className="text-xs"
-            aria-label="ログアウト"
-            onClick={() => void signOut()}
-          >
-            <Icon name="logout" />
-            <span className="hidden sm:inline">ログアウト</span>
-          </Button>
-        </div>
-      </header>
+        }
+      >
+        <span className="hidden size-7 items-center justify-center rounded-full bg-wash text-xs font-semibold text-brand sm:flex">
+          運
+        </span>
+        <span className="hidden max-w-32 truncate text-xs sm:inline">
+          {session?.name}
+        </span>
+        <Button
+          variant="ghost"
+          className="text-xs"
+          aria-label="ログアウト"
+          onClick={() => void signOut()}
+        >
+          <Icon name="logout" />
+          <span className="hidden sm:inline">ログアウト</span>
+        </Button>
+      </AppHeader>
       {eventId && (
         <div className="shrink-0 border-b border-line bg-white">
           <nav
@@ -76,10 +74,6 @@ export function AppFrame({
             </Link>
             {[
               { path: `/event/${eventId}`, label: '出演順' },
-              {
-                path: `/event/${eventId}/performances`,
-                label: '出演枠・メンバー',
-              },
               { path: `/event/${eventId}/forms/edit`, label: 'フォーム管理' },
               { path: `/event/${eventId}/settings`, label: '設定' },
             ].map((item) => (

@@ -1,10 +1,16 @@
 import { useRef, useState } from 'react'
 
+import {
+  evaluateConstraint,
+  violatedBandIds,
+} from '../../../shared/model/constraints'
+import { isFixed } from '../../../shared/model/event'
 import { Button } from '../../../shared/ui/Button'
 import { Panel } from '../../../shared/ui/Panel'
 import type { EventController } from '../hooks/useEvent'
 import { useScheduleFlip } from '../hooks/useScheduleFlip'
 import { LiveInfoDialog } from './LiveInfoDialog'
+import { PerformanceDetailsDialog } from './PerformanceDetailsDialog'
 import {
   EmptyPerformanceRow,
   PerformanceRow,
@@ -14,10 +20,41 @@ import { ScheduleDragSurface, UnassignedDropZone } from './ScheduleDragSurface'
 
 export function SchedulePanel({ controller }: { controller: EventController }) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const focusAfterDelete = useRef(false)
+  const [selectedBandId, setSelectedBandId] = useState<string | null>(null)
   useScheduleFlip(scrollRef, controller.reorderRevision)
   const { event, schedule, setOrder, setFixed } = controller
   const [editingLive, setEditingLive] = useState(false)
   if (!event || !schedule) return null
+  const selectedBand = event.performances.find(
+    (performance) => performance.id === selectedBandId,
+  )
+  const selectedRow = selectedBandId
+    ? [
+        ...schedule.sections.flatMap((section) => section.rows),
+        ...schedule.unassigned,
+      ].find((row) => row.performance?.id === selectedBandId)
+    : undefined
+  const unavailable =
+    controller.scheduleDirty ||
+    controller.constraintsDirty ||
+    controller.saving ||
+    controller.solving ||
+    controller.refreshing ||
+    controller.sending ||
+    controller.deletingBand
+  const violationByBand = new Map<string, 'hard' | 'soft'>()
+  for (const constraint of event.constraints) {
+    if (evaluateConstraint(constraint, event).status !== 'unmet') continue
+    for (const bandId of violatedBandIds(constraint, event)) {
+      if (
+        constraint.hardness === 'hard' ||
+        violationByBand.get(bandId) !== 'hard'
+      ) {
+        violationByBand.set(bandId, constraint.hardness)
+      }
+    }
+  }
   return (
     <Panel
       inert={
@@ -84,6 +121,42 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
           onClose={() => setEditingLive(false)}
         />
       )}
+      {selectedBand && (
+        <PerformanceDetailsDialog
+          event={event}
+          performance={{
+            ...selectedBand,
+            fixed: isFixed(event, selectedBand.id),
+          }}
+          position={selectedRow?.order ?? null}
+          unavailable={unavailable}
+          deleting={controller.deletingBand}
+          error={controller.error}
+          onSaved={() => {
+            setSelectedBandId(null)
+            controller.retryLoad()
+          }}
+          onDelete={() => {
+            void controller.deleteBand(selectedBand.id).then((deleted) => {
+              if (deleted) {
+                focusAfterDelete.current = true
+                setSelectedBandId(null)
+                requestAnimationFrame(() => {
+                  if (focusAfterDelete.current) {
+                    focusAfterDelete.current = false
+                    scrollRef.current?.focus()
+                  }
+                })
+              }
+            })
+          }}
+          onRefresh={() => {
+            setSelectedBandId(null)
+            controller.retryLoad()
+          }}
+          onClose={() => setSelectedBandId(null)}
+        />
+      )}
       <ScheduleDragSurface controller={controller}>
         <div
           ref={scrollRef}
@@ -115,11 +188,13 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
                     <PerformanceRow
                       key={row.key}
                       row={{ ...row, performance: row.performance }}
+                      violation={violationByBand.get(row.performance.id)}
                       capacity={
                         schedule.assignedCount + (row.order === null ? 1 : 0)
                       }
                       onFixed={setFixed}
                       onOrder={setOrder}
+                      onDetails={setSelectedBandId}
                     />
                   ) : (
                     <EmptyPerformanceRow key={row.key} row={row} />
@@ -139,11 +214,13 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
                   <PerformanceRow
                     key={row.key}
                     row={row}
+                    violation={violationByBand.get(row.performance.id)}
                     capacity={
                       schedule.assignedCount + (row.order === null ? 1 : 0)
                     }
                     onFixed={setFixed}
                     onOrder={setOrder}
+                    onDetails={setSelectedBandId}
                   />
                 ))}
                 {!schedule.unassigned.length && (

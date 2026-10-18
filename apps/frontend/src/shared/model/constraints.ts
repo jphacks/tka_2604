@@ -209,3 +209,52 @@ export function evaluateConstraint(
         : '未達成',
   }
 }
+
+export function violatedBandIds(
+  constraint: Constraint,
+  event: EventData,
+): string[] {
+  if (evaluateConstraint(constraint, event).status !== 'unmet') return []
+
+  const placed = positions(event)
+  const ids = targetBandIds(constraint, event)
+  switch (constraint.type) {
+    case 'min_gap_member':
+    case 'min_gap_bands': {
+      const violated = new Set<string>()
+      ids.forEach((id, index) => {
+        ids.slice(index + 1).forEach((other) => {
+          const a = placed.get(id)!
+          const b = placed.get(other)!
+          if (
+            !(constraint.params.same_part_only && a.part !== b.part) &&
+            Math.abs(a.position - b.position) < constraint.params.min_diff
+          ) {
+            violated.add(id)
+            violated.add(other)
+          }
+        })
+      })
+      return [...violated]
+    }
+    case 'before':
+      return [
+        constraint.targets.before_band_id,
+        constraint.targets.after_band_id,
+      ]
+    case 'at_position':
+      return [constraint.targets.band_id]
+    case 'in_range':
+      return ids.filter((id) => {
+        const value = placed.get(id)!
+        return constraint.params.kind === 'positions'
+          ? value.position < constraint.params.position_from ||
+              value.position > constraint.params.position_to
+          : !constraint.params.part_ids.includes(value.part)
+      })
+    case 'count':
+      // A count rule describes its target group as a whole, so every placed
+      // target is implicated when the group count is outside the allowed range.
+      return ids
+  }
+}

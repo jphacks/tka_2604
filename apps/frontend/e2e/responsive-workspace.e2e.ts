@@ -131,14 +131,11 @@ for (const width of [320, 390, 768, 1279]) {
     const draft = page.getByRole('textbox', { name: 'AIへのメッセージ' })
     await draft.fill('後半に出演したいです')
     await page.screenshot({ path: testInfo.outputPath(`chat-${width}.png`) })
-    await page.getByRole('button', { name: '未達成の条件を確認' }).click()
+    await tabs.getByRole('tab', { name: '制約', exact: true }).click()
     await expect(constraints).toBeVisible()
     await expect(
       tabs.getByRole('tab', { name: '制約', exact: true }),
     ).toHaveAttribute('aria-selected', 'true')
-    await expect(
-      page.getByRole('button', { name: /未達成のみ/ }),
-    ).toHaveAttribute('aria-pressed', 'true')
     await page.screenshot({
       path: testInfo.outputPath(`constraints-${width}.png`),
     })

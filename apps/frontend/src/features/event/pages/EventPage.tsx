@@ -1,8 +1,8 @@
 import type { CSSProperties } from 'react'
-import { useState } from 'react'
-import { useParams } from 'react-router'
+import { useEffect, useState } from 'react'
+import { useLocation, useParams } from 'react-router'
 
-import { AppFrame } from '../../../shared/ui/AppFrame'
+import { useEventName } from '../../../app/eventNameContext'
 import { Button } from '../../../shared/ui/Button'
 import { LinkButton } from '../../../shared/ui/LinkButton'
 import { PageState } from '../../../shared/ui/PageState'
@@ -21,15 +21,16 @@ export function EventPage() {
 
 function EventWorkspace({ eventId }: { eventId: string }) {
   const controller = useEvent(eventId)
+  const importNotice = (useLocation().state as { notice?: string } | null)
+    ?.notice
+  const setEventName = useEventName()
   const columns = useColumnResize()
   const [activePanel, setActivePanel] = useState<WorkspacePanel>('schedule')
-  const showConstraints = () => {
-    controller.setShowUnmet(true)
-    setActivePanel('constraints')
-    document.getElementById('workspace-tab-constraints')?.focus()
-  }
+  useEffect(() => {
+    if (controller.event?.name) setEventName?.(controller.event.name)
+  }, [controller.event?.name, setEventName])
   return (
-    <AppFrame workspace eventId={eventId} eventName={controller.event?.name}>
+    <>
       {!controller.event ? (
         <PageState
           error={controller.loadError}
@@ -42,6 +43,14 @@ function EventWorkspace({ eventId }: { eventId: string }) {
         />
       ) : (
         <>
+          {importNotice && (
+            <p
+              role="alert"
+              className="shrink-0 border-b border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"
+            >
+              {importNotice}
+            </p>
+          )}
           {controller.hardViolationCount > 0 && (
             <p
               role="status"
@@ -54,7 +63,7 @@ function EventWorkspace({ eventId }: { eventId: string }) {
           {controller.event.performances.length === 0 && (
             <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-brand/20 bg-wash p-3">
               <p className="text-sm">まず出演名とメンバーを登録しましょう。</p>
-              <LinkButton primary to={`/event/${eventId}/performances`}>
+              <LinkButton primary to={`/event/${eventId}/forms`}>
                 出演枠を登録する
               </LinkButton>
             </div>
@@ -77,7 +86,6 @@ function EventWorkspace({ eventId }: { eventId: string }) {
                   'chat',
                   <ChatPanel
                     controller={controller}
-                    onShowConstraints={showConstraints}
                     active={activePanel === 'chat'}
                   />,
                 ],
@@ -136,6 +144,6 @@ function EventWorkspace({ eventId }: { eventId: string }) {
             )}
           </div>
         )}
-    </AppFrame>
+    </>
   )
 }

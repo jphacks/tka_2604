@@ -14,10 +14,10 @@ import { EventSettingsPage } from '../features/events/pages/EventSettingsPage'
 import { EventsPage } from '../features/events/pages/EventsPage'
 import { FormEditorPage } from '../features/forms/pages/FormEditorPage'
 import { RegistrationPage } from '../features/forms/pages/RegistrationPage'
-import { ParticipantsPage } from '../features/participants/pages/ParticipantsPage'
 import { Brand } from '../shared/ui/Brand'
 import { LinkButton } from '../shared/ui/LinkButton'
 import { PageState } from '../shared/ui/PageState'
+import { EventLayout } from './EventLayout'
 import { loginDestination } from './navigation'
 import { useSession } from './sessionContext'
 
@@ -43,14 +43,14 @@ function LoginRoute() {
   )
 }
 
-function EventScopedRoute({ component: Page }: { component: ComponentType }) {
-  const { eventId = '' } = useParams()
-  return <Page key={eventId} />
-}
-
 function LegacyFormRedirect() {
   const { eventId = '' } = useParams()
   return <Navigate to={`/event/${eventId}/forms`} replace />
+}
+
+function EventScopedRoute({ component: Page }: { component: ComponentType }) {
+  const { eventId = '' } = useParams()
+  return <Page key={eventId} />
 }
 
 function NotFoundPage() {
@@ -74,32 +74,24 @@ export function AppRoutes() {
     <Routes>
       <Route path="/" element={<Navigate to="/event" replace />} />
       <Route path="/login" element={<LoginRoute />} />
-      <Route
-        path="/event/:eventId/forms"
-        element={<EventScopedRoute component={RegistrationPage} />}
-      />
+      <Route path="/event/:eventId/forms" element={<RegistrationPage />} />
       <Route
         path="/event/:eventId/forms/demo"
         element={<LegacyFormRedirect />}
       />
       <Route element={<ProtectedRoutes />}>
-        <Route
-          path="/event/:eventId/performances"
-          element={<EventScopedRoute component={ParticipantsPage} />}
-        />
-        <Route
-          path="/event/:eventId/forms/edit"
-          element={<EventScopedRoute component={FormEditorPage} />}
-        />
         <Route path="/event" element={<EventsPage />} />
-        <Route
-          path="/event/:eventId"
-          element={<EventScopedRoute component={EventPage} />}
-        />
-        <Route
-          path="/event/:eventId/settings"
-          element={<EventScopedRoute component={EventSettingsPage} />}
-        />
+        <Route path="/event/:eventId" element={<EventLayout />}>
+          <Route index element={<EventScopedRoute component={EventPage} />} />
+          <Route
+            path="forms/edit"
+            element={<EventScopedRoute component={FormEditorPage} />}
+          />
+          <Route
+            path="settings"
+            element={<EventScopedRoute component={EventSettingsPage} />}
+          />
+        </Route>
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

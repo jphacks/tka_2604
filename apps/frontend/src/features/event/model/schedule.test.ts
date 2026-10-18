@@ -1,7 +1,7 @@
 import { assert, test } from 'vitest'
 
 import { eventFixture } from '../../../test/fixtures/event'
-import { eventReducer, initialState } from './eventReducer'
+import { eventReducer, initialState, removeBandFromEvent } from './eventReducer'
 import {
   buildSchedule,
   movePerformance,
@@ -23,6 +23,35 @@ function assertRoster(event: typeof eventFixture) {
     event.performances.length,
   )
 }
+
+test('deleting a band clears its placement and only its generated constraints', () => {
+  const event = fresh()
+  event.updatedAt = 'old-version'
+  event.constraintSources = {
+    'fixed-p1': null,
+    'fixed-p5': null,
+    'gap-m1': 'p2',
+    'last-p12': 'p4',
+  }
+  const result = removeBandFromEvent(event, 'p2', 'new-version')
+  assert.equal(result.updatedAt, 'new-version')
+  assert.equal(
+    result.performances.some((band) => band.id === 'p2'),
+    false,
+  )
+  assert.equal(result.sections[0].slots[1], null)
+  assert.deepEqual(result.unassigned, event.unassigned)
+  assert.deepEqual(result.members, event.members)
+  assert.deepEqual(
+    result.constraints.map((constraint) => constraint.constraint_id),
+    ['fixed-p1', 'fixed-p5', 'last-p12'],
+  )
+  assert.deepEqual(result.constraintSources, {
+    'fixed-p1': null,
+    'fixed-p5': null,
+    'last-p12': 'p4',
+  })
+})
 
 test('fixture: 3 parts, 4 slots each, 2 unassigned', () => {
   const schedule = buildSchedule(fresh())

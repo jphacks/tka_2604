@@ -8,6 +8,11 @@ const description = z
   .max(500)
   .nullable()
   .transform((value) => value || null)
+const requestText = z
+  .string()
+  .trim()
+  .nullable()
+  .transform((value) => value || null)
 const memberIds = z.array(z.string().min(1)).max(20)
 const newMembers = z
   .array(z.strictObject({ memberName: z.string().trim().min(1).max(40) }))
@@ -47,6 +52,7 @@ export const createFormBandSchema = z
     expectedUpdatedAt: z.iso.datetime(),
     bandName,
     description: description.optional(),
+    requestText: requestText.optional(),
     memberIds,
     newMembers,
   })
@@ -57,6 +63,7 @@ export const updateFormBandSchema = z
     expectedUpdatedAt: z.iso.datetime(),
     bandName: bandName.optional(),
     description: description.optional(),
+    requestText: requestText.optional(),
     memberIds: memberIds.optional(),
     newMembers: newMembers.optional(),
   })
@@ -64,6 +71,7 @@ export const updateFormBandSchema = z
     if (
       input.bandName === undefined &&
       input.description === undefined &&
+      input.requestText === undefined &&
       input.memberIds === undefined &&
       input.newMembers === undefined
     )

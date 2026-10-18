@@ -40,6 +40,7 @@ function saveEcho() {
           bandId: `b${count}`,
           bandName: input.bandName,
           description: input.description ?? null,
+          requestText: null,
           memberIds: [...input.memberIds, ...created.map((m) => m.memberId)],
         },
         members: [

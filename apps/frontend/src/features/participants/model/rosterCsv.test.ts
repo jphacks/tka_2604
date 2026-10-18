@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  decodeCsv,
-  parseRosterCsv,
-  planRosterImport,
-  rosterTemplate,
-} from './rosterCsv'
+import { decodeCsv, parseRosterCsv, planRosterImport } from './rosterCsv'
 
 const header = '曲名,メンバー1,メンバー2,メンバー3\n'
 
@@ -48,16 +43,6 @@ describe('parseRosterCsv', () => {
     })
   })
 
-  it('reads its own template, including descriptions and a shared member', () => {
-    const result = parseRosterCsv(rosterTemplate())
-    const rows = 'rows' in result ? result.rows : []
-
-    expect(rows).toHaveLength(2)
-    expect(rows[0].description).toBe('明るいポップス。手拍子で盛り上がる')
-    expect(rows[0].members).toEqual(['佐藤', '田中', '鈴木'])
-    expect(planRosterImport(rows, []).shared).toEqual(['田中'])
-  })
-
   it('reads the optional 紹介 column only when its header is present', () => {
     expect(
       parseRosterCsv('曲名,紹介,メンバー1\n曲A, メタル ,佐藤\n曲B,,田中\n'),
@@ -88,7 +73,7 @@ describe('parseRosterCsv', () => {
     const error = errorOf('バンド名,メンバー1\n曲A,佐藤\n')
 
     expect(error).toContain('1行目')
-    expect(error).toContain('雛形をダウンロード')
+    expect(error).toContain('曲名,紹介,メンバー1')
   })
 
   it.each([

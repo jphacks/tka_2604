@@ -173,7 +173,7 @@ export function createEventsApi(client: ApiClient) {
         'イベントが更新されました。「最新の状態を取得」で一覧を更新し、対象を確認してから削除してください。',
       )
       if (response.status !== 200)
-        throw new Error('バンドを削除できませんでした。')
+        throw new Error('出演枠を削除できませんでした。')
       return response.json()
     },
     async deleteEvent(id: string) {

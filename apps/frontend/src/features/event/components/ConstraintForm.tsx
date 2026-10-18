@@ -8,7 +8,6 @@ import {
 import type { EventData } from '../../../shared/model/event'
 import { Button } from '../../../shared/ui/Button'
 import { Dialog } from '../../../shared/ui/Dialog'
-import { Textarea } from '../../../shared/ui/Input'
 import {
   buildConstraints,
   type ConstraintDraft,
@@ -163,27 +162,7 @@ export function ConstraintForm({
               onHardness={(hardness) => change({ hardness })}
               onPriority={(priority) => change({ priority })}
             />
-            <p className="text-xs leading-6 text-muted">
-              必須は必ず守る条件、任意はできるだけ守る条件です。
-            </p>
           </fieldset>
-          <details>
-            <summary className="cursor-pointer text-xs text-muted">
-              要望の原文を残す（任意）
-            </summary>
-            <label className="mt-3 block text-sm">
-              元の要望
-              <Textarea
-                className="mt-2 w-full"
-                rows={2}
-                maxLength={1000}
-                value={draft.sourceText}
-                onChange={(changeEvent) =>
-                  change({ sourceText: changeEvent.target.value })
-                }
-              />
-            </label>
-          </details>
           <div className="rounded-lg border border-brand/20 bg-wash p-4">
             <p className="mb-2 text-xs font-semibold text-brand">
               追加する条件の確認

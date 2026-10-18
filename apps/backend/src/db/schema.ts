@@ -61,7 +61,7 @@ export const events = sqliteTable(
   ],
 )
 
-// 出演バンド：イベントに登録されたバンド。
+// 出演枠：イベントに登録された出演枠。
 export const bands = sqliteTable('bands', {
   bandId: text('band_id').primaryKey().notNull(),
   eventId: text('event_id')
@@ -89,11 +89,11 @@ export const members = sqliteTable('members', {
   memberName: text('member_name').notNull(),
 })
 
-// バンド所属：同じ出演者を複数バンドに紐づけて掛け持ちを表す。
+// 出演枠所属：同じ出演者を複数の出演枠に紐づけて掛け持ちを表す。
 export const bandMembers = sqliteTable(
   'band_members',
   {
-    // バンドID
+    // 出演枠ID
     bandId: text('band_id')
       .notNull()
       .references(() => bands.bandId, { onDelete: 'cascade' }),
@@ -130,11 +130,11 @@ export const parts = sqliteTable(
   ],
 )
 
-// バンド配置：どの部の何番目に出演するか。行がなければ未配置。
+// 出演枠配置：どの部の何番目に出演するか。行がなければ未配置。
 export const bandOrder = sqliteTable(
   'band_order',
   {
-    // バンドID
+    // 出演枠ID
     bandId: text('band_id')
       .primaryKey()
       .notNull()

@@ -66,7 +66,7 @@ export function PartCountFields({
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {counts.map((count, index) => (
           <label key={index} className="block text-xs font-medium">
-            第{index + 1}部のバンド数
+            第{index + 1}部の組数
             <Input
               type="number"
               required

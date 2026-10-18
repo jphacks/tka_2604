@@ -58,7 +58,7 @@ export const eventRoutes = new Hono<EventEnv>()
         {
           error: {
             code: error.code,
-            message: 'バンドが見つかりません。',
+            message: '出演枠が見つかりません。',
             details: error.details,
           },
         },
