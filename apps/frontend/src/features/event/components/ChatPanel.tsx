@@ -5,6 +5,7 @@ import { Panel } from '../../../shared/ui/Panel'
 import { useChatScroll } from '../hooks/useChatScroll'
 import type { EventController } from '../hooks/useEvent'
 import { ChatProposal } from './ChatProposal'
+import { ReorderDialog } from './ReorderDialog'
 
 export function ChatPanel({ controller }: { controller: EventController }) {
   const endRef = useChatScroll(
@@ -66,6 +67,7 @@ export function ChatPanel({ controller }: { controller: EventController }) {
           )}
         </div>
         <ChatProposal controller={controller} />
+        <ReorderDialog controller={controller} />
         <div className="mt-3 rounded-lg border border-line p-3">
           <h3 className="mb-2 text-xs font-semibold">現在の配置</h3>
           <p className="text-xs leading-5 text-muted">
