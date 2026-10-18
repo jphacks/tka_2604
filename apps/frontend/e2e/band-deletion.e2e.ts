@@ -224,13 +224,18 @@ test('rejects stale confirmation, reloads explicitly and requires confirming the
   ).toHaveCount(0)
 })
 
-test('explains constraint references and keeps the band and constraints intact', async ({
+test('deletes a referenced band and retains the constraints after reload', async ({
   page,
   request,
   databaseEvent,
 }) => {
   const url = `/api/events/${databaseEvent.eventId}`
   const before = (await (await request.get(`${url}/form`)).json()) as FormRoster
+  const constraintsBefore = (await (
+    await request.get(`${url}/constraints`)
+  ).json()) as { constraints: unknown[] }
+  const errors: string[] = []
+  page.on('pageerror', (error) => errors.push(error.message))
   await page.goto(`/event/${databaseEvent.eventId}/performances`)
   await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
   await page
@@ -238,9 +243,19 @@ test('explains constraint references and keeps the band and constraints intact',
     .click()
   const dialog = page.getByRole('dialog', { name: 'バンドを削除' })
   await dialog.getByRole('button', { name: '削除する', exact: true }).click()
-  await expect(dialog.getByRole('alert')).toContainText(
-    '制約から参照されています',
-  )
+  await expect(dialog).toHaveCount(0)
   const after = (await (await request.get(`${url}/form`)).json()) as FormRoster
-  expect(after).toEqual(before)
+  expect(after.bands).toEqual(
+    before.bands.filter((band) => band.bandId !== databaseEvent.bandIds.p1),
+  )
+  const remaining = (await (
+    await request.get(`${url}/constraints`)
+  ).json()) as { constraints: unknown[] }
+  expect(remaining.constraints).toEqual(constraintsBefore.constraints)
+  await page.goto(`/event/${databaseEvent.eventId}`)
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(
+    page.getByRole('button', { name: '自動生成', exact: true }),
+  ).toBeVisible()
+  expect(errors).toEqual([])
 })

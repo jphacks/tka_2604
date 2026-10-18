@@ -8,7 +8,6 @@ import {
   bandOrder,
   bands,
   chatMessages,
-  constraints,
   events,
   users,
 } from '../../src/db/schema'
@@ -95,8 +94,8 @@ it('deletes an assigned band and leaves a vacant slot and preserves every other 
     { bandId: 'a-b4', partId: 'a-p2', order: 0 },
   ])
 })
-it('can delete the final band while preserving the member roster and parts', async () => {
-  await db.delete(constraints)
+it('can delete the final band while preserving the member roster, parts and constraints', async () => {
+  const before = (await snapshot())!
   expect((await remove('a-b1')).status).toBe(200)
   const revision = (await snapshot())!.event.updatedAt
   expect((await remove('a-b2', { expectedUpdatedAt: revision })).status).toBe(
@@ -107,15 +106,22 @@ it('can delete the final band while preserving the member roster and parts', asy
   expect(after.placements).toEqual([])
   expect(after.members).toHaveLength(1)
   expect(after.parts).toHaveLength(2)
+  expect(after.constraints).toEqual(
+    before.constraints.map((row) => ({ ...row, sourceBandId: null })),
+  )
 })
-it('rejects a referenced band without changing any saved data', async () => {
-  const before = await snapshot()
-  const response = await remove('a-b1')
-  expect(response.status).toBe(409)
-  expect(await response.json()).toMatchObject({
-    error: { code: 'band_constraint_conflict' },
-  })
-  expect(await snapshot()).toEqual(before)
+it('deletes a referenced band, retaining constraint JSON and clearing only its source link', async () => {
+  const before = (await snapshot())!
+  expect((await remove('a-b1')).status).toBe(200)
+  const after = (await snapshot())!
+  expect(after.bands.map((band) => band.bandId)).toEqual(['a-b2'])
+  expect(after.constraints).toEqual(
+    before.constraints.map((row) => ({
+      ...row,
+      sourceBandId: row.sourceBandId === 'a-b1' ? null : row.sourceBandId,
+    })),
+  )
+  expect(after.members).toEqual(before.members)
 })
 it.each([
   ['missing event', 'a-b2', 'missing', 404],
@@ -187,7 +193,7 @@ it('rolls back deletion, memberships, order and timestamp on a late D1 failure',
       "CREATE TRIGGER fail_delete AFTER DELETE ON bands BEGIN SELECT RAISE(ABORT, 'test_failure'); END",
     )
     .run()
-  expect((await remove()).status).toBe(500)
+  expect((await remove('a-b1')).status).toBe(500)
   expect(await snapshot()).toEqual(before)
   expect(await db.select().from(bandMembers)).toHaveLength(2)
 })

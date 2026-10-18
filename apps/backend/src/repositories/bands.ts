@@ -2,7 +2,7 @@ import { and, eq, exists, sql } from 'drizzle-orm'
 
 import { loadEvent } from '../db/events'
 import type { createDb } from '../db/index'
-import { bands, events } from '../db/schema'
+import { bands, constraints, events } from '../db/schema'
 import { BandError } from '../services/bands/errors'
 import type { BandRepository } from '../services/bands/service'
 import { EventError } from '../services/events/errors'
@@ -31,6 +31,11 @@ export function bandsRepository(
               updatedAt: sql`CASE WHEN ${events.createdUserId} = ${userId} AND ${events.isDeleted} = 0 AND ${events.updatedAt} = ${expected} AND ${exists(target)} THEN ${updatedAt} ELSE NULL END`,
             })
             .where(eq(events.eventId, eventId)),
+          // Keep the constraint JSON; only detach its foreign-key source metadata.
+          db
+            .update(constraints)
+            .set({ sourceBandId: null })
+            .where(eq(constraints.sourceBandId, bandId)),
           db
             .delete(bands)
             .where(and(eq(bands.bandId, bandId), eq(bands.eventId, eventId))),

@@ -4,7 +4,6 @@ import type { Constraint } from '../../../src/generated/constraint'
 import {
   type BandRepository,
   bandService,
-  validateBandDeletion,
 } from '../../../src/services/bands/service'
 import type { Snapshot } from '../../../src/services/scheduling/types'
 const fixture = (): Snapshot => ({
@@ -87,32 +86,8 @@ function store(
     },
   ]
 }
-it.each(targeted)(
-  'rejects references in a disabled $type constraint',
-  (constraint) => {
-    const snapshot = fixture()
-    store(snapshot, constraint)
-    expect(() => validateBandDeletion(snapshot, 'a')).toThrow(
-      'band_constraint_conflict',
-    )
-  },
-)
-it('guards sourceBandId without confusing a member ID with the same band ID', () => {
-  const snapshot = fixture()
-  const constraint: Constraint = {
-    ...common,
-    type: 'min_gap_member',
-    targets: { member_id: 'a' },
-    params: { min_diff: 2, same_part_only: false },
-  }
-  store(snapshot, constraint)
-  expect(() => validateBandDeletion(snapshot, 'a')).not.toThrow()
-  store(snapshot, constraint, 'a')
-  expect(() => validateBandDeletion(snapshot, 'a')).toThrow(
-    'band_constraint_conflict',
-  )
-})
-it.each<Constraint>([
+it.each([
+  ...targeted,
   {
     ...common,
     type: 'at_position',
@@ -125,23 +100,41 @@ it.each<Constraint>([
     targets: { band_ids: ['b'] },
     params: { kind: 'positions', position_from: 0, position_to: 2 },
   },
-])(
-  'refuses deletion that invalidates another $type position range',
-  (constraint) => {
-    const snapshot = fixture()
-    store(snapshot, constraint)
-    expect(() => validateBandDeletion(snapshot, 'a')).toThrow(
-      'band_constraint_conflict',
-    )
+] as Constraint[])(
+  'allows deletion despite $type references or remaining position ranges',
+  async (constraint) => {
+    for (const enabled of [true, false]) {
+      const snapshot = fixture()
+      store(snapshot, { ...constraint, enabled }, 'a')
+      const before = structuredClone(snapshot.constraints)
+      const remove = vi.fn<BandRepository['remove']>().mockResolvedValue({
+        eventId: 'event',
+        bandId: 'a',
+        updatedAt: snapshot.event.updatedAt,
+      })
+      await bandService(
+        { load: vi.fn().mockResolvedValue(snapshot), remove },
+        'owner',
+      ).remove('event', 'a', snapshot.event.updatedAt)
+      expect(remove).toHaveBeenCalledWith('owner', snapshot, 'a')
+      expect(snapshot.constraints).toEqual(before)
+    }
   },
 )
-it('fails closed on corrupt stored constraints', () => {
+it('does not parse or change malformed stored constraint JSON before deleting', async () => {
   const snapshot = fixture()
   store(snapshot, targeted[0])
   snapshot.constraints[0].constraintJson = '{}'
-  expect(() => validateBandDeletion(snapshot, 'b')).toThrow(
-    'invalid_stored_constraint',
-  )
+  const remove = vi.fn<BandRepository['remove']>().mockResolvedValue({
+    eventId: 'event',
+    bandId: 'a',
+    updatedAt: snapshot.event.updatedAt,
+  })
+  await bandService(
+    { load: vi.fn().mockResolvedValue(snapshot), remove },
+    'owner',
+  ).remove('event', 'a', snapshot.event.updatedAt)
+  expect(remove).toHaveBeenCalledOnce()
 })
 it('never starts a delete write for a stale revision or unknown band', async () => {
   const snapshot = fixture()

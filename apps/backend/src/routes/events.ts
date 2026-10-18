@@ -58,14 +58,11 @@ export const eventRoutes = new Hono<EventEnv>()
         {
           error: {
             code: error.code,
-            message:
-              error.code === 'band_not_found'
-                ? 'バンドが見つかりません。'
-                : '制約から参照されています。制約一覧で対象・生成元・位置範囲を確認し、先に制約を変更・削除してください。',
+            message: 'バンドが見つかりません。',
             details: error.details,
           },
         },
-        error.code === 'band_not_found' ? 404 : 409,
+        404,
       )
     if (error instanceof SolverError)
       return c.json(

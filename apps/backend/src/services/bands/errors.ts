@@ -1,4 +1,4 @@
-type BandErrorCode = 'band_not_found' | 'band_constraint_conflict'
+type BandErrorCode = 'band_not_found'
 export class BandError extends Error {
   readonly code: BandErrorCode
   readonly details: { path: string; reason: string }[]
