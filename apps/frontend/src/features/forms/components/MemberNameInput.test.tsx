@@ -70,17 +70,37 @@ describe('MemberNameInput', () => {
     expect(onSelect).not.toHaveBeenCalled()
     await user.click(screen.getByRole('option', { name: /田中 1（バンドA/ }))
     expect(onSelect).toHaveBeenCalledWith('m1', false)
-    expect(input).toHaveValue('田中 1（バンドA）')
+    expect(screen.getByText('田中 1（バンドA）')).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: 'メンバー1の名前の選択を解除' }),
+    ).toBeVisible()
   })
 
-  it('renders the selected member name instead of its ID', async () => {
+  it('renders an existing selection as a removable chip', async () => {
     const user = userEvent.setup()
     render(<Harness initialValue="m1" />)
+    expect(screen.getByText('田中 1（バンドA）')).toBeVisible()
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+    await user.click(
+      screen.getByRole('button', { name: 'メンバー1の名前の選択を解除' }),
+    )
     const input = screen.getByRole('combobox', { name: 'メンバー1の名前' })
-    expect(input).toHaveValue('田中 1（バンドA）')
-    await user.click(input)
-    expect(input).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getAllByRole('option')).toHaveLength(roster.members.length)
+    expect(input).toHaveValue('')
+    await waitFor(() => expect(input).toHaveFocus())
+  })
+
+  it('confirms a new member on Enter and clears the chip with its remove button', async () => {
+    const user = userEvent.setup()
+    const onSelect = vi.fn()
+    render(<Harness onSelect={onSelect} />)
+    await user.type(screen.getByRole('combobox'), '新しい名前{Enter}')
+    expect(screen.getByText('新しい名前')).toBeVisible()
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+    expect(onSelect).not.toHaveBeenCalled()
+    await user.click(
+      screen.getByRole('button', { name: 'メンバー1の名前の選択を解除' }),
+    )
+    expect(screen.getByRole('combobox')).toHaveValue('')
   })
 
   it('opens the full roster list when an empty input receives focus', async () => {

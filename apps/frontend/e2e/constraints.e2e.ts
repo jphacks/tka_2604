@@ -27,9 +27,21 @@ test('all condition choices produce editable conditions with live evaluation', a
   let dialog = await choose(page, /メンバーの出演間隔を空ける/)
   await dialog.getByRole('button', { name: 'この条件を追加' }).click()
   await expect(dialog.getByRole('alert')).toContainText('メンバーを選んで')
-  await dialog
-    .getByRole('combobox', { name: '対象のメンバー' })
-    .selectOption(databaseEvent.memberIds.m2)
+  const allMembers = dialog.getByRole('checkbox', { name: /掛け持ちの全員/ })
+  await allMembers.check()
+  await expect(
+    dialog.getByRole('combobox', { name: '対象のメンバー' }),
+  ).toBeDisabled()
+  await dialog.screenshot({
+    path: testInfo.outputPath('all-members-checkbox.png'),
+  })
+  await allMembers.uncheck()
+  await expect(
+    dialog.getByRole('combobox', { name: '対象のメンバー' }),
+  ).toBeEnabled()
+
+  await dialog.getByRole('combobox', { name: '対象のメンバー' }).fill('田中')
+  await dialog.getByRole('option', { name: /田中/, exact: false }).click()
   await dialog
     .getByRole('spinbutton', { name: '間に空ける出演枠（組以上）' })
     .fill('4')
@@ -46,8 +58,15 @@ test('all condition choices produce editable conditions with live evaluation', a
   ).toBeVisible()
 
   dialog = await choose(page, /指定した出演枠の間隔を空ける/)
-  await dialog.getByRole('checkbox', { name: 'Pretender', exact: true }).check()
-  await dialog.getByRole('checkbox', { name: 'VPS', exact: true }).check()
+  await dialog
+    .getByRole('combobox', { name: '対象の出演枠を検索' })
+    .fill('Pretender')
+  await dialog.getByRole('option', { name: 'Pretender', exact: true }).click()
+  await dialog.getByRole('combobox', { name: '対象の出演枠を検索' }).fill('VPS')
+  await dialog.getByRole('option', { name: 'VPS', exact: true }).click()
+  await dialog.screenshot({
+    path: testInfo.outputPath('multiple-chips-input.png'),
+  })
   await dialog.getByRole('button', { name: 'この条件を追加' }).click()
   await expect(
     page.getByRole('heading', {
@@ -57,12 +76,12 @@ test('all condition choices produce editable conditions with live evaluation', a
   ).toBeVisible()
 
   dialog = await choose(page, /出演の前後関係を決める/)
-  await dialog
-    .getByRole('combobox', { name: '先に出演する組' })
-    .selectOption(databaseEvent.bandIds.p3)
+  await dialog.getByRole('combobox', { name: '先に出演する組' }).fill('VPS')
+  await dialog.getByRole('option', { name: 'VPS', exact: true }).click()
   await dialog
     .getByRole('combobox', { name: '後に出演する組' })
-    .selectOption(databaseEvent.bandIds.p2)
+    .fill('Pretender')
+  await dialog.getByRole('option', { name: 'Pretender', exact: true }).click()
   await dialog.getByRole('button', { name: 'この条件を追加' }).click()
   await expect(
     page.getByRole('heading', {
@@ -74,7 +93,10 @@ test('all condition choices produce editable conditions with live evaluation', a
   dialog = await choose(page, /出演位置を指定する/)
   await dialog
     .getByRole('combobox', { name: '位置を指定する出演枠' })
-    .selectOption(databaseEvent.bandIds.p13)
+    .fill('源泉掛け流し')
+  await dialog
+    .getByRole('option', { name: '源泉掛け流し', exact: true })
+    .click()
   await dialog.getByRole('spinbutton', { name: '出演位置（番）' }).fill('6')
   await dialog.getByRole('button', { name: 'この条件を追加' }).click()
   const unassignedCondition = page.getByRole('article').filter({
@@ -86,7 +108,10 @@ test('all condition choices produce editable conditions with live evaluation', a
   await expect(unassignedCondition).toContainText('未配置')
 
   dialog = await choose(page, /出演できる範囲・部を指定する/)
-  await dialog.getByRole('checkbox', { name: '青と夏', exact: true }).check()
+  await dialog
+    .getByRole('combobox', { name: '対象の出演枠を検索' })
+    .fill('青と夏')
+  await dialog.getByRole('option', { name: '青と夏', exact: true }).click()
   await dialog.getByRole('spinbutton', { name: '開始（番）' }).fill('1')
   await dialog.getByRole('spinbutton', { name: '終了（番）' }).fill('4')
   await dialog.getByRole('button', { name: 'この条件を追加' }).click()
@@ -140,7 +165,8 @@ test('mobile layout and modal remain usable without page overflow', async ({
   await dialog.getByRole('button', { name: /出演位置を指定する/ }).click()
   await dialog
     .getByRole('combobox', { name: '位置を指定する出演枠' })
-    .selectOption(databaseEvent.bandIds.p2)
+    .fill('Pretender')
+  await dialog.getByRole('option', { name: 'Pretender', exact: true }).click()
   await dialog.getByRole('spinbutton', { name: '出演位置（番）' }).fill('3')
   await dialog.screenshot({
     path: testInfo.outputPath('manual-condition-mobile.png'),

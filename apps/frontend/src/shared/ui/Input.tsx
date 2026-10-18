@@ -11,7 +11,7 @@ const style =
 export function Input({
   className = '',
   ...props
-}: InputHTMLAttributes<HTMLInputElement>) {
+}: InputHTMLAttributes<HTMLInputElement> & { ref?: Ref<HTMLInputElement> }) {
   return <input className={`${style} h-9 px-2.5 ${className}`} {...props} />
 }
 
