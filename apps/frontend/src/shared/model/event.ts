@@ -13,6 +13,8 @@ export interface Performance {
   id: string
   name: string
   memberIds: string[]
+  /** ジャンル・雰囲気などの紹介。AIの並べ替え案で使う。 */
+  description?: string | null
   requestText?: string | null
   requestStatus?:
     'pending' | 'needs_confirmation' | 'converted' | 'failed' | null

@@ -14,8 +14,8 @@ const roster: FormRoster = {
   eventTitle: 'ライブ',
   updatedAt: '2026-10-17T00:00:00.000Z',
   bands: [
-    { bandId: 'a', bandName: 'A' },
-    { bandId: 'b', bandName: 'B' },
+    { bandId: 'a', bandName: 'A', description: null },
+    { bandId: 'b', bandName: 'B', description: null },
   ],
   members: [{ memberId: 'm1', memberName: '田中' }],
   memberships: [
@@ -26,7 +26,12 @@ const roster: FormRoster = {
 const saved: SavedFormBand = {
   eventId: 'event',
   updatedAt: '2026-10-17T00:01:00.000Z',
-  band: { bandId: 'new', bandName: 'New', memberIds: ['m1', 'm2'] },
+  band: {
+    bandId: 'new',
+    bandName: 'New',
+    description: null,
+    memberIds: ['m1', 'm2'],
+  },
   members: [
     { memberId: 'm1', memberName: '田中' },
     { memberId: 'm2', memberName: '田中' },

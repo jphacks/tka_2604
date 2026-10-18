@@ -6,7 +6,7 @@ import { NumberField } from '../../../shared/ui/NumberField'
 import type { PerformanceRow as Row, PerformanceView } from '../model/types'
 
 export const rowColumns =
-  'grid min-w-[520px] grid-cols-[36px_45px_62px_minmax(140px,1fr)_minmax(140px,1.1fr)] items-center gap-1 px-3'
+  'grid min-w-[680px] grid-cols-[36px_45px_62px_minmax(140px,1fr)_minmax(120px,0.8fr)_minmax(160px,1.4fr)] items-center gap-1 px-3'
 
 export function PerformanceRow({
   row,
@@ -73,7 +73,7 @@ export function PerformanceRow({
         onCommit={(value) => onOrder(performance.id, value)}
       />
       <span
-        className="min-w-0 truncate px-1 py-1 text-left font-medium text-brand"
+        className="min-w-0 truncate px-1 py-1 text-left font-bold text-brand"
         title={performance.name}
       >
         {performance.name}
@@ -83,6 +83,12 @@ export function PerformanceRow({
         title={performance.members.join('・')}
       >
         {performance.members.join('・')}
+      </span>
+      <span
+        className="min-w-0 truncate text-[13px] text-muted"
+        title={performance.description ?? undefined}
+      >
+        {performance.description}
       </span>
     </div>
   )
@@ -100,10 +106,8 @@ export function EmptyPerformanceRow({ row }: { row: Row }) {
     >
       <span />
       <span />
-      <span className="pl-2 text-muted/60 tabular-nums">
-        {row.order ?? '—'}
-      </span>
-      <span className="col-span-2 text-xs text-muted/70">
+      <span className="pl-2 text-muted tabular-nums">{row.order ?? '—'}</span>
+      <span className="col-span-3 text-xs text-muted">
         空き枠 · ここにドラッグして配置
       </span>
     </div>

@@ -218,6 +218,7 @@ export function createEventsApi(client: ApiClient) {
           memberIds: schedule.memberships
             .filter((item) => item.bandId === band.bandId)
             .map((item) => item.memberId),
+          description: band.description,
           requestText: band.requestText,
           requestStatus: band.requestStatus,
         })),

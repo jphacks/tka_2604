@@ -12,6 +12,7 @@ import {
 
 import { createDb } from '../../src/db/index'
 import {
+  bandOrder,
   bands,
   chatMessages,
   constraints,
@@ -180,6 +181,54 @@ describe('persisted chat POST API', () => {
       openApiDocument.paths['/api/events/{eventId}/chat'].get.responses,
     )
     expect(await history.json()).toEqual({ eventId, messages: await rows() })
+  })
+
+  it('returns a judged reorder proposal once without saving it, and only the text on replay', async () => {
+    const partId = (await eventsRepository(db).getSchedule(
+      'demo-owner',
+      eventId,
+    ))!.parts[0].partId
+    await db.insert(bands).values([
+      { bandId: 'band-a', eventId, bandName: 'A', description: 'バラード' },
+      { bandId: 'band-b', eventId, bandName: 'B', description: 'メタル' },
+    ])
+    await db.insert(bandOrder).values([
+      { bandId: 'band-a', partId, order: 1 },
+      { bandId: 'band-b', partId, order: 0 },
+    ])
+    const placements = [
+      { bandId: 'band-a', partId, order: 0 },
+      { bandId: 'band-b', partId, order: 1 },
+    ]
+    model.mockResolvedValueOnce({
+      type: 'reorder_proposal',
+      message: '盛り上がる順にしました。',
+      actions: [],
+      placements: [...placements],
+    })
+    const before = await eventsRepository(db).getSchedule('demo-owner', eventId)
+    const response = await post({ message: '盛り上げて', messageId: 'u1' })
+    expect(response.status).toBe(200)
+    await expectJsonResponse(response, responses)
+    expect(await response.json()).toEqual({
+      reply: '盛り上がる順にしました。',
+      reorder: {
+        expectedUpdatedAt: before!.updatedAt,
+        placements,
+        source: 'llm',
+        results: [],
+      },
+    })
+    expect(model.mock.calls[0][0].context.bands).toEqual([
+      { bandId: 'band-a', bandName: 'A', description: 'バラード' },
+      { bandId: 'band-b', bandName: 'B', description: 'メタル' },
+    ])
+    expect(
+      await eventsRepository(db).getSchedule('demo-owner', eventId),
+    ).toEqual(before)
+    const replay = await post({ message: '盛り上げて', messageId: 'u1' })
+    expect(await replay.json()).toEqual({ reply: '盛り上がる順にしました。' })
+    expect(model).toHaveBeenCalledTimes(1)
   })
 
   it('generates a message ID when omitted and returns the saved answer on replay without another model call', async () => {
@@ -363,7 +412,7 @@ describe('persisted chat POST API', () => {
     expect(await db.select().from(chatMessages)).toEqual([])
   })
 
-  it('shares the request and unchanged reply shape through Hono RPC', async () => {
+  it('shares the request and reply shape through Hono RPC', async () => {
     const client = hc<AppType>('http://localhost', {
       fetch: async (input: RequestInfo | URL, init?: RequestInit) =>
         app.request(input instanceof URL ? input.toString() : input, init, {
@@ -381,6 +430,10 @@ describe('persisted chat POST API', () => {
     expectTypeOf<
       NonNullable<typeof body.proposal>['expectedUpdatedAt']
     >().toEqualTypeOf<string>()
+    expectTypeOf<NonNullable<typeof body.reorder>['source']>().toEqualTypeOf<
+      'llm' | 'solver'
+    >()
+    expect(body).toEqual({ reply: answer.message })
     expect(body.reply).toBe(answer.message)
   })
 })

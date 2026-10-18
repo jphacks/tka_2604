@@ -12,7 +12,7 @@ export function EventCard({ event }: { event: EventSummary }) {
           <Icon name="calendar" className="size-5" />
         </span>
         <span
-          className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${event.status === 'confirmed' ? 'bg-emerald-50 text-emerald-700' : event.status === 'adjusting' ? 'bg-wash text-brand' : 'bg-canvas text-muted'}`}
+          className={`rounded-full px-2.5 py-1 text-xs font-medium ${event.status === 'confirmed' ? 'bg-emerald-50 text-emerald-700' : event.status === 'adjusting' ? 'bg-wash text-brand' : 'bg-canvas text-muted'}`}
         >
           {statusLabels[event.status]}
         </span>
@@ -29,7 +29,7 @@ export function EventCard({ event }: { event: EventSummary }) {
           <Icon name="location" className="size-3.5" />
           {event.venue || '会場未定'}
         </p>
-        <p className="mt-4 line-clamp-2 min-h-10 text-xs leading-5 text-muted/85">
+        <p className="mt-4 line-clamp-2 min-h-10 text-xs leading-5 text-muted">
           {event.description ||
             '出演者を集めて、ライブの準備をはじめましょう。'}
         </p>
@@ -38,23 +38,23 @@ export function EventCard({ event }: { event: EventSummary }) {
         <div>
           <p className="text-lg font-semibold tabular-nums">
             {event.performanceCount}
-            <span className="ml-1 text-[10px] font-normal text-muted">組</span>
+            <span className="ml-1 text-[11px] font-normal text-muted">組</span>
           </p>
-          <p className="mt-1 text-[10px] text-muted">出演枠</p>
+          <p className="mt-1 text-[11px] text-muted">出演枠</p>
         </div>
         <div>
           <p className="text-lg font-semibold tabular-nums">
             {event.partCount}
-            <span className="ml-1 text-[10px] font-normal text-muted">部</span>
+            <span className="ml-1 text-[11px] font-normal text-muted">部</span>
           </p>
-          <p className="mt-1 text-[10px] text-muted">構成</p>
+          <p className="mt-1 text-[11px] text-muted">構成</p>
         </div>
         <div>
           <p className="text-lg font-semibold tabular-nums">
             {event.responseCount ?? '—'}
-            <span className="ml-1 text-[10px] font-normal text-muted">件</span>
+            <span className="ml-1 text-[11px] font-normal text-muted">件</span>
           </p>
-          <p className="mt-1 text-[10px] text-muted">フォーム回答</p>
+          <p className="mt-1 text-[11px] text-muted">フォーム回答</p>
         </div>
       </div>
       <div className="flex items-center justify-between gap-3 px-5 py-3">

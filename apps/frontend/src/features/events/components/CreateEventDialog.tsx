@@ -76,7 +76,7 @@ export function CreateEventDialog({
           onChange={(bandCounts) => controller.setDraft({ bandCounts })}
         />
         {controller.formError && (
-          <p role="alert" className="text-xs text-red-500">
+          <p role="alert" className="text-xs text-red-600">
             {controller.formError}
           </p>
         )}

@@ -1,10 +1,10 @@
-import { Badge } from '../../../shared/ui/Badge'
 import { Button } from '../../../shared/ui/Button'
 import { Icon } from '../../../shared/ui/Icon'
 import { Panel } from '../../../shared/ui/Panel'
 import { useChatScroll } from '../hooks/useChatScroll'
 import type { EventController } from '../hooks/useEvent'
 import { ChatProposal } from './ChatProposal'
+import { ReorderDialog } from './ReorderDialog'
 
 export function ChatPanel({ controller }: { controller: EventController }) {
   const endRef = useChatScroll(
@@ -13,7 +13,7 @@ export function ChatPanel({ controller }: { controller: EventController }) {
   )
   if (!controller.event || !controller.schedule) return null
   return (
-    <Panel title="AIチャット" action={<Badge>提案は確認して反映</Badge>}>
+    <Panel title="AIチャット">
       <div
         ref={endRef}
         className="max-h-[55dvh] min-h-64 scrollbar-thin overflow-y-auto p-3 xl:max-h-none xl:min-h-0 xl:flex-1"
@@ -66,6 +66,7 @@ export function ChatPanel({ controller }: { controller: EventController }) {
           )}
         </div>
         <ChatProposal controller={controller} />
+        <ReorderDialog controller={controller} />
         <div className="mt-3 rounded-lg border border-line p-3">
           <h3 className="mb-2 text-xs font-semibold">現在の配置</h3>
           <p className="text-xs leading-5 text-muted">
@@ -116,9 +117,7 @@ export function ChatPanel({ controller }: { controller: EventController }) {
             className="w-full resize-none bg-transparent text-[13px] leading-6 placeholder:text-muted focus-visible:ring-0"
           />
           <div className="mt-1 flex items-center justify-between">
-            <span className="text-[11px] text-muted">
-              Ctrl / ⌘ + Enterで送信
-            </span>
+            <span className="text-xs text-muted">Ctrl / ⌘ + Enterで送信</span>
             <Button
               variant="primary"
               type="submit"
@@ -130,7 +129,7 @@ export function ChatPanel({ controller }: { controller: EventController }) {
             </Button>
           </div>
         </div>
-        <p className="mt-2 text-center text-[10px] text-muted/80">
+        <p className="mt-2 text-center text-[11px] text-muted">
           確認して反映した制約は自動保存されます。
         </p>
       </form>

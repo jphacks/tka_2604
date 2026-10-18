@@ -12,8 +12,8 @@ const roster: FormRoster = {
   eventTitle: 'E',
   updatedAt: 'read',
   bands: [
-    { bandId: 'a', bandName: 'A' },
-    { bandId: 'b', bandName: 'B' },
+    { bandId: 'a', bandName: 'A', description: null },
+    { bandId: 'b', bandName: 'B', description: null },
   ],
   members: [
     { memberId: '1', memberName: '田中' },
@@ -71,11 +71,19 @@ describe('registration input and roster', () => {
     const next = applySavedBand(roster, {
       eventId: 'e',
       updatedAt: 'saved',
-      band: { bandId: 'a', bandName: 'A更新', memberIds: [] },
+      band: {
+        bandId: 'a',
+        bandName: 'A更新',
+        description: 'メタル',
+        memberIds: [],
+      },
       members: [],
     })
     expect(next.members).toEqual(roster.members)
     expect(next.memberships).toEqual([{ bandId: 'b', memberId: '1' }])
+    expect(next.bands.find((band) => band.bandId === 'a')?.description).toBe(
+      'メタル',
+    )
     expect(next.updatedAt).toBe('saved')
     expect(memberOptionLabel(next, '1')).toBe('田中（B / ID: 1）')
     expect(memberOptionLabel(next, '2')).toBe('田中（所属なし / ID: 2）')

@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import { Button } from '../../../shared/ui/Button'
 import { Panel } from '../../../shared/ui/Panel'
 import type { EventController } from '../hooks/useEvent'
+import { useScheduleFlip } from '../hooks/useScheduleFlip'
 import { LiveInfoDialog } from './LiveInfoDialog'
 import {
   EmptyPerformanceRow,
@@ -12,7 +13,8 @@ import {
 import { ScheduleDragSurface, UnassignedDropZone } from './ScheduleDragSurface'
 
 export function SchedulePanel({ controller }: { controller: EventController }) {
-  const unassignedRef = useRef<HTMLElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  useScheduleFlip(scrollRef, controller.reorderRevision)
   const { event, schedule, setOrder, setFixed } = controller
   const [editingLive, setEditingLive] = useState(false)
   if (!event || !schedule) return null
@@ -64,20 +66,6 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
           <Button onClick={() => setEditingLive(true)} className="text-xs">
             ライブ情報の編集
           </Button>
-          {schedule.unassigned.length > 0 ? (
-            <Button
-              variant="subtle"
-              className="text-xs"
-              onClick={() =>
-                unassignedRef.current?.scrollIntoView({
-                  block: 'nearest',
-                  behavior: 'smooth',
-                })
-              }
-            >
-              未配置へ（{schedule.unassigned.length}）
-            </Button>
-          ) : undefined}
         </div>
       }
       detail={
@@ -93,7 +81,10 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
         />
       )}
       <ScheduleDragSurface controller={controller}>
-        <div className="max-h-[65dvh] min-h-64 scrollbar-thin overflow-auto xl:max-h-none xl:min-h-0 xl:flex-1">
+        <div
+          ref={scrollRef}
+          className="max-h-[65dvh] min-h-64 scrollbar-thin overflow-auto xl:max-h-none xl:min-h-0 xl:flex-1"
+        >
           <div
             className={`${rowColumns} sticky top-0 z-10 min-h-9 border-b border-line bg-white text-xs text-muted`}
           >
@@ -102,6 +93,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
             <span>順</span>
             <span>出演名</span>
             <span>メンバー</span>
+            <span>紹介</span>
           </div>
           {schedule.sections.map((section) => (
             <section key={section.id} aria-label={section.name}>
@@ -129,7 +121,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
             </section>
           ))}
           <UnassignedDropZone>
-            <section ref={unassignedRef} aria-label="未配置">
+            <section aria-label="未配置">
               <div className="flex min-h-9 min-w-[520px] items-center gap-3 bg-slate-100 px-4 text-xs">
                 <h3 className="font-semibold">
                   未配置 · {schedule.unassigned.length}組

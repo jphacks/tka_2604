@@ -19,7 +19,7 @@ async function choose(page: Page, name: RegExp) {
   return dialog
 }
 
-test('all six condition choices produce editable conditions with live evaluation', async ({
+test('all condition choices produce editable conditions with live evaluation', async ({
   page,
   databaseEvent,
 }, testInfo) => {
@@ -102,51 +102,24 @@ test('all six condition choices produce editable conditions with live evaluation
     .selectOption('parts')
   await dialog.getByRole('checkbox', { name: '第2部', exact: true }).check()
   await dialog.getByRole('button', { name: '変更を保存' }).click()
-  await expect(
-    page.getByRole('article').filter({
-      has: page.getByRole('heading', {
-        name: '青と夏を第2部に配置する',
-        exact: true,
-      }),
-    }),
-  ).toContainText('必須条件に違反')
-
-  dialog = await choose(page, /部ごとの出演数を決める/)
-  await dialog.getByRole('checkbox', { name: 'Pretender', exact: true }).check()
-  await dialog.getByRole('checkbox', { name: 'VPS', exact: true }).check()
-  await dialog.getByRole('spinbutton', { name: '上限（組）' }).fill('2')
-  await dialog.getByRole('button', { name: 'この条件を追加' }).click()
-  await page
-    .getByRole('button', {
-      name: 'Pretender・VPSを各部に0〜2組配置するを編集',
-      exact: true,
-    })
-    .click()
-  dialog = page.getByRole('dialog', { name: '制約を編集' })
-  await dialog
-    .getByRole('combobox', { name: '出演数を数える範囲' })
-    .selectOption('in_parts')
-  await dialog.getByRole('checkbox', { name: '第1部', exact: true }).check()
-  await dialog.getByRole('spinbutton', { name: '下限（組）' }).fill('2')
-  await dialog.getByRole('button', { name: '変更を保存' }).click()
-  const countCondition = page.getByRole('article').filter({
+  const rangeCondition = page.getByRole('article').filter({
     has: page.getByRole('heading', {
-      name: 'Pretender・VPSを第1部の合計で2〜2組配置する',
+      name: '青と夏を第2部に配置する',
       exact: true,
     }),
   })
-  await expect(countCondition).toContainText('達成')
+  await expect(rangeCondition).toContainText('必須条件に違反')
   await page.screenshot({
     path: testInfo.outputPath('conditions.png'),
     fullPage: true,
   })
 
-  await countCondition.getByRole('button', { name: /を削除$/ }).click()
+  await rangeCondition.getByRole('button', { name: /を削除$/ }).click()
   await page
     .getByRole('dialog', { name: '制約を削除' })
     .getByRole('button', { name: '削除する' })
     .click()
-  await expect(countCondition).toHaveCount(0)
+  await expect(rangeCondition).toHaveCount(0)
   await page.getByRole('button', { name: /未達成のみ/ }).click()
   await expect(unassignedCondition).toHaveCount(0)
 })

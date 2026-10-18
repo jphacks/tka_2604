@@ -92,3 +92,23 @@ it('blocks chat while business edits are unsaved and ignores replies after leavi
   expect(api.getMessages).not.toHaveBeenCalled()
   expect(dispatch).toHaveBeenCalledTimes(1)
 })
+
+it('keeps a reorder proposal with the reply text until it is dismissed', async () => {
+  const reorder = {
+    expectedUpdatedAt: '2026-10-17T00:00:00.000Z',
+    source: 'llm',
+    placements: [{ bandId: 'a', partId: 'p1', order: 0 }],
+    results: [],
+  }
+  api.sendMessage.mockResolvedValue({ reply: '並べ替えました。', reorder })
+  api.getMessages.mockResolvedValue([])
+  const { result } = renderHook(() => useEventChat('a', vi.fn(), event, false))
+  act(() => result.current.setChatDraft('盛り上げて'))
+  await act(() => result.current.sendMessage())
+  expect(result.current.chatReorder).toEqual({
+    ...reorder,
+    reply: '並べ替えました。',
+  })
+  act(() => result.current.dismissReorder())
+  expect(result.current.chatReorder).toBeNull()
+})

@@ -351,8 +351,12 @@ describe('form HTTP API', () => {
       eventTitle: seed.event.title,
       updatedAt: seed.event.updatedAt,
       bands: [
-        { bandId: 'a-b1', bandName: 'A' },
-        { bandId: 'a-b2', bandName: 'B' },
+        {
+          bandId: 'a-b1',
+          bandName: 'A',
+          description: '明るいポップス。客席を盛り上げる',
+        },
+        { bandId: 'a-b2', bandName: 'B', description: null },
       ],
       members: [
         { memberId: 'a-m0', memberName: '未所属' },
@@ -437,6 +441,39 @@ describe('form HTTP API', () => {
     expect(after.bands.find((b) => b.bandId === 'a-b1')?.bandName).toBe(
       '新しい名前',
     )
+  })
+
+  it('saves, keeps and clears a band description', async () => {
+    const created = await request('/bands', 'POST', {
+      expectedUpdatedAt: seed.event.updatedAt,
+      bandName: '紹介つき',
+      description: ' 疾走感のあるメロコア ',
+      memberIds: [],
+      newMembers: [{ memberName: '新人' }],
+    })
+    expect(created.status).toBe(201)
+    type Saved = {
+      updatedAt: string
+      band: { bandId: string; description: string | null }
+    }
+    const saved = await created.json<Saved>()
+    expect(saved.band.description).toBe('疾走感のあるメロコア')
+    const renamed = await request(`/bands/${saved.band.bandId}`, 'PATCH', {
+      expectedUpdatedAt: saved.updatedAt,
+      bandName: '改名',
+    })
+    const kept = await renamed.json<Saved>()
+    expect(kept.band.description).toBe('疾走感のあるメロコア')
+    const cleared = await request(`/bands/${saved.band.bandId}`, 'PATCH', {
+      expectedUpdatedAt: kept.updatedAt,
+      description: '  ',
+    })
+    expect((await cleared.json<Saved>()).band.description).toBeNull()
+    const tooLong = await request(`/bands/${saved.band.bandId}`, 'PATCH', {
+      expectedUpdatedAt: kept.updatedAt,
+      description: 'あ'.repeat(501),
+    })
+    expect(tooLong.status).toBe(422)
   })
 
   it('rejects missing and cross-event member IDs without partially saving new people', async () => {

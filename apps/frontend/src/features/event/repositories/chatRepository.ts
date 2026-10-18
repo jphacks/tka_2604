@@ -89,5 +89,40 @@ export async function sendChatMessage(
     )
       throw new Error('チャットの変更案を読み取れませんでした。')
   }
+  if ('reorder' in body && !isReorder(body.reorder))
+    throw new Error('チャットの並べ替え案を読み取れませんでした。')
   return body as ChatResponse
+}
+
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === 'object'
+
+// Checks the fields the dialog reads; BE already judged the contents.
+function isReorder(value: unknown) {
+  return (
+    isObject(value) &&
+    typeof value.expectedUpdatedAt === 'string' &&
+    (value.source === 'llm' || value.source === 'solver') &&
+    Array.isArray(value.placements) &&
+    value.placements.length > 0 &&
+    value.placements.every(
+      (p) =>
+        isObject(p) &&
+        typeof p.bandId === 'string' &&
+        typeof p.partId === 'string' &&
+        Number.isInteger(p.order),
+    ) &&
+    Array.isArray(value.results) &&
+    value.results.every(
+      (r) =>
+        isObject(r) &&
+        typeof r.constraintId === 'string' &&
+        (r.hardness === 'hard' || r.hardness === 'soft') &&
+        typeof r.before === 'string' &&
+        typeof r.after === 'string' &&
+        Array.isArray(r.violations) &&
+        Array.isArray(r.explanations) &&
+        r.explanations.every((text) => typeof text === 'string'),
+    )
+  )
 }

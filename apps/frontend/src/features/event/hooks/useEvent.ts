@@ -7,6 +7,7 @@ import {
 } from '../../../shared/model/constraints'
 import { type EventData, scheduleContent } from '../../../shared/model/event'
 import { applyChatProposal } from '../model/chatProposal'
+import { applyChatReorder } from '../model/chatReorder'
 import {
   type ConstraintPatch,
   eventReducer,
@@ -53,6 +54,8 @@ export function useEvent(eventId: string) {
   const [loadError, setLoadError] = useState('')
   const [retry, setRetry] = useState(0)
   const [showUnmet, setShowUnmet] = useState(false)
+  // Bumped on each approved AI reorder so the schedule animates the move.
+  const [reorderRevision, setReorderRevision] = useState(0)
   useEffect(() => {
     const controller = new AbortController()
     lifetime.current = controller
@@ -126,15 +129,16 @@ export function useEvent(eventId: string) {
   )
 
   const save = useCallback(
-    async (kind: 'schedule' | 'constraints') => {
-      if (!event || busy.current || refreshing || chat.sending) return
+    async (kind: 'schedule' | 'constraints', snapshot = event) => {
+      if (!snapshot || busy.current || refreshing || chat.sending) return false
       busy.current = true
       setSavingKind(kind)
       setSaveError('')
       dispatch({ type: 'notice', message: '' })
       const signal = lifetime.current?.signal
       try {
-        await persist(event, kind)
+        await persist(snapshot, kind)
+        return true
       } catch (error) {
         if (!signal?.aborted) {
           setFailedKind(kind)
@@ -146,6 +150,7 @@ export function useEvent(eventId: string) {
         busy.current = false
         if (!signal?.aborted) setSavingKind(null)
       }
+      return false
     },
     [event, refreshing, chat.sending, persist],
   )
@@ -195,6 +200,7 @@ export function useEvent(eventId: string) {
       const result = await eventRepository.solve(current)
       if (signal?.aborted) return
       const next = applySolverSchedule(current, result)
+      setReorderRevision((value) => value + 1)
       dispatch({ type: 'loaded', event: next })
       setBaseline(next)
       dispatch({ type: 'notice', message: solveMessages[result.result.status] })
@@ -259,6 +265,42 @@ export function useEvent(eventId: string) {
         })
       }
     },
+    // Approving a reorder replaces the schedule and saves it at once; on a
+    // save failure the edit stays local with the usual retry notice.
+    applyReorder: async () => {
+      if (
+        !event ||
+        !chat.chatReorder ||
+        chat.chatBlocked ||
+        busy.current ||
+        refreshing ||
+        chat.sending
+      )
+        return
+      let next: EventData
+      try {
+        next = applyChatReorder(event, chat.chatReorder)
+      } catch (error) {
+        dispatch({
+          type: 'notice',
+          error: true,
+          message:
+            error instanceof Error
+              ? error.message
+              : '並べ替え案を反映できませんでした。',
+        })
+        return
+      }
+      chat.dismissReorder()
+      setReorderRevision((value) => value + 1)
+      dispatch({ type: 'loaded', event: next })
+      if (await save('schedule', next))
+        dispatch({
+          type: 'notice',
+          message: '並べ替え案を出演順に保存しました。',
+        })
+    },
+    reorderRevision,
     loadError,
     saving,
     savingSchedule: savingKind === 'schedule',

@@ -32,7 +32,7 @@ export function LoginPage() {
                 <Icon name="list" className="text-brand" />
                 あなたのライブ
               </span>
-              <span className="rounded bg-wash px-2 py-1 text-[10px] text-brand">
+              <span className="rounded bg-wash px-2 py-1 text-[11px] text-brand">
                 準備がもっと、スムーズに
               </span>
             </div>
@@ -45,7 +45,7 @@ export function LoginPage() {
                 key={text}
                 className="flex items-center gap-3 border-t border-line/70 py-3"
               >
-                <span className="flex size-6 items-center justify-center rounded-full bg-wash text-[10px] font-semibold text-brand">
+                <span className="flex size-6 items-center justify-center rounded-full bg-wash text-[11px] font-semibold text-brand">
                   0{index + 1}
                 </span>
                 <span className="flex-1 text-xs">{text}</span>
@@ -54,7 +54,7 @@ export function LoginPage() {
             ))}
           </div>
         </div>
-        <p className="text-[11px] text-muted">
+        <p className="text-xs text-muted">
           Setly — ライブの出演順づくりを支えるワークスペース
         </p>
       </section>
@@ -81,7 +81,7 @@ export function LoginPage() {
             <Icon name="sparkle" />
             ワークスペースを開く
           </Button>
-          <p className="mt-5 text-center text-[11px] leading-5 text-muted">
+          <p className="mt-5 text-center text-xs leading-5 text-muted">
             イベントの情報は保存され、再読み込み後も残ります。
           </p>
         </div>

@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { useParams } from 'react-router'
 
 import { AppFrame } from '../../../shared/ui/AppFrame'
@@ -5,8 +6,10 @@ import { Button } from '../../../shared/ui/Button'
 import { LinkButton } from '../../../shared/ui/LinkButton'
 import { PageState } from '../../../shared/ui/PageState'
 import { ChatPanel } from '../components/ChatPanel'
+import { ColumnResizer } from '../components/ColumnResizer'
 import { ConstraintsPanel } from '../components/ConstraintsPanel'
 import { SchedulePanel } from '../components/SchedulePanel'
+import { useColumnResize } from '../hooks/useColumnResize'
 import { useEvent } from '../hooks/useEvent'
 
 export function EventPage() {
@@ -16,6 +19,7 @@ export function EventPage() {
 
 function EventWorkspace({ eventId }: { eventId: string }) {
   const controller = useEvent(eventId)
+  const columns = useColumnResize()
   return (
     <AppFrame workspace eventId={eventId} eventName={controller.event?.name}>
       {!controller.event ? (
@@ -47,10 +51,30 @@ function EventWorkspace({ eventId }: { eventId: string }) {
               </LinkButton>
             </div>
           )}
-          <div className="grid min-h-0 min-w-0 flex-1 xl:grid-cols-[minmax(0,1fr)_300px_320px]">
+          <div
+            style={
+              {
+                '--constraints-width': `${columns.widths.constraints}px`,
+                '--chat-width': `${columns.widths.chat}px`,
+              } as CSSProperties
+            }
+            className="relative grid min-h-0 min-w-0 flex-1 xl:grid-cols-[minmax(0,1fr)_var(--constraints-width)_var(--chat-width)]"
+          >
             <SchedulePanel controller={controller} />
             <ConstraintsPanel controller={controller} />
             <ChatPanel controller={controller} />
+            <ColumnResizer
+              handle="constraints"
+              label="出演順と制約の幅を変更"
+              right={columns.widths.constraints + columns.widths.chat}
+              columns={columns}
+            />
+            <ColumnResizer
+              handle="chat"
+              label="制約とAIチャットの幅を変更"
+              right={columns.widths.chat}
+              columns={columns}
+            />
           </div>
         </>
       )}
