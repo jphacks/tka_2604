@@ -153,3 +153,43 @@ test('mobile layout and modal remain usable without page overflow', async ({
     fullPage: true,
   })
 })
+
+test('the recommended member gap is added in one step and listed as one card', async ({
+  page,
+  databaseEvent,
+}, testInfo) => {
+  await openEvent(page, databaseEvent.eventId)
+  await page.getByRole('button', { name: '手動追加' }).click()
+  const dialog = page.getByRole('dialog', { name: '制約を手動追加' })
+  await page.screenshot({ path: testInfo.outputPath('recommend-choices.png') })
+  await dialog
+    .getByRole('button', { name: /掛け持ちの人が連続しないようにする/ })
+    .click()
+  await expect(dialog).toContainText('人に「出演の間に1組以上空ける（必須）」')
+  await page.screenshot({ path: testInfo.outputPath('recommend-confirm.png') })
+  await dialog.getByRole('button', { name: /件を追加$/ }).click()
+  const card = page
+    .getByRole('article')
+    .filter({ hasText: /\d+人の出演の間に1組以上空ける/ })
+  await expect(card).toHaveCount(1)
+  await card.getByRole('button', { name: /内訳/ }).click()
+  await page.screenshot({ path: testInfo.outputPath('recommend-group.png') })
+  await card.getByRole('button', { name: '任意', exact: true }).click()
+  await expect(
+    card.getByRole('button', { name: '任意', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true')
+
+  await page.getByRole('button', { name: '手動追加' }).click()
+  await expect(
+    dialog.getByRole('button', { name: /掛け持ちの人が連続しないようにする/ }),
+  ).toBeDisabled()
+  await expect(dialog).toContainText('追加済み')
+  await dialog.getByRole('button', { name: '閉じる' }).click()
+
+  await card.getByRole('button', { name: /まとめて削除/ }).click()
+  await page
+    .getByRole('dialog', { name: '制約を削除' })
+    .getByRole('button', { name: '削除' })
+    .click()
+  await expect(card).toHaveCount(0)
+})
