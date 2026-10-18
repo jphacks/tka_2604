@@ -10,8 +10,11 @@ import { Button } from '../../../shared/ui/Button'
 import { Dialog } from '../../../shared/ui/Dialog'
 import {
   buildConstraints,
+  buildRecommendedGapConstraints,
   type ConstraintDraft,
   createConstraintDraft,
+  missingGapMemberIds,
+  multiMemberIds,
 } from '../model/constraintDraft'
 import { ConstraintControls } from './ConstraintControls'
 import { ConstraintFields } from './ConstraintFields'
@@ -61,6 +64,7 @@ export function ConstraintForm({
 }) {
   const [draft, setDraft] = useState(() => createConstraintDraft(constraint))
   const [choosing, setChoosing] = useState(!constraint)
+  const [recommending, setRecommending] = useState(false)
   const [error, setError] = useState('')
   const change = (patch: Partial<ConstraintDraft>) => {
     setDraft((value) => ({ ...value, ...patch }))
@@ -84,22 +88,70 @@ export function ConstraintForm({
     for (const item of result.constraints) onSave(item)
     onClose()
   }
+  const multiCount = multiMemberIds(event).length
+  const missingCount = missingGapMemberIds(event).length
+  function addRecommended() {
+    for (const item of buildRecommendedGapConstraints(event, () =>
+      crypto.randomUUID(),
+    ))
+      onSave(item)
+    onClose()
+  }
   return (
     <Dialog
       title={constraint ? '制約を編集' : '制約を手動追加'}
       onClose={onClose}
     >
-      {choosing ? (
+      {recommending ? (
+        <div className="space-y-5">
+          <p className="text-sm leading-7">
+            掛け持ちの{missingCount}
+            人に「出演の間に1組以上空ける（必須）」を1人1件ずつ追加します。
+            {multiCount > missingCount &&
+              `間隔の条件が既にある${multiCount - missingCount}人には追加しません。`}
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button onClick={() => setRecommending(false)}>キャンセル</Button>
+            <Button variant="primary" onClick={addRecommended}>
+              {missingCount}件を追加
+            </Button>
+          </div>
+        </div>
+      ) : choosing ? (
         <>
-          <p className="mb-4 text-sm leading-7 text-muted">
-            条件の種類を選び、対象や数値を入力します。
+          <h3 className="mb-2 text-xs font-semibold text-brand">推奨</h3>
+          <button
+            type="button"
+            disabled={missingCount === 0}
+            className="mb-6 w-full rounded-lg border-2 border-brand/40 bg-wash p-4 text-left hover:border-brand focus-visible:ring-2 disabled:cursor-not-allowed disabled:border-line disabled:bg-white disabled:opacity-70"
+            onClick={() => setRecommending(true)}
+          >
+            <span className="mb-1 flex flex-wrap items-center gap-2 text-sm font-semibold text-brand">
+              掛け持ちの人が連続しないようにする
+              {multiCount > 0 && missingCount === 0 && (
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-normal text-muted">
+                  追加済み
+                </span>
+              )}
+            </span>
+            <span className="block text-xs leading-6 text-muted">
+              {multiCount === 0
+                ? '掛け持ちしているメンバーがいません。'
+                : `掛け持ち${multiCount}人の出演の間に1組以上空けます（必須）。`}
+            </span>
+          </button>
+          <h3 className="mb-1 text-xs font-semibold text-muted">
+            個別に指定する
+          </h3>
+          <p className="mb-3 text-xs leading-6 text-muted">
+            特定の組や人だけに条件をつけたいときに使います。
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             {choices.map((choice) => (
               <button
                 key={choice.type}
                 type="button"
-                className="rounded-lg border border-line p-4 text-left hover:border-brand hover:bg-wash focus-visible:ring-2"
+                className="rounded-lg border border-line p-3 text-left hover:border-brand hover:bg-wash focus-visible:ring-2"
                 onClick={() => {
                   setDraft({
                     ...createConstraintDraft(),
@@ -113,7 +165,7 @@ export function ConstraintForm({
                   setError('')
                 }}
               >
-                <span className="mb-2 block text-sm font-semibold text-brand">
+                <span className="mb-1 block text-sm font-semibold text-ink">
                   {constraintLabels[choice.type]}
                 </span>
                 <span className="mb-2 block text-xs leading-6 text-ink">

@@ -267,3 +267,27 @@ export function buildConstraints(
   }
   return { ok: true, constraints }
 }
+
+/** 推奨：間隔の条件がまだない掛け持ちメンバー */
+export function missingGapMemberIds(event: EventData) {
+  const covered = new Set(
+    event.constraints.flatMap((constraint) =>
+      constraint.type === 'min_gap_member'
+        ? [constraint.targets.member_id]
+        : [],
+    ),
+  )
+  return multiMemberIds(event).filter((id) => !covered.has(id))
+}
+
+/** 推奨：掛け持ちの人の出演の間に1組以上空ける（必須）を不足分だけ作る */
+export function buildRecommendedGapConstraints(
+  event: EventData,
+  createId: () => string,
+) {
+  const draft = { ...createConstraintDraft(), type: 'min_gap_member' as const }
+  return missingGapMemberIds(event).flatMap((memberId) => {
+    const result = buildConstraint({ ...draft, memberId }, event, createId())
+    return result.ok ? [result.constraint] : []
+  })
+}

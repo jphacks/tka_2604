@@ -5,7 +5,9 @@ import {
   ALL_MULTI_MEMBERS,
   buildConstraint,
   buildConstraints,
+  buildRecommendedGapConstraints,
   createConstraintDraft,
+  missingGapMemberIds,
   multiMemberIds,
 } from './constraintDraft'
 
@@ -154,4 +156,30 @@ it('creates one member gap constraint for every member in multiple bands', () =>
       item.type === 'min_gap_member' ? item.targets.member_id : null,
     ),
   ).toEqual(expected)
+})
+
+it('adds the recommended gap only for members in multiple bands without one', () => {
+  const multi = multiMemberIds(eventFixture)
+  expect(multi).toContain('m1')
+  const missing = missingGapMemberIds(eventFixture)
+  expect(missing).toEqual(multi.filter((id) => id !== 'm1'))
+  let id = 0
+  const constraints = buildRecommendedGapConstraints(
+    eventFixture,
+    () => `r${++id}`,
+  )
+  expect(constraints).toHaveLength(missing.length)
+  expect(constraints[0]).toMatchObject({
+    type: 'min_gap_member',
+    hardness: 'hard',
+    priority: null,
+    enabled: true,
+    params: { min_diff: 2, same_part_only: false },
+  })
+  const filled = {
+    ...eventFixture,
+    constraints: [...eventFixture.constraints, ...constraints],
+  }
+  expect(missingGapMemberIds(filled)).toEqual([])
+  expect(buildRecommendedGapConstraints(filled, () => 'x')).toEqual([])
 })

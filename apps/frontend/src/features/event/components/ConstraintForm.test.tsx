@@ -3,6 +3,10 @@ import userEvent from '@testing-library/user-event'
 import { expect, it, vi } from 'vitest'
 
 import { eventFixture } from '../../../test/fixtures/event'
+import {
+  buildRecommendedGapConstraints,
+  missingGapMemberIds,
+} from '../model/constraintDraft'
 import { ConstraintForm } from './ConstraintForm'
 
 it('guides a person from a condition choice through validation, preview, and a typed constraint', async () => {
@@ -44,4 +48,54 @@ it('guides a person from a condition choice through validation, preview, and a t
     }),
   )
   expect(onClose).toHaveBeenCalledOnce()
+})
+
+it('adds the recommended member gap after confirmation, and adds nothing on cancel', async () => {
+  const user = userEvent.setup()
+  const onSave = vi.fn()
+  const onClose = vi.fn()
+  const missing = missingGapMemberIds(eventFixture).length
+  render(
+    <ConstraintForm event={eventFixture} onSave={onSave} onClose={onClose} />,
+  )
+  const dialog = within(screen.getByRole('dialog'))
+  const recommended = dialog.getByRole('button', {
+    name: /掛け持ちの人が連続しないようにする/,
+  })
+  await user.click(recommended)
+  expect(dialog.getByText(new RegExp(`掛け持ちの${missing}人`))).toBeVisible()
+  await user.click(dialog.getByRole('button', { name: 'キャンセル' }))
+  expect(onSave).not.toHaveBeenCalled()
+  expect(onClose).not.toHaveBeenCalled()
+  await user.click(
+    dialog.getByRole('button', { name: /掛け持ちの人が連続しないようにする/ }),
+  )
+  await user.click(dialog.getByRole('button', { name: `${missing}件を追加` }))
+  expect(onSave).toHaveBeenCalledTimes(missing)
+  expect(onSave).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: 'min_gap_member',
+      hardness: 'hard',
+      params: { min_diff: 2, same_part_only: false },
+    }),
+  )
+  expect(onClose).toHaveBeenCalledOnce()
+})
+
+it('shows the recommendation as already added when every member has a gap', () => {
+  const event = {
+    ...eventFixture,
+    constraints: [
+      ...eventFixture.constraints,
+      ...buildRecommendedGapConstraints(eventFixture, () =>
+        crypto.randomUUID(),
+      ),
+    ],
+  }
+  render(<ConstraintForm event={event} onSave={vi.fn()} onClose={vi.fn()} />)
+  const recommended = within(screen.getByRole('dialog')).getByRole('button', {
+    name: /掛け持ちの人が連続しないようにする/,
+  })
+  expect(recommended).toBeDisabled()
+  expect(recommended).toHaveTextContent('追加済み')
 })
