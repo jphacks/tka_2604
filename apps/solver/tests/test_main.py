@@ -104,6 +104,73 @@ def test_solve_accepts_band_count_for_each_part(client: TestClient) -> None:
     assert response.status_code == 200
 
 
+@pytest.mark.parametrize("gap_type", ["min_gap_member", "min_gap_bands"])
+def test_solve_ignores_min_gap_pairs_across_parts(
+    client: TestClient, gap_type: str
+) -> None:
+    payload = solve_payload()
+    payload["parts"] = [
+        {"partId": "part-1", "sortOrder": 0, "bandCount": 1},
+        {"partId": "part-2", "sortOrder": 1, "bandCount": 1},
+    ]
+    payload["constraints"] = [
+        {
+            "schema_version": "1.0.0",
+            "constraint_id": "c-part-a",
+            "event_id": "event-1",
+            "type": "in_range",
+            "hardness": "hard",
+            "priority": None,
+            "enabled": True,
+            "targets": {"band_ids": ["band-a"]},
+            "params": {"kind": "parts", "part_ids": [0]},
+        },
+        {
+            "schema_version": "1.0.0",
+            "constraint_id": "c-part-b",
+            "event_id": "event-1",
+            "type": "in_range",
+            "hardness": "hard",
+            "priority": None,
+            "enabled": True,
+            "targets": {"band_ids": ["band-b"]},
+            "params": {"kind": "parts", "part_ids": [1]},
+        },
+        {
+            "schema_version": "1.0.0",
+            "constraint_id": "c-gap",
+            "event_id": "event-1",
+            "type": gap_type,
+            "hardness": "hard",
+            "priority": None,
+            "enabled": True,
+            "targets": (
+                {"member_id": "member-1"}
+                if gap_type == "min_gap_member"
+                else {"band_ids": ["band-a", "band-b"]}
+            ),
+            "params": {"min_diff": 2, "same_part_only": True},
+        },
+    ]
+    if gap_type == "min_gap_member":
+        payload["members"] = [{"memberId": "member-1"}]
+        payload["memberships"] = [
+            {"bandId": "band-a", "memberId": "member-1"},
+            {"bandId": "band-b", "memberId": "member-1"},
+        ]
+
+    response = post_solve(client, payload)
+
+    assert response.status_code == 200
+    body = response.json()
+    placements = {item["bandId"]: item["partId"] for item in body["placements"]}
+    assert placements == {"band-a": "part-1", "band-b": "part-2"}
+    assert body["constraintResults"][-1] == {
+        "constraintId": "c-gap",
+        "status": "met",
+    }
+
+
 @pytest.mark.parametrize("band_count", [-1, 1.5, True, "5"])
 def test_solve_rejects_invalid_part_band_count(
     client: TestClient, band_count: object
