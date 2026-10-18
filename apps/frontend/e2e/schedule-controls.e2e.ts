@@ -6,7 +6,7 @@ test('pointer drag previews, commits and persists a reorder while preserving fix
   request,
 }) => {
   await page.goto(`/event/${databaseEvent.eventId}`)
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await expect(
     page.getByRole('button', { name: 'ライブ情報の編集', exact: true }),
   ).toBeEnabled()
@@ -131,7 +131,7 @@ test('pointer drag previews, commits and persists a reorder while preserving fix
     placements.find((row) => row.bandId === databaseEvent.bandIds.p2)?.order,
   ).toBe(1)
   await page.reload()
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await expect(
     page.getByRole('textbox', { name: 'Pretenderの出演順', exact: true }),
   ).toHaveValue('2')
@@ -147,7 +147,7 @@ test('keyboard order clearing refuses changes that would shift a hard fixed posi
     placements: unknown[]
   }
   await page.goto(`/event/${databaseEvent.eventId}`)
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   const fixedSaved = page.waitForResponse(
     (response) =>
       response
@@ -187,7 +187,7 @@ test('keyboard handle supports cancel and commit while keeping focus and fixed r
   databaseEvent,
 }) => {
   await page.goto(`/event/${databaseEvent.eventId}`)
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   const handle = page.getByRole('button', {
     name: 'Pretenderを並べ替え',
     exact: true,
@@ -228,7 +228,7 @@ test('live info edits are validated, cancelled or applied as one change', async 
   databaseEvent,
 }) => {
   await page.goto(`/event/${databaseEvent.eventId}`)
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await page.getByRole('button', { name: 'ライブ情報の編集' }).click()
   const dialog = page.getByRole('dialog', { name: 'ライブ情報の編集' })
   const capacity = dialog.getByRole('spinbutton', {
@@ -278,7 +278,7 @@ test('live info edits are validated, cancelled or applied as one change', async 
     page.getByRole('button', { name: '出演順を保存', exact: true }),
   ).toBeDisabled()
   await page.reload()
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await expect(
     page.getByRole('heading', { name: '第1部 · 3/3組', exact: true }),
   ).toBeVisible()

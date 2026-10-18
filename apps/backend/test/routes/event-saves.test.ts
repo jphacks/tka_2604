@@ -8,10 +8,12 @@ import { createDb } from '../../src/db/index'
 import * as persistence from '../../src/db/save-event'
 import app from '../../src/index'
 import { openApiDocument } from '../../src/openapi'
+import { createAuthenticatedHeaders } from '../helpers/auth'
 import { testDatabase } from '../helpers/database'
 import { expectJsonResponse } from '../helpers/openapi'
 
 let local: Awaited<ReturnType<typeof testDatabase>>
+let sessionHeaders: Record<string, string>
 beforeEach(async () => {
   local = await testDatabase()
   const seed = await readFile(
@@ -23,6 +25,7 @@ beforeEach(async () => {
   await local.binding
     .prepare("INSERT INTO users VALUES ('demo-other-owner', 'test-only')")
     .run()
+  sessionHeaders = await createAuthenticatedHeaders(local.binding)
 })
 afterEach(async () => {
   vi.restoreAllMocks()
@@ -35,7 +38,7 @@ function request(resource: string, body: unknown, eventId = 'demo-event') {
     `/api/events/${eventId}/${resource}`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...sessionHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     },
     { DB: local.binding },
@@ -181,7 +184,7 @@ describe('separate schedule and constraint saves', () => {
     })
     const chat = await app.request(
       '/api/events/demo-event/chat',
-      {},
+      { headers: sessionHeaders },
       { DB: local.binding },
     )
     expect((await chat.json<{ messages: unknown[] }>()).messages).toHaveLength(
@@ -330,7 +333,7 @@ describe('separate schedule and constraint saves', () => {
       '/api/events/demo-event/schedule',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...sessionHeaders, 'Content-Type': 'application/json' },
         body: '{',
       },
       { DB: local.binding },

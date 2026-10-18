@@ -2,7 +2,7 @@ import { expect, it } from 'vitest'
 
 import { loginDestination } from './navigation'
 
-it('restores an event URL after demo login and rejects non-event destinations', () => {
+it('restores an event URL after login and rejects non-event destinations', () => {
   expect(loginDestination({ returnTo: '/event/spring-live-2026' })).toBe(
     '/event/spring-live-2026',
   )

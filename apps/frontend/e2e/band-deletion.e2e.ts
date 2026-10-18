@@ -28,7 +28,7 @@ test('confirms or cancels band deletion, retains the roster and persists assigne
       deletes++
   })
   await page.goto(`/event/${databaseEvent.eventId}/performances`)
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   const button = page.getByRole('button', {
     name: 'Pretenderを削除',
     exact: true,
@@ -98,7 +98,7 @@ test('confirms or cancels band deletion, retains the roster and persists assigne
   })
   expect(resaved.status()).toBe(200)
   await page.goto(`/event/${databaseEvent.eventId}`)
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   const deleted = originalSchedule.placements.find(
     (row) => row.bandId === databaseEvent.bandIds.p2,
   )!
@@ -120,7 +120,7 @@ test('confirms or cancels band deletion, retains the roster and persists assigne
     ).toHaveAttribute('data-performance', placement.bandId)
   await page.goto(`/event/${databaseEvent.eventId}/performances`)
 
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await expect(button).toHaveCount(0)
   const unassigned = page.getByRole('button', {
     name: '源泉掛け流しを削除',
@@ -151,7 +151,7 @@ test('retains the confirmation on API failure, retries, and blocks closing or du
     await route.continue()
   })
   await page.goto(`/event/${databaseEvent.eventId}/performances`)
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await page
     .getByRole('button', { name: 'Pretenderを削除', exact: true })
     .click()
@@ -186,7 +186,7 @@ test('rejects stale confirmation, reloads explicitly and requires confirming the
 }) => {
   const url = `/api/events/${databaseEvent.eventId}`
   await page.goto(`/event/${databaseEvent.eventId}/performances`)
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await page
     .getByRole('button', { name: 'Pretenderを削除', exact: true })
     .click()
@@ -238,7 +238,7 @@ test('deletes a referenced band and retains the constraints after reload', async
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.goto(`/event/${databaseEvent.eventId}/performances`)
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await page
     .getByRole('button', { name: '気分上々↑↑を削除', exact: true })
     .click()
@@ -254,7 +254,7 @@ test('deletes a referenced band and retains the constraints after reload', async
   ).json()) as { constraints: unknown[] }
   expect(remaining.constraints).toEqual(constraintsBefore.constraints)
   await page.goto(`/event/${databaseEvent.eventId}`)
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await expect(
     page.getByRole('button', { name: '自動生成', exact: true }),
   ).toBeVisible()

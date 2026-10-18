@@ -32,10 +32,12 @@ import type {
   EventDetails,
   EventSummary,
 } from '../../src/services/events/types'
+import { createAuthenticatedHeaders } from '../helpers/auth'
 import { testDatabase } from '../helpers/database'
 import { expectJsonResponse } from '../helpers/openapi'
 
 let local: Awaited<ReturnType<typeof testDatabase>>
+let sessionHeaders: Record<string, string>
 let db: ReturnType<typeof createDb>
 beforeEach(async () => {
   local = await testDatabase()
@@ -44,6 +46,7 @@ beforeEach(async () => {
     { userId: 'demo-owner', passwordHash: 'test-only' },
     { userId: 'other', passwordHash: 'test-only' },
   ])
+  sessionHeaders = await createAuthenticatedHeaders(local.binding)
 })
 afterEach(async () => {
   await local?.dispose()
@@ -55,9 +58,9 @@ function request(path = '/api/events', method = 'GET', body?: unknown) {
     {
       method,
       ...(body === undefined
-        ? {}
+        ? { headers: sessionHeaders }
         : {
-            headers: { 'Content-Type': 'application/json' },
+            headers: { ...sessionHeaders, 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
           }),
     },
@@ -89,7 +92,7 @@ describe('event HTTP API', () => {
       `/${created.eventId}/schedule`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...sessionHeaders, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           expectedUpdatedAt: created.updatedAt,
           parts: snapshot.parts.map(({ partId, partName }) => ({
@@ -112,7 +115,7 @@ describe('event HTTP API', () => {
       `/${created.eventId}/constraints`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...sessionHeaders, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           expectedUpdatedAt: saved.updatedAt,
           constraints: [],
@@ -149,7 +152,7 @@ describe('event HTTP API', () => {
       `/${created.eventId}/solve`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...sessionHeaders, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           expectedUpdatedAt: created.updatedAt,
           parts: snapshot.parts.map(({ partId }) => ({ partId, bandCount: 5 })),
@@ -258,7 +261,7 @@ describe('event HTTP API', () => {
     ] as const) {
       const response = await app.request(
         '/api/events',
-        { method: 'POST', body, headers },
+        { method: 'POST', body, headers: { ...sessionHeaders, ...headers } },
         { DB: local.binding },
       )
       expect(response.status).toBe(status)
@@ -398,12 +401,12 @@ describe('event HTTP API', () => {
     expect(await loadEvent(db, 'demo-owner', eventId)).toBeNull()
   })
 
-  it('uses the demo owner without environment settings and ignores client-supplied owner IDs', async () => {
+  it('uses the authenticated session owner and ignores client-supplied owner IDs', async () => {
     const created = await create()
     await createEvent(db, 'other', { title: 'Other owner' })
     const response = await app.request(
       '/api/events?userId=other',
-      { headers: { 'X-User-Id': 'other' } },
+      { headers: { ...sessionHeaders, 'X-User-Id': 'other' } },
       { DB: local.binding },
     )
     expect(response.status).toBe(200)
@@ -464,6 +467,7 @@ describe('event HTTP API', () => {
 
   it('exposes event request and response types through Hono RPC', async () => {
     const client = hc<AppType>('http://localhost', {
+      headers: sessionHeaders,
       fetch: async (input: RequestInfo | URL, init?: RequestInit) =>
         app.request(input instanceof URL ? input.toString() : input, init, {
           DB: local.binding,

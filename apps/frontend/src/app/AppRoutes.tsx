@@ -22,9 +22,13 @@ import { loginDestination } from './navigation'
 import { useSession } from './sessionContext'
 
 function ProtectedRoutes() {
-  const { session, loading } = useSession()
+  const { session, loading, restoreError, retrySession } = useSession()
   const location = useLocation()
   if (loading) return <PageState />
+  if (restoreError)
+    return (
+      <PageState error={restoreError} onRetry={() => void retrySession()} />
+    )
   return session ? (
     <Outlet />
   ) : (
@@ -33,9 +37,13 @@ function ProtectedRoutes() {
 }
 
 function LoginRoute() {
-  const { session, loading } = useSession()
+  const { session, loading, restoreError, retrySession } = useSession()
   const location = useLocation()
   if (loading) return <PageState />
+  if (restoreError)
+    return (
+      <PageState error={restoreError} onRetry={() => void retrySession()} />
+    )
   return session ? (
     <Navigate to={loginDestination(location.state)} replace />
   ) : (

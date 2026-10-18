@@ -25,10 +25,11 @@ import {
 import { solveInputSchema } from '../services/solver/contract'
 import { SolverError } from '../services/solver/errors'
 import { solverService } from '../services/solver/service'
+import { type AuthVariables, requireSession } from './auth-security'
 
 type EventEnv = {
   Bindings: CloudflareBindings
-  Variables: {
+  Variables: AuthVariables & {
     eventService: ReturnType<typeof eventService>
     scheduling: ReturnType<typeof schedulingService>
     solve: ReturnType<typeof solverService>
@@ -133,10 +134,9 @@ export const eventRoutes = new Hono<EventEnv>()
       500,
     )
   })
+  .use('*', requireSession)
   .use('*', async (c, next) => {
-    // #57 replaces this server-side placeholder with the authenticated user ID.
-    // Never resolve the owner from query parameters, request bodies or headers.
-    const userId = 'demo-owner'
+    const userId = c.get('userId')
     const db = createDb(c.env.DB)
     const scheduling = schedulingRepository(db)
     c.set('eventService', eventService(eventsRepository(db), userId))

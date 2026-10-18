@@ -1,6 +1,6 @@
 # DB方針・設計
 
-Cloudflare D1をDrizzle ORMで扱う。developとmainのDBは分離し、Honoからは`c.env.DB`で接続する。業務API・frontend接続・認証は後続Issueで実装する。今回の確認はローカルD1のみ。
+Cloudflare D1をDrizzle ORMで扱う。developとmainのDBは分離し、Honoからは`c.env.DB`で接続する。業務API・frontend・認証は接続済み。開発とテストはローカルD1で確認する。
 
 ## 正本と配置
 
@@ -24,6 +24,7 @@ DBのテーブル定義は`apps/backend/src/db/schema.ts`で管理する。こ�
 ```mermaid
 erDiagram
     User ||--o{ Event : "所有"
+    User ||--o{ Auth_Session : "ログイン状態"
     Event ||--o{ Band : "出演バンド"
     Event ||--o{ Member : "出演者"
     Event ||--|{ Part : "1部以上"
@@ -38,6 +39,16 @@ erDiagram
     User {
         TEXT user_id PK "必須・ログインID"
         TEXT password_hash "必須"
+    }
+    Auth_Session {
+        TEXT token_hash PK "必須・SHA-256"
+        TEXT user_id FK "必須・削除時cascade"
+        INTEGER expires_at "必須・UTC epoch ms"
+    }
+    Auth_Rate_Limit {
+        TEXT key PK "必須・ID/IPのハッシュと用途"
+        INTEGER attempts "必須・固定窓の試行数"
+        INTEGER expires_at "必須・UTC epoch ms"
     }
     Event {
         TEXT event_id PK "必須"
@@ -97,7 +108,7 @@ erDiagram
     }
 ```
 
-状態の保存値は既存frontendに合わせ`planning`／`adjusting`／`confirmed`、初期値は`planning`。日時はUTCのISO 8601文字列。開催日は任意の`YYYY-MM-DD`。パスワードはハッシュのみを保存し、取得結果・ログに含めない。ハッシュ方式・セッションは#13で決める。Userはメールアドレスを持たず、Eventの所有者は一人。共同管理テーブルは作らない。
+状態の保存値は既存frontendに合わせ`planning`／`adjusting`／`confirmed`、初期値は`planning`。日時はUTCのISO 8601文字列。開催日は任意の`YYYY-MM-DD`。パスワードはハッシュのみを保存し、取得結果・ログに含めない。ハッシュはsalt付きscrypt。セッションの秘密値はSHA-256のダイジェストだけを保存する。Userはメールアドレスを持たず、Eventの所有者は一人。共同管理テーブルは作らない。
 
 ## DBが保証すること
 
@@ -131,7 +142,7 @@ Eventはis_deletedを1にする論理削除。配下は残し、通常の読み�
 
 保存処理は信頼できるuser_idを受け取る内部関数で、ユーザーの認証自体は行わない。業務APIから呼ぶ際に認証済みユーザーを渡す。
 
-#15のイベント本体APIは`Route → Service → Repository`で接続する。`apps/backend/src/repositories/events.ts`は所有者・論理削除で絞った基本情報と独立した件数集計を返し、設定更新は`updatedAt`を条件にして原子的に行う。作成・論理削除は既存の`db/events.ts`を利用する。認証の追加前はRoute内の仮ID定数`demo-owner`を渡し、#57で認証済みIDへ置き換える。APIの詳細は[イベントAPI](../apps/backend/docs/api/events.md)を参照。
+#15のイベント本体APIは`Route → Service → Repository`で接続する。`apps/backend/src/repositories/events.ts`は所有者・論理削除で絞った基本情報と独立した件数集計を返し、設定更新は`updatedAt`を条件にして原子的に行う。作成・論理削除は既存の`db/events.ts`を利用する。共通認証middlewareから、BEで検証したユーザーIDを渡す。APIの詳細は[イベントAPI](../apps/backend/docs/api/events.md)を参照。
 
 ## 後続Issueで扱うこと
 
@@ -166,3 +177,11 @@ Band.descriptionはジャンル・雰囲気などのバンド紹介（NULL可、
 通常の一括保存と公開フォームではBand・Memberを保持する。管理画面の明示的な確認後だけ、[バンド削除API](../apps/backend/docs/api/bands.md)でBandとその所属・配置を削除する。Memberは残す。既存のCASCADE定義を使い、スキーマ変更は行わない。
 
 制約からの参照や削除後の位置範囲にかかわらずバンドを削除する。source_band_idが削除対象を指す制約は、有効状態や対象IDにかかわらず同じbatch内で削除する。それ以外の制約JSONは保持する。対象バンドの配置だけを削除し、他バンドのorderは変更しない。欠番は未設定の位置を表す。所有者・未削除状態・更新日時・バンド所属先を書込み時にも再確認し、失敗時は全体をロールバックする。
+
+## 認証の保存（#59）
+
+`0007_auth_sessions.sql`で`auth_sessions`と`auth_rate_limits`を追加する。既存`users.password_hash`とイベント所有者は変更しない。新規登録のUserとセッションは同じD1 batchで作成し、途中失敗なら全体を戻す。IDの重複は既存パスワードを上書きせず409にする。
+
+セッション期限はUTC epochミリ秒のINTEGERで保持し、毎回のAPI認証で期限とユーザーの存在を確認する。期限切れの行はセッション発行時に清掃する。ログアウトでは該当行を削除し、パスワード変更コマンドでは対象ユーザーの全セッションを削除する。
+
+試行制限はアカウントごと10回／60秒、IPごと30回／60秒をD1の原子的なUPSERTで数える。ログイン・新規登録に共通適用し、存在しないIDも同じように数える。超過後は期限を延長せず429を返す。期限切れのバケットは試行時に清掃する。

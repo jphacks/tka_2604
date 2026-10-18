@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import {
   type AnySQLiteColumn,
   check,
+  index,
   integer,
   primaryKey,
   sqliteTable,
@@ -16,6 +17,33 @@ export const users = sqliteTable('users', {
   // パスワードのハッシュ
   passwordHash: text('password_hash').notNull(),
 })
+
+// 生のCookie値は保存せず、ランダムなセッショントークンのSHA-256のみ保持する。
+export const authSessions = sqliteTable(
+  'auth_sessions',
+  {
+    tokenHash: text('token_hash').primaryKey().notNull(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.userId, { onDelete: 'cascade' }),
+    expiresAt: integer('expires_at').notNull(),
+  },
+  (table) => [
+    index('auth_sessions_expiry').on(table.expiresAt),
+    index('auth_sessions_user').on(table.userId),
+  ],
+)
+
+// 固定窓の試行回数。ID/IPはハッシュ化し、拒否のたびに期限を延長しない。
+export const authRateLimits = sqliteTable(
+  'auth_rate_limits',
+  {
+    key: text('key').primaryKey().notNull(),
+    attempts: integer('attempts').notNull(),
+    expiresAt: integer('expires_at').notNull(),
+  },
+  (table) => [index('auth_rate_limits_expiry').on(table.expiresAt)],
+)
 
 // イベント：所有者・開催情報・編集状態を管理する。
 export const events = sqliteTable(

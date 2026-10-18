@@ -2,6 +2,7 @@ import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
   testDir: './e2e',
+  globalSetup: './e2e/auth-setup.ts',
   forbidOnly: Boolean(process.env.CI),
   outputDir: './test-results/api',
   testMatch: '**/*.e2e.ts',

@@ -183,8 +183,7 @@ test('production flow: create an event, open its form, register and update DB me
   request,
 }) => {
   await page.goto('/login')
-  await expect(page.locator('body')).not.toContainText('デモ')
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await page
     .getByRole('button', { name: 'イベントを作成', exact: true })
     .first()

@@ -5,15 +5,18 @@ import { createDb } from '../../src/db/index'
 import { users } from '../../src/db/schema'
 import app from '../../src/index'
 import { openApiDocument } from '../../src/openapi'
+import { createAuthenticatedHeaders } from '../helpers/auth'
 import { testDatabase } from '../helpers/database'
 import { expectJsonResponse } from '../helpers/openapi'
 
 let local: Awaited<ReturnType<typeof testDatabase>>
+let sessionHeaders: Record<string, string>
 beforeEach(async () => {
   local = await testDatabase()
   await createDb(local.binding)
     .insert(users)
     .values({ userId: 'demo-owner', passwordHash: 'test-only' })
+  sessionHeaders = await createAuthenticatedHeaders(local.binding)
 })
 afterEach(async () => {
   vi.restoreAllMocks()
@@ -24,7 +27,7 @@ function request(path: string, method = 'GET', body?: unknown) {
     `/api/events${path}`,
     {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...sessionHeaders, 'Content-Type': 'application/json' },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     },
     { DB: local.binding },

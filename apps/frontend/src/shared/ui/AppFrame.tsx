@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useRef, useState } from 'react'
 import { Link, NavLink } from 'react-router'
 
 import { useSession } from '../../app/sessionContext'
@@ -21,6 +21,25 @@ export function AppFrame({
 }) {
   const width = workspace ? '' : wide ? 'max-w-[1600px]' : 'max-w-[1200px]'
   const { session, signOut } = useSession()
+  const [signingOut, setSigningOut] = useState(false)
+  const [logoutError, setLogoutError] = useState('')
+  const logoutInFlight = useRef(false)
+  async function logout() {
+    if (logoutInFlight.current) return
+    logoutInFlight.current = true
+    setSigningOut(true)
+    setLogoutError('')
+    try {
+      await signOut()
+    } catch {
+      setLogoutError(
+        'ログアウトできませんでした。接続を確認してもう一度お試しください。',
+      )
+    } finally {
+      logoutInFlight.current = false
+      setSigningOut(false)
+    }
+  }
   return (
     <div
       className={
@@ -42,19 +61,25 @@ export function AppFrame({
             運
           </span>
           <span className="hidden max-w-32 truncate text-xs sm:inline">
-            {session?.name}
+            {session?.userId}
           </span>
           <Button
             variant="ghost"
             className="text-xs"
             aria-label="ログアウト"
-            onClick={() => void signOut()}
+            disabled={signingOut}
+            onClick={() => void logout()}
           >
             <Icon name="logout" />
             <span className="hidden sm:inline">ログアウト</span>
           </Button>
         </div>
       </header>
+      {logoutError && (
+        <p role="alert" className="bg-red-50 px-4 py-3 text-sm text-red-600">
+          {logoutError}
+        </p>
+      )}
       {eventId && (
         <div className="shrink-0 border-b border-line bg-white">
           <nav

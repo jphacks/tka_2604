@@ -45,7 +45,8 @@
     "test:e2e:solver": "node scripts/test-e2e-solver.mjs",
     "db:generate": "npm run db:generate --workspace=@jphack-2026/backend --",
     "db:seed:local": "wrangler d1 execute DB --env develop --local --file apps/backend/db/seed.sql",
-    "db:prepare:e2e": "wrangler d1 migrations apply DB --env develop --local --persist-to .wrangler/e2e-api && wrangler d1 execute DB --env develop --local --persist-to .wrangler/e2e-api --file apps/backend/db/seed.sql"
+    "db:prepare:e2e": "wrangler d1 migrations apply DB --env develop --local --persist-to .wrangler/e2e-api && wrangler d1 execute DB --env develop --local --persist-to .wrangler/e2e-api --file apps/backend/db/seed.sql",
+    "auth:provision": "node --experimental-strip-types scripts/provision-user.mjs"
   },
   "lint-staged": {
     "*.{js,mjs,cjs,jsx,ts,tsx}": "eslint --max-warnings=0 --no-warn-ignored",

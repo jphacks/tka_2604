@@ -1,7 +1,6 @@
 export type EventStatus = 'planning' | 'adjusting' | 'confirmed'
 export interface Session {
-  name: string
-  email: string
+  userId: string
 }
 export interface EventDetails {
   id: string

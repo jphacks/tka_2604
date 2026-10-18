@@ -2,8 +2,9 @@ import { hc } from 'hono/client'
 
 import type { ChatAppType } from '../../../../../backend/src/routes/chat'
 import type { ChatResponse } from '../../../../../backend/src/services/chat/types'
+import { createSessionFetch } from '../../../shared/api/sessionEvents'
 
-const client = hc<ChatAppType>('/api/events')
+const client = hc<ChatAppType>('/api/events', { fetch: createSessionFetch() })
 
 export async function sendChatMessage(
   eventId: string,
@@ -15,6 +16,11 @@ export async function sendChatMessage(
     { param: { eventId }, json: { message, ...(messageId && { messageId }) } },
     { init: { signal } },
   )
+  if (response.status === 401) {
+    throw new Error(
+      'セッションの有効期限が切れました。もう一度ログインしてください。',
+    )
+  }
   if (!response.ok) {
     throw new Error('送信に失敗しました。もう一度お試しください。')
   }

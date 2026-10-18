@@ -8,7 +8,7 @@ const roster =
 
 async function openImport(page: Page, eventId: string) {
   await page.goto(`/event/${eventId}/performances`)
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await page.getByRole('button', { name: 'CSVを取り込む' }).click()
   return page.getByRole('dialog', { name: '名簿CSVを取り込む' })
 }

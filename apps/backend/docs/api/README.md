@@ -4,13 +4,13 @@ OpenAPI 3.1.0の仕様を`apps/backend/docs/api/openapi.json`に手書きで管�
 
 APIを変更するときは実装・OpenAPI仕様・APIの動作テストを同じ変更で更新する。OpenAPIの自動生成は行わない。`apps/backend/src/openapi.ts`は仕様JSONの読み込みとSwagger UIの設定だけを担当する。
 
-イベント本体の一覧・作成・詳細取得・設定更新・論理削除は[イベントAPI](events.md)を参照。認証接続前はRoute内の仮ID定数`demo-owner`を所有者として渡し、#57で認証済みIDへ置き換える。環境変数の設定は不要。
+イベント本体の一覧・作成・詳細取得・設定更新・論理削除は[イベントAPI](events.md)を参照。[認証API](auth.md)で発行したCookieセッションが必要。セッションから所有者IDを取得し、別ユーザーのイベントは404を返す。
 
 フォームの名簿取得・バンド登録・所属編集は[フォーム名簿API](forms.md)を参照。`routes/form.ts`で独立して提供し、URLを知る人が認証なしで利用できる。所属解除でもメンバーはイベント名簿に残る。新規登録は1人以上、編集は0人まで許可する。公開フォームの初回登録・更新と管理画面からの導線は接続済み。公開フォームの所属解除では名簿に残る。バンド本体の削除は[管理用バンド削除API](bands.md)を使う。メンバー本体の削除は未実装。フォーム設定・受付終了・希望変換は別Issueで扱う。
 
 表・制約・チャット履歴は、それぞれ`GET /api/events/{eventId}/schedule`・`/constraints`・`/chat`で取得する。契約・具体例・並び順は[イベントAPI](events.md)にまとめる。チャットはページング・件数上限なしで保存済み全履歴を返す。
 
-`GET /api/health`は入力なしで200と`{"status":"ok"}`を返す。DBの稼働確認は含まない。イベント本体と3種類の情報取得を実装済み。表・制約は同じパスのPOSTで個別保存する。計算は独立した`POST /api/events/{eventId}/solve`を使う。[計算API](solver.md)を参照。認証は後続Issueで扱う。
+`GET /api/health`は入力なしで200と`{"status":"ok"}`を返す。DBの稼働確認は含まない。イベント本体と3種類の情報取得を実装済み。表・制約は同じパスのPOSTで個別保存する。計算は独立した`POST /api/events/{eventId}/solve`を使う。[計算API](solver.md)を参照。管理用APIは未認証なら401、更新リクエストのOrigin不正・欠落は403で処理を拒否する。
 [チャット送信](chat.md)の`POST /api/events/{eventId}/chat`は所有者・イベントを確認し、userの先行保存、LLM生成・検証、assistant本文保存の順に処理する。履歴取得GETと同じパスで、既存の`reply`形式で返す。生成Serviceの型・検証は[AIチャット入出力](../AIチャット入出力.md)を参照。
 
 BE ↔ Solverの契約案は[BE - Solver API設計](<../BE - Solver API設計.md>)を参照。リクエスト・レスポンス例と探索状態を記載している。これはbackend → Solverの契約。ブラウザ → backendの計算APIは[計算API](solver.md)と配信OpenAPIに記載する。
@@ -35,7 +35,7 @@ MarkdownのAPI定義書は[共通テンプレート](template.md)を使い、次
 
 ## Swaggerの分類と現在の対応範囲
 
-実装済みのAPIは17操作。`Health`、`Events`、`Form`、`Schedule`、`Constraints`、`Chat`、`Solver`に分類する。チャット履歴GETと送信POSTは同じ`Chat`欄に表示する。
+実装済みのAPIは20操作。`Auth`、`Health`、`Events`、`Form`、`Schedule`、`Constraints`、`Chat`、`Solver`に分類する。チャット履歴GETと送信POSTは同じ`Chat`欄に表示する。
 
 - `Events`の`DELETE /api/events/{eventId}/bands/{bandId}`はバンド本体の削除。確認元の`expectedUpdatedAt`を渡す。制約参照があっても削除でき、生成元sourceBandIdが削除対象を指す制約は一緒に削除する。それ以外の制約JSONは保持する。
 - `Form`のPATCHは名前と所属の編集で、空配列は全員の所属解除。こちらはバンドとメンバー本体を残す。
@@ -45,7 +45,7 @@ MarkdownのAPI定義書は[共通テンプレート](template.md)を使い、次
 
 ## developで共有・試行
 
-既存のdevelopドメインで次のパスを配信する。URLを共有すれば、閲覧するメンバーのPCで開発環境を起動する必要はない。
+既存のdevelopドメインで次のパスを配信する。URLを共有すれば、閲覧するメンバーのPCで開発環境を起動する必要はない。Swagger UIとOpenAPI JSONも認証対象のため、先に同じドメインの画面で登録またはログインする。
 
 - [Swagger UI](https://dev.jphack-2026.workers.dev/api/docs)：`GET /api/health`を展開し、`Try it out` → `Execute`で200と応答を確認する。
 - [OpenAPI JSON](https://dev.jphack-2026.workers.dev/api/openapi.json)：手書きで管理するAPI仕様。
@@ -54,14 +54,14 @@ OpenAPIの`servers`は`/`、UIが読み込む仕様は`/api/openapi.json`とし�
 
 ## ローカル開発とdevelopへの公開
 
-リポジトリルートで`npm run dev`を実行すると、`http://localhost:8787/api/docs`で同じUIを確認できる。
+リポジトリルートで`npm run dev`を実行すると、`http://localhost:8787/api/docs`で同じUIを確認できる。先に同じオリジンの`/login`でログインする。
 
 ```sh
 npm run check
 npm run deploy:develop
 ```
 
-公開は依頼がある場合に実行する。コマンドは画面のビルド後にdevelopのWorkerへ公開する。DBマイグレーション・mainへのデプロイは含まない。公開後は表示されたdevelopドメインでUI・JSON・healthの200・未知のAPIのJSON 404・既存アプリの画面を確認する。
+公開は依頼がある場合に実行する。コマンドは画面のビルド後にdevelopのWorkerへ公開する。DBマイグレーション・mainへのデプロイは含まない。公開後は表示されたdevelopドメインでログイン後のUI・JSONの200、匿名healthの200、認証済みでの未知APIのJSON 404、未認証の管理APIの401、既存アプリの画面を確認する。
 
 ## 更新と確認
 

@@ -1,6 +1,7 @@
 import { Brand } from '../../../shared/ui/Brand'
 import { Button } from '../../../shared/ui/Button'
 import { Icon } from '../../../shared/ui/Icon'
+import { Input } from '../../../shared/ui/Input'
 import { useLogin } from '../hooks/useLogin'
 
 export function LoginPage() {
@@ -63,27 +64,117 @@ export function LoginPage() {
           <span className="mb-5 inline-flex size-11 items-center justify-center rounded-xl bg-wash text-brand">
             <Icon name="lock" className="size-5" />
           </span>
-          <h2 className="text-2xl font-semibold">出演順づくりをはじめる</h2>
+          <h2 className="text-2xl font-semibold">
+            {login.registering ? 'アカウントを作成' : 'ログイン'}
+          </h2>
           <p className="mt-2 mb-8 text-sm text-muted">
-            イベントを作成して、出演者の登録と出演順の調整を始めましょう。
+            {login.registering
+              ? 'ログインIDとパスワードを設定して、イベントの管理を始めましょう。'
+              : 'ログインして、イベントの管理と出演順の調整を始めましょう。'}
           </p>
-          {login.error && (
-            <p role="alert" className="mb-4 text-red-600">
-              {login.error}
-            </p>
-          )}
-          <Button
-            variant="primary"
-            className="h-11 w-full"
-            disabled={login.busy}
-            onClick={() => void login.login()}
+          <form
+            onSubmit={(event) => {
+              event.preventDefault()
+              void login.login()
+            }}
           >
-            <Icon name="sparkle" />
-            ワークスペースを開く
+            <label className="mb-5 flex flex-col gap-2 text-sm font-medium">
+              ログインID
+              <Input
+                name="userId"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
+                minLength={login.registering ? 3 : undefined}
+                maxLength={login.registering ? 64 : 128}
+                pattern={login.registering ? '[A-Za-z0-9_\\-]+' : undefined}
+                aria-describedby={
+                  login.registering ? 'user-id-help' : undefined
+                }
+                required
+                value={login.userId}
+                onChange={(event) => login.setUserId(event.target.value)}
+                disabled={login.busy}
+              />
+            </label>
+            {login.registering && (
+              <p id="user-id-help" className="-mt-3 mb-5 text-xs text-muted">
+                半角英数字・ハイフン・アンダースコアで3〜64文字
+              </p>
+            )}
+            <label className="mb-6 flex flex-col gap-2 text-sm font-medium">
+              パスワード
+              <Input
+                name="password"
+                type="password"
+                autoComplete={
+                  login.registering ? 'new-password' : 'current-password'
+                }
+                minLength={login.registering ? 15 : undefined}
+                maxLength={128}
+                aria-describedby={
+                  login.registering ? 'password-help' : undefined
+                }
+                required
+                value={login.password}
+                onChange={(event) => login.setPassword(event.target.value)}
+                disabled={login.busy}
+              />
+            </label>
+            {login.registering && (
+              <>
+                <p
+                  id="password-help"
+                  className="-mt-4 mb-5 text-xs leading-5 text-muted"
+                >
+                  15文字以上128文字以内。他のサービスで使っていない、長いパスワードを設定してください。
+                </p>
+                <label className="mb-6 flex flex-col gap-2 text-sm font-medium">
+                  パスワード（確認）
+                  <Input
+                    name="confirmation"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    maxLength={128}
+                    value={login.confirmation}
+                    onChange={(event) =>
+                      login.setConfirmation(event.target.value)
+                    }
+                    disabled={login.busy}
+                  />
+                </label>
+              </>
+            )}
+            {(login.error || (!login.registering && login.notice)) && (
+              <p role="alert" className="mb-4 text-sm text-red-600">
+                {login.error || login.notice}
+              </p>
+            )}
+            <Button
+              type="submit"
+              variant="primary"
+              className="h-11 w-full"
+              disabled={login.busy}
+            >
+              <Icon name="lock" />
+              {login.busy
+                ? login.registering
+                  ? '登録中…'
+                  : 'ログイン中…'
+                : login.registering
+                  ? '新規登録'
+                  : 'ログイン'}
+            </Button>
+          </form>
+          <Button
+            variant="ghost"
+            className="mt-5 w-full text-sm"
+            disabled={login.busy}
+            onClick={login.switchMode}
+          >
+            {login.registering ? 'ログイン画面へ戻る' : 'アカウントを作成する'}
           </Button>
-          <p className="mt-5 text-center text-xs leading-5 text-muted">
-            イベントの情報は保存され、再読み込み後も残ります。
-          </p>
         </div>
       </main>
     </div>

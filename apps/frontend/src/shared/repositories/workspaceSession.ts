@@ -1,18 +1,40 @@
+import { createApiClient, ensureOk } from '../api/client'
 import type { Session } from '../model/workspace'
 
-// Workspace entry state until the authentication API is available (#57/#59).
-// Event and roster data are always loaded from the API.
-let session: Session | null = null
+const client = createApiClient('').api.auth
+
+async function readSession(
+  response: Pick<Response, 'ok' | 'status' | 'json'>,
+): Promise<Session> {
+  await ensureOk(response)
+  const body: unknown = await response.json()
+  if (
+    !body ||
+    typeof body !== 'object' ||
+    !('userId' in body) ||
+    typeof body.userId !== 'string' ||
+    !body.userId
+  ) {
+    throw new Error('ログイン情報を読み取れませんでした。')
+  }
+  return { userId: body.userId }
+}
+
 export const workspaceSession = {
-  getSession() {
-    return Promise.resolve(session && { ...session })
+  async getSession() {
+    const response = await client.session.$get()
+    if (response.status === 401) return null
+    return readSession(response)
   },
-  signIn(email: string) {
-    session = { name: 'ライブ運営', email }
-    return Promise.resolve({ ...session })
+  async signIn(userId: string, password: string) {
+    return readSession(await client.login.$post({ json: { userId, password } }))
   },
-  signOut() {
-    session = null
-    return Promise.resolve()
+  async signUp(userId: string, password: string) {
+    return readSession(
+      await client.register.$post({ json: { userId, password } }),
+    )
+  },
+  async signOut() {
+    await ensureOk(await client.logout.$post())
   },
 }

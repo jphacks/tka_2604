@@ -26,6 +26,7 @@ import * as persistence from '../../src/repositories/form'
 import { createFormRoutes } from '../../src/routes/form'
 import { formService } from '../../src/services/form/service'
 import type { FormRoster, SavedFormBand } from '../../src/services/form/types'
+import { createAuthenticatedHeaders } from '../helpers/auth'
 import { testDatabase } from '../helpers/database'
 import { seedEventInformation } from '../helpers/event-information'
 import { expectJsonResponse } from '../helpers/openapi'
@@ -150,7 +151,7 @@ describe('form HTTP API', () => {
       {},
       { DB: local.binding },
     )
-    expect(admin.status).toBe(404)
+    expect(admin.status).toBe(401)
   })
 
   it('rejects malformed input and unknown fields before writing', async () => {
@@ -301,7 +302,7 @@ describe('form HTTP API', () => {
     expect(saved.members).toHaveLength(20)
     const schedule = await app.request(
       `/api/events/${seed.event.eventId}/schedule`,
-      {},
+      { headers: await createAuthenticatedHeaders(local.binding) },
       { DB: local.binding },
     )
     expect(schedule.status).toBe(200)
@@ -331,7 +332,10 @@ describe('form HTTP API', () => {
     const before = await snapshot()
     const removed = await app.request(
       `/api/events/${seed.event.eventId}/form/bands/a-b1`,
-      { method: 'DELETE' },
+      {
+        method: 'DELETE',
+        headers: await createAuthenticatedHeaders(local.binding),
+      },
       { DB: local.binding },
     )
     expect(removed.status).toBe(404)
