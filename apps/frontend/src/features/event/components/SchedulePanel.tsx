@@ -64,7 +64,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
         controller.sending
       }
       title="出演順"
-      headerClassName="flex-wrap py-2"
+      headerClassName="flex-wrap py-2 xl:flex-nowrap xl:py-0"
       action={
         <div
           role="group"

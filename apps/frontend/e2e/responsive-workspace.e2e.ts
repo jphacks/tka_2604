@@ -170,3 +170,28 @@ for (const width of [320, 390, 768, 1279]) {
     await expect(draft).toHaveValue('後半に出演したいです')
   })
 }
+
+for (const width of [1280, 1600, 2234]) {
+  test(`workspace header borders align at ${width}px`, async ({
+    page,
+    databaseEvent,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(`/event/${databaseEvent.eventId}`)
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    const headerBottoms = []
+    for (const name of ['出演順', '制約', 'AIチャット']) {
+      const panel = page.getByRole('region', { name, exact: true })
+      const heading = panel.getByRole('heading', { name, exact: true })
+      await expect(heading).toBeVisible()
+      const box = (await heading.locator('../..').boundingBox())!
+      headerBottoms.push(box.y + box.height)
+    }
+    expect(
+      Math.max(...headerBottoms) - Math.min(...headerBottoms),
+    ).toBeLessThanOrEqual(1)
+    await page.screenshot({
+      path: testInfo.outputPath(`workspace-headers-${width}.png`),
+    })
+  })
+}
