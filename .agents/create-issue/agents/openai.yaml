@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Create Issue'
+  short_description: '出演順作成アプリの要望を整理し、重複確認後に開発タスクを起票'
+  default_prompt: '$create-issue を使い、このリポジトリの仕様と既存Issueを確認して、要望を[Task]形式のGitHub Issueとして起票してください。'

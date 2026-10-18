@@ -2,7 +2,7 @@
 
 ハッカソンのMVPとデモを優先する。仕様は必要な分だけ書き、変更と一緒に更新する。大きな設計書や将来向けの仕組みは増やさない。
 
-技術選定は[構成・技術選定](architecture.md)、その他の開発資料は`docs/`で管理する。
+技術選定は[構成・技術選定](architecture.md)、共通の開発資料は`docs/`、backend固有の仕様は`apps/backend/docs/`で管理する。backendの構成・責務は[backendの開発ルール](../apps/backend/AGENTS.md)を参照する。
 
 ## 起動
 
@@ -23,18 +23,37 @@
 
 PR本文でIssueを閉じる場合は`Closes #123`、参照だけなら`Refs #123`。タイトルだけでは完了扱いにしない。AIで一連の作業を進める場合は`$develop-issue`を使う。
 
+Issueの整理・起票だけを依頼する場合は[create-issue](../.agents/create-issue/SKILL.md)を使う。重複を確認し、[開発タスクのテンプレート](../.github/ISSUE_TEMPLATE/task.md)に沿って起票する。実装からPR作成まで進める依頼は[develop-issue](../.agents/develop-issue/SKILL.md)で扱う。
+
 ## テスト・完了条件
 
 入力検証、各チェックの内容、commitフック、CIの範囲は[バリデーション・チェック・CI](validation-ci.md)を参照。
 
+backendの振る舞いを変更するときは、次の順で進める。
+
+1. Issueの完了条件を、入力・操作・期待結果の具体例にする。該当しない観点は理由を残す。
+
+   | 観点     | 保存APIでの例                                                |
+   | -------- | ------------------------------------------------------------ |
+   | 正常系   | 保存後に再取得すると、編集内容が残っている                   |
+   | 不正入力 | 別イベントのバンドを指定すると拒否され、保存前のデータが残る |
+   | 境界値   | 空の部は保存できるが、部数0は拒否される                      |
+   | 失敗時   | 保存途中でDB制約に違反すると、先行する更新も取り消される     |
+
+2. [テストの役割](validation-ci.md#backendのテスト追加方針)に応じてテストを書き、意図した失敗を確認する。
+3. 最小限の実装で成功させ、テストを保ちながら重複・命名を整理する。実装と仕様が変わる場合はdocsも更新する。
+4. `npm run test:backend`、`npm run check`を実行し、別実行・未確認の項目を記録する。
+
+テストは`apps/backend/test/`配下に`src/`と同じ相対パスで置く（`src/db/events.ts` → `test/db/events.test.ts`）。共通補助処理は`test/helpers/`。特定ファイルだけの実行例は`npm run test:backend -- apps/backend/test/db/events.test.ts`。実装例は[DB手順](../apps/backend/db/README.md#db結合テスト)、API契約の確認例は[API手順](../apps/backend/docs/api/README.md#更新と確認)を参照する。
+
 - ロジック・不具合は振る舞いと境界条件をテストする。資料・文言変更の形式的なテストは不要。
 - 制約は間隔・部の境界・入力不備を確認する。ソルバーは特定の順番より、欠落・重複・ハード制約違反がないことを確認する。
 - LLM・外部通信は通常テストでモックし、実サービスの確認と分ける。UI変更はブラウザで確認する。
-- `npm run check`で整形・lint・生成物一致・型・Vitest・ビルドを確認する。Pythonテストは未導入で、このチェックにも含まれない。solverのロジック実装時に追加する。
+- `npm run check`で整形・lint・生成物一致・型・Vitest・ビルドを確認する。Pythonテストは`uv --directory apps/solver run pytest`で別途実行し、このチェックには含まれない。
 - 完了はIssueの条件を満たし、関連仕様を更新し、必要な確認が通った状態。未確認・失敗は理由を明記する。
 
 ## デモ・公開
 
-予定するデモは「データ入力 → 対話で制約追加 → 確認 → 生成 → 未達成確認 → 手動調整」。実装後にダミーデータと最短の操作手順を追記する。
+通常の画面は「イベント作成 → 出演登録 → 条件追加 → 確認 → 生成 → 手動調整」の流れで実API・DBを使う。操作手順と現在の対応範囲は[フロントエンドの使い方](frontend.md)を参照。devとmainのDBは環境ごとに分離し、画面内の固定サンプルやモック切替は持たない。
 
-Workersの公開は検証用が `npm run deploy:develop`（`npm run deploy` も同じ）、本番用が `npm run deploy:main`。ビルド後に公開し、DBマイグレーションは別途適用する。[DB手順](../apps/backend/db/README.md)を参照。公開の依頼がある場合に実行する。LLM・ソルバーの環境変数や公開手順は導入時に記載する。秘密情報をGitやログに残さず、PRプレビューの自動生成は前提にしない。
+Workersの公開は検証用が `npm run deploy:develop`（`npm run deploy` も同じ）、本番用が `npm run deploy:main`。ビルド後に公開し、DBマイグレーションは別途適用する。OGP画像などの絶対URLはビルド時に`SITE_URL`で決まり、未指定ならdevelopのURL、`deploy:main`では本番のURLになる。[DB手順](../apps/backend/db/README.md)を参照。公開の依頼がある場合に実行する。SolverのURL・トークンは[環境構築](setup.md#solverの環境変数)に従って環境別envファイルで管理する。秘密情報をGitやログに残さず、PRプレビューの自動生成は前提にしない。

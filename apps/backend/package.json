@@ -5,9 +5,18 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "test": "npm --prefix ../.. run test -- --project backend"
+    "test": "npm --prefix ../.. run test -- --project backend",
+    "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
-    "hono": "^4.13.13"
+    "@google/genai": "^2.30.0",
+    "@hono/swagger-ui": "^0.6.1",
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.13",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0",
+    "drizzle-kit": "^0.31.11"
   }
 }

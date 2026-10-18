@@ -8,6 +8,8 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "fastapi>=0.143.3",
+    "ortools>=9.15.6755",
     "pydantic>=2.14.1",
 ]
 
@@ -17,7 +19,14 @@ package = false
 [dependency-groups]
 dev = [
     "datamodel-code-generator>=0.83.0",
+    "httpx>=0.28.1",
+    "pytest>=9.1.1",
+    "uvicorn>=0.54.0",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "bench"]
+testpaths = ["tests"]
 
 [tool.datamodel-codegen]
 input = "../schema/constraint.schema.json"

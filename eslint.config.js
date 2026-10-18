@@ -19,6 +19,8 @@ export default defineConfig([
   globalIgnores([
     '**/dist/**',
     '**/coverage/**',
+    '**/test-results/**',
+    '**/playwright-report/**',
     '**/.wrangler/**',
     '**/.cloudflare/**',
     '**/worker-configuration.d.ts',
@@ -60,6 +62,13 @@ export default defineConfig([
     ],
     languageOptions: { globals: globals.browser },
     rules: {
+      'jsx-a11y/label-has-associated-control': [
+        'error',
+        {
+          controlComponents: ['Input', 'Select', 'Textarea', 'NumberField'],
+          depth: 3,
+        },
+      ],
       'import-x/no-extraneous-dependencies': [
         'error',
         {
@@ -73,6 +82,7 @@ export default defineConfig([
           patterns: [
             {
               group: ['**/backend/**'],
+              allowTypeImports: true,
               message: 'API 経由で backend にアクセスしてください。',
             },
           ],
@@ -93,7 +103,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['apps/backend/src/**/*.ts'],
+    files: ['apps/backend/{src,test}/**/*.ts'],
     rules: {
       'import-x/no-extraneous-dependencies': [
         'error',
@@ -114,7 +124,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['apps/backend/src/**/*.{test,spec}.ts'],
+    files: ['apps/backend/test/**/*.ts'],
     rules: {
       'import-x/no-extraneous-dependencies': [
         'error',

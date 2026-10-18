@@ -1,0 +1,1129 @@
+{
+  "eventId": "bench-demo",
+  "parts": [
+    {
+      "partId": "part-1",
+      "sortOrder": 0
+    },
+    {
+      "partId": "part-2",
+      "sortOrder": 1
+    }
+  ],
+  "bands": [
+    {
+      "bandId": "band-01"
+    },
+    {
+      "bandId": "band-02"
+    },
+    {
+      "bandId": "band-03"
+    },
+    {
+      "bandId": "band-04"
+    },
+    {
+      "bandId": "band-05"
+    },
+    {
+      "bandId": "band-06"
+    },
+    {
+      "bandId": "band-07"
+    },
+    {
+      "bandId": "band-08"
+    },
+    {
+      "bandId": "band-09"
+    },
+    {
+      "bandId": "band-10"
+    },
+    {
+      "bandId": "band-11"
+    },
+    {
+      "bandId": "band-12"
+    },
+    {
+      "bandId": "band-13"
+    },
+    {
+      "bandId": "band-14"
+    },
+    {
+      "bandId": "band-15"
+    },
+    {
+      "bandId": "band-16"
+    },
+    {
+      "bandId": "band-17"
+    },
+    {
+      "bandId": "band-18"
+    },
+    {
+      "bandId": "band-19"
+    },
+    {
+      "bandId": "band-20"
+    }
+  ],
+  "members": [
+    {
+      "memberId": "member-001"
+    },
+    {
+      "memberId": "member-002"
+    },
+    {
+      "memberId": "member-003"
+    },
+    {
+      "memberId": "member-004"
+    },
+    {
+      "memberId": "member-005"
+    },
+    {
+      "memberId": "member-006"
+    },
+    {
+      "memberId": "member-007"
+    },
+    {
+      "memberId": "member-008"
+    },
+    {
+      "memberId": "member-009"
+    },
+    {
+      "memberId": "member-010"
+    },
+    {
+      "memberId": "member-011"
+    },
+    {
+      "memberId": "member-012"
+    },
+    {
+      "memberId": "member-013"
+    },
+    {
+      "memberId": "member-014"
+    },
+    {
+      "memberId": "member-015"
+    },
+    {
+      "memberId": "member-016"
+    },
+    {
+      "memberId": "member-017"
+    },
+    {
+      "memberId": "member-018"
+    },
+    {
+      "memberId": "member-019"
+    },
+    {
+      "memberId": "member-020"
+    },
+    {
+      "memberId": "member-021"
+    },
+    {
+      "memberId": "member-022"
+    },
+    {
+      "memberId": "member-023"
+    },
+    {
+      "memberId": "member-024"
+    },
+    {
+      "memberId": "member-025"
+    },
+    {
+      "memberId": "member-026"
+    },
+    {
+      "memberId": "member-027"
+    },
+    {
+      "memberId": "member-028"
+    },
+    {
+      "memberId": "member-029"
+    },
+    {
+      "memberId": "member-030"
+    },
+    {
+      "memberId": "member-031"
+    },
+    {
+      "memberId": "member-032"
+    },
+    {
+      "memberId": "member-033"
+    },
+    {
+      "memberId": "member-034"
+    },
+    {
+      "memberId": "member-035"
+    },
+    {
+      "memberId": "member-036"
+    },
+    {
+      "memberId": "member-037"
+    },
+    {
+      "memberId": "member-038"
+    },
+    {
+      "memberId": "member-039"
+    },
+    {
+      "memberId": "member-040"
+    },
+    {
+      "memberId": "member-041"
+    },
+    {
+      "memberId": "member-042"
+    },
+    {
+      "memberId": "member-043"
+    },
+    {
+      "memberId": "member-044"
+    }
+  ],
+  "memberships": [
+    {
+      "bandId": "band-01",
+      "memberId": "member-001"
+    },
+    {
+      "bandId": "band-01",
+      "memberId": "member-002"
+    },
+    {
+      "bandId": "band-01",
+      "memberId": "member-003"
+    },
+    {
+      "bandId": "band-01",
+      "memberId": "member-004"
+    },
+    {
+      "bandId": "band-01",
+      "memberId": "member-005"
+    },
+    {
+      "bandId": "band-01",
+      "memberId": "member-006"
+    },
+    {
+      "bandId": "band-02",
+      "memberId": "member-007"
+    },
+    {
+      "bandId": "band-02",
+      "memberId": "member-008"
+    },
+    {
+      "bandId": "band-02",
+      "memberId": "member-009"
+    },
+    {
+      "bandId": "band-02",
+      "memberId": "member-010"
+    },
+    {
+      "bandId": "band-02",
+      "memberId": "member-011"
+    },
+    {
+      "bandId": "band-02",
+      "memberId": "member-012"
+    },
+    {
+      "bandId": "band-03",
+      "memberId": "member-013"
+    },
+    {
+      "bandId": "band-03",
+      "memberId": "member-002"
+    },
+    {
+      "bandId": "band-03",
+      "memberId": "member-014"
+    },
+    {
+      "bandId": "band-03",
+      "memberId": "member-015"
+    },
+    {
+      "bandId": "band-03",
+      "memberId": "member-006"
+    },
+    {
+      "bandId": "band-04",
+      "memberId": "member-016"
+    },
+    {
+      "bandId": "band-04",
+      "memberId": "member-003"
+    },
+    {
+      "bandId": "band-04",
+      "memberId": "member-009"
+    },
+    {
+      "bandId": "band-04",
+      "memberId": "member-004"
+    },
+    {
+      "bandId": "band-04",
+      "memberId": "member-005"
+    },
+    {
+      "bandId": "band-05",
+      "memberId": "member-017"
+    },
+    {
+      "bandId": "band-05",
+      "memberId": "member-002"
+    },
+    {
+      "bandId": "band-05",
+      "memberId": "member-010"
+    },
+    {
+      "bandId": "band-05",
+      "memberId": "member-011"
+    },
+    {
+      "bandId": "band-05",
+      "memberId": "member-012"
+    },
+    {
+      "bandId": "band-05",
+      "memberId": "member-018"
+    },
+    {
+      "bandId": "band-06",
+      "memberId": "member-019"
+    },
+    {
+      "bandId": "band-06",
+      "memberId": "member-006"
+    },
+    {
+      "bandId": "band-06",
+      "memberId": "member-014"
+    },
+    {
+      "bandId": "band-07",
+      "memberId": "member-020"
+    },
+    {
+      "bandId": "band-07",
+      "memberId": "member-021"
+    },
+    {
+      "bandId": "band-07",
+      "memberId": "member-022"
+    },
+    {
+      "bandId": "band-07",
+      "memberId": "member-015"
+    },
+    {
+      "bandId": "band-08",
+      "memberId": "member-023"
+    },
+    {
+      "bandId": "band-08",
+      "memberId": "member-003"
+    },
+    {
+      "bandId": "band-08",
+      "memberId": "member-009"
+    },
+    {
+      "bandId": "band-08",
+      "memberId": "member-010"
+    },
+    {
+      "bandId": "band-08",
+      "memberId": "member-005"
+    },
+    {
+      "bandId": "band-08",
+      "memberId": "member-012"
+    },
+    {
+      "bandId": "band-09",
+      "memberId": "member-022"
+    },
+    {
+      "bandId": "band-09",
+      "memberId": "member-002"
+    },
+    {
+      "bandId": "band-09",
+      "memberId": "member-014"
+    },
+    {
+      "bandId": "band-09",
+      "memberId": "member-011"
+    },
+    {
+      "bandId": "band-09",
+      "memberId": "member-024"
+    },
+    {
+      "bandId": "band-10",
+      "memberId": "member-025"
+    },
+    {
+      "bandId": "band-10",
+      "memberId": "member-008"
+    },
+    {
+      "bandId": "band-10",
+      "memberId": "member-004"
+    },
+    {
+      "bandId": "band-10",
+      "memberId": "member-015"
+    },
+    {
+      "bandId": "band-10",
+      "memberId": "member-013"
+    },
+    {
+      "bandId": "band-10",
+      "memberId": "member-026"
+    },
+    {
+      "bandId": "band-11",
+      "memberId": "member-027"
+    },
+    {
+      "bandId": "band-11",
+      "memberId": "member-003"
+    },
+    {
+      "bandId": "band-11",
+      "memberId": "member-017"
+    },
+    {
+      "bandId": "band-11",
+      "memberId": "member-021"
+    },
+    {
+      "bandId": "band-11",
+      "memberId": "member-028"
+    },
+    {
+      "bandId": "band-11",
+      "memberId": "member-029"
+    },
+    {
+      "bandId": "band-12",
+      "memberId": "member-030"
+    },
+    {
+      "bandId": "band-12",
+      "memberId": "member-031"
+    },
+    {
+      "bandId": "band-12",
+      "memberId": "member-032"
+    },
+    {
+      "bandId": "band-12",
+      "memberId": "member-033"
+    },
+    {
+      "bandId": "band-13",
+      "memberId": "member-034"
+    },
+    {
+      "bandId": "band-13",
+      "memberId": "member-002"
+    },
+    {
+      "bandId": "band-13",
+      "memberId": "member-014"
+    },
+    {
+      "bandId": "band-13",
+      "memberId": "member-011"
+    },
+    {
+      "bandId": "band-13",
+      "memberId": "member-012"
+    },
+    {
+      "bandId": "band-14",
+      "memberId": "member-035"
+    },
+    {
+      "bandId": "band-14",
+      "memberId": "member-009"
+    },
+    {
+      "bandId": "band-14",
+      "memberId": "member-004"
+    },
+    {
+      "bandId": "band-14",
+      "memberId": "member-023"
+    },
+    {
+      "bandId": "band-15",
+      "memberId": "member-036"
+    },
+    {
+      "bandId": "band-15",
+      "memberId": "member-008"
+    },
+    {
+      "bandId": "band-16",
+      "memberId": "member-037"
+    },
+    {
+      "bandId": "band-16",
+      "memberId": "member-038"
+    },
+    {
+      "bandId": "band-16",
+      "memberId": "member-001"
+    },
+    {
+      "bandId": "band-16",
+      "memberId": "member-010"
+    },
+    {
+      "bandId": "band-16",
+      "memberId": "member-015"
+    },
+    {
+      "bandId": "band-16",
+      "memberId": "member-006"
+    },
+    {
+      "bandId": "band-16",
+      "memberId": "member-018"
+    },
+    {
+      "bandId": "band-17",
+      "memberId": "member-039"
+    },
+    {
+      "bandId": "band-18",
+      "memberId": "member-040"
+    },
+    {
+      "bandId": "band-18",
+      "memberId": "member-041"
+    },
+    {
+      "bandId": "band-18",
+      "memberId": "member-018"
+    },
+    {
+      "bandId": "band-18",
+      "memberId": "member-025"
+    },
+    {
+      "bandId": "band-19",
+      "memberId": "member-012"
+    },
+    {
+      "bandId": "band-20",
+      "memberId": "member-042"
+    },
+    {
+      "bandId": "band-20",
+      "memberId": "member-043"
+    },
+    {
+      "bandId": "band-20",
+      "memberId": "member-016"
+    },
+    {
+      "bandId": "band-20",
+      "memberId": "member-044"
+    },
+    {
+      "bandId": "band-20",
+      "memberId": "member-037"
+    }
+  ],
+  "constraints": [
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-001",
+      "event_id": "bench-demo",
+      "source_text": "青木 陽菜さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-001"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-002",
+      "event_id": "bench-demo",
+      "source_text": "遠藤 湊さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-002"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-003",
+      "event_id": "bench-demo",
+      "source_text": "千葉 奏太さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-003"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-004",
+      "event_id": "bench-demo",
+      "source_text": "石川 蒼さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-004"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-005",
+      "event_id": "bench-demo",
+      "source_text": "片山 颯太さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-005"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-006",
+      "event_id": "bench-demo",
+      "source_text": "斎藤 芽依さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-006"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-008",
+      "event_id": "bench-demo",
+      "source_text": "森田 翔さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-008"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-009",
+      "event_id": "bench-demo",
+      "source_text": "小島 蓮さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-009"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-010",
+      "event_id": "bench-demo",
+      "source_text": "杉山 樹さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-010"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-011",
+      "event_id": "bench-demo",
+      "source_text": "宮本 航さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-011"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-012",
+      "event_id": "bench-demo",
+      "source_text": "平野 紬さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-012"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-013",
+      "event_id": "bench-demo",
+      "source_text": "川口 さくらさんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-013"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-014",
+      "event_id": "bench-demo",
+      "source_text": "堀 拓海さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-014"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-015",
+      "event_id": "bench-demo",
+      "source_text": "野口 健人さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-015"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-016",
+      "event_id": "bench-demo",
+      "source_text": "菊地 大翔さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-016"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-017",
+      "event_id": "bench-demo",
+      "source_text": "島田 七海さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-017"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-018",
+      "event_id": "bench-demo",
+      "source_text": "竹内 心春さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-018"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-021",
+      "event_id": "bench-demo",
+      "source_text": "永井 朝陽さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-021"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-022",
+      "event_id": "bench-demo",
+      "source_text": "福田 隼さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-022"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-023",
+      "event_id": "bench-demo",
+      "source_text": "関 ひなたさんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-023"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-025",
+      "event_id": "bench-demo",
+      "source_text": "大西 美咲さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-025"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gap-member-037",
+      "event_id": "bench-demo",
+      "source_text": "村上 美月さんの出演の間は1組以上空ける",
+      "type": "min_gap_member",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "member_id": "member-037"
+      },
+      "params": {
+        "min_diff": 2,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-opener",
+      "event_id": "bench-demo",
+      "source_text": "トップバッターはマリーゴールド/あいみょん",
+      "type": "at_position",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "band_id": "band-01"
+      },
+      "params": {
+        "position": 0
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-gear",
+      "event_id": "bench-demo",
+      "source_text": "機材の受け渡しのため青と夏/Mrs. GREEN APPLEはドライフラワー/優里より前",
+      "type": "before",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "before_band_id": "band-10",
+        "after_band_id": "band-15"
+      },
+      "params": {}
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-late",
+      "event_id": "bench-demo",
+      "source_text": "アイドル/YOASOBIはメンバーが遅れて到着するので第2部以降",
+      "type": "in_range",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "band_ids": [
+          "band-16"
+        ]
+      },
+      "params": {
+        "kind": "parts",
+        "part_ids": [
+          1
+        ]
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-finale",
+      "event_id": "bench-demo",
+      "source_text": "ギターと孤独と蒼い惑星/結束バンド・ソロピアノメドレー・Lemon/米津玄師は最後の3枠",
+      "type": "in_range",
+      "hardness": "hard",
+      "priority": null,
+      "enabled": true,
+      "targets": {
+        "band_ids": [
+          "band-12",
+          "band-19",
+          "band-17"
+        ]
+      },
+      "params": {
+        "kind": "positions",
+        "position_from": 17,
+        "position_to": 19
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-rest-member-002",
+      "event_id": "bench-demo",
+      "source_text": "遠藤 湊さんは掛け持ちが多いので3組以上空けたい",
+      "type": "min_gap_member",
+      "hardness": "soft",
+      "priority": "high",
+      "enabled": true,
+      "targets": {
+        "member_id": "member-002"
+      },
+      "params": {
+        "min_diff": 4,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-rest-member-012",
+      "event_id": "bench-demo",
+      "source_text": "平野 紬さんは掛け持ちが多いので3組以上空けたい",
+      "type": "min_gap_member",
+      "hardness": "soft",
+      "priority": "mid",
+      "enabled": true,
+      "targets": {
+        "member_id": "member-012"
+      },
+      "params": {
+        "min_diff": 4,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-rest-member-003",
+      "event_id": "bench-demo",
+      "source_text": "千葉 奏太さんは掛け持ちが多いので3組以上空けたい",
+      "type": "min_gap_member",
+      "hardness": "soft",
+      "priority": "low",
+      "enabled": true,
+      "targets": {
+        "member_id": "member-003"
+      },
+      "params": {
+        "min_diff": 4,
+        "same_part_only": false
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-genre",
+      "event_id": "bench-demo",
+      "source_text": "雰囲気の近いマリーゴールド/あいみょん・ドライフラワー/優里・紅蓮華/LiSAは部内で離したい",
+      "type": "min_gap_bands",
+      "hardness": "soft",
+      "priority": "mid",
+      "enabled": true,
+      "targets": {
+        "band_ids": [
+          "band-01",
+          "band-15",
+          "band-03"
+        ]
+      },
+      "params": {
+        "min_diff": 4,
+        "same_part_only": true
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-friend",
+      "event_id": "bench-demo",
+      "source_text": "ソロピアノメドレーを見てからアイドル/YOASOBIの準備に入りたい",
+      "type": "before",
+      "hardness": "soft",
+      "priority": "low",
+      "enabled": true,
+      "targets": {
+        "before_band_id": "band-19",
+        "after_band_id": "band-16"
+      },
+      "params": {}
+    },
+    {
+      "schema_version": "1.0.0",
+      "constraint_id": "c-old",
+      "event_id": "bench-demo",
+      "source_text": "アイドル/YOASOBIをトップにしたい（取り下げ済み）",
+      "type": "at_position",
+      "hardness": "soft",
+      "priority": "low",
+      "enabled": false,
+      "targets": {
+        "band_id": "band-16"
+      },
+      "params": {
+        "position": 0
+      }
+    }
+  ],
+  "currentPlacements": []
+}

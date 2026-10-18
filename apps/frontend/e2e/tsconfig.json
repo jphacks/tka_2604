@@ -1,0 +1,8 @@
+{
+  "extends": "../tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["node", "../../backend/worker-configuration.d.ts"],
+    "tsBuildInfoFile": "../../../node_modules/.tmp/frontend.e2e.tsbuildinfo"
+  },
+  "include": ["*.ts"]
+}

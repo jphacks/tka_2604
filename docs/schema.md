@@ -1,6 +1,6 @@
 # 制約と型生成
 
-正本は`apps/schema/*.schema.json`。入口は`constraint.schema.json`、共通部品は`common.schema.json`。Notionは検討履歴として参照する。
+正本は`apps/schema/*.schema.json`。入口は`constraint.schema.json`、共通部品は`common.schema.json`。
 
 ## 制約の意味
 
@@ -27,7 +27,11 @@ npm run codegen
 npm run codegen:check
 ```
 
-生成先は`apps/frontend/src/generated/constraint.ts`と`apps/solver/src/generated/constraint.py`。手編集せず、スキーマと生成差分を一緒にGit管理する。TypeScriptの型は実行時検証にならず、生成したPydanticモデルにも業務上の検証が必要。
+生成先はfrontend・backendの`src/generated/constraint.ts`と`apps/solver/src/generated/constraint.py`の3ファイル。手編集せず、スキーマと生成差分を一緒にGit管理する。TypeScriptの型は実行時検証にならず、生成したPydanticモデルにも業務上の検証が必要。
+
+backendの実行時検証は`shared/constraints/schema.ts`で共有Schemaの参照を解決し、Zodの`fromJSONSchema`を利用する。6種類の制約・union分岐・配列の一意性・未知の項目の拒否をテストする。`fromJSONSchema`はZod 4.6の実験的APIのため、Zod更新時もこれらの互換性を確認する。AjvはOpenAPI契約テストにだけ使用し、検証用JavaScript・型宣言の生成は行わない。
+
+チャットの変更案も同じ共通検証を使い、BE管理項目を検証用の値にだけ補う。実際の変更案ではnullableな設定を保持し、BE管理項目は追加しない。詳細は[AIチャット入出力](../apps/backend/docs/AIチャット入出力.md)を参照。
 
 実行時検証とCIが保証する範囲は[バリデーション・チェック・CI](validation-ci.md)を参照。
 
