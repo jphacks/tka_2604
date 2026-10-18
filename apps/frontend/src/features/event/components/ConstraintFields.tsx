@@ -1,4 +1,8 @@
-import { type EventData, memberLabel } from '../../../shared/model/event'
+import {
+  type EventData,
+  memberLabel,
+  positionLimit,
+} from '../../../shared/model/event'
 import { Input, Select } from '../../../shared/ui/Input'
 import type { ConstraintDraft } from '../model/constraintDraft'
 import { BandPicker, BandSelect, PartPicker } from './ConstraintTargets'
@@ -41,10 +45,7 @@ export function ConstraintFields({
   draft: ConstraintDraft
   change: (patch: Partial<ConstraintDraft>) => void
 }) {
-  const capacity = event.sections.reduce(
-    (total, section) => total + section.slots.length,
-    0,
-  )
+  const capacity = positionLimit(event)
   const multiple = ['min_gap_bands', 'in_range', 'count'].includes(draft.type)
   return (
     <div className="space-y-4">

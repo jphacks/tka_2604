@@ -19,7 +19,7 @@ export function PerformanceRow({
   capacity: number
   onFixed: (id: string, fixed: boolean) => void
   onOrder: (id: string, value: number | null) => void
-  onEdit: (id: string) => void
+  onEdit?: (id: string) => void
 }) {
   const performance = row.performance
   const {
@@ -76,8 +76,9 @@ export function PerformanceRow({
       />
       <button
         type="button"
+        disabled={!onEdit}
         aria-label={`${performance.name}を編集`}
-        onClick={() => onEdit(performance.id)}
+        onClick={() => onEdit?.(performance.id)}
         className="min-w-0 truncate rounded px-1 py-1 text-left font-medium text-brand hover:bg-wash hover:underline"
         title={performance.name}
       >
@@ -105,7 +106,9 @@ export function EmptyPerformanceRow({ row }: { row: Row }) {
     >
       <span />
       <span />
-      <span className="pl-2 text-muted/60 tabular-nums">{row.order}</span>
+      <span className="pl-2 text-muted/60 tabular-nums">
+        {row.order ?? '—'}
+      </span>
       <span className="col-span-2 text-xs text-muted/70">
         空き枠 · ここにドラッグして配置
       </span>

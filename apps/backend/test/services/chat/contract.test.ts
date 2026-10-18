@@ -1,6 +1,7 @@
 import { Ajv2020 } from 'ajv/dist/2020.js'
 import { describe, expect, it } from 'vitest'
 
+import { openApiDocument } from '../../../src/openapi'
 import {
   aiChatOutputJsonSchema,
   aiChatOutputSchema,
@@ -73,11 +74,17 @@ const validateStructuredOutput = new Ajv2020({ strict: false }).compile(
   aiChatOutputJsonSchema,
 )
 
+const validateHttpProposal = new Ajv2020({ strict: false }).compile({
+  ...openApiDocument.components.schemas.ChatProposedConstraint,
+  components: openApiDocument.components,
+})
+
 describe('chat DTOs derived from apps/schema', () => {
   it.each(constraints)(
     'accepts $type and its original completed Constraint',
     (constraint) => {
       expect(proposedConstraintSchema.safeParse(constraint).success).toBe(true)
+      expect(validateHttpProposal(constraint)).toBe(true)
       expect(
         constraintSchema.safeParse({
           ...constraint,

@@ -30,7 +30,7 @@
 2. 対応するassistant発言が保存済みなら、その本文を返してLLMを呼ばない。
 3. 最新のイベント・名簿・配置・制約と、今回の発言より前の履歴を取得する。今回の発言は`userMessage`に分け、過去の直近6メッセージをLLMへ渡す。
 4. LLMの応答形式・対象ID・制約を検証する。`message`本文だけをassistantの`text`へ保存し、`replyToMessageId`でuserへ紐づける。
-5. 保存したassistant本文を返す。
+5. 保存したassistant本文を返す。自分の回答INSERTに成功した新規の制約変更案に限り、検証済みの未適用案も返す。並行再送で先に保存された他の回答を返す場合は案を付けない。
 
 採番はINSERT内で原子的に行い、同じuserへのassistant回答は一意とする。並行再送でLLMが複数回呼ばれることはあるが、DBの回答は1件で、先に保存された回答を返す。会話の保存でイベントの`updatedAt`は更新しない。
 
@@ -41,6 +41,10 @@
 ```json
 { "reply": "必要な出演間隔を教えてください。" }
 ```
+
+新規生成で制約変更案がある場合は `proposal: { expectedUpdatedAt, actions }` を追加する。actionsは `add_constraint / update_constraint / delete_constraint` で、追加・更新のconstraintは共有形式からID・schema_version・enabled・source_textを除いた形。hardnessとpriorityは未指定ならnull。対象・paramsは共有Schemaとイベント所属で検証済み。frontendは内容と必須／任意・必要な優先度を確認し、完成した同じ制約一覧を既存のPOST `/constraints` で自動保存する。この送信API自体では制約や配置を更新せず、Solverも実行しない。
+
+未適用案は会話履歴や専用テーブルに保存しない。再読込・保存済み発言の再送では本文だけが返り、案を復元・再適用しない。必要なら新しい発言で再度相談する。確認前にイベントの更新日時が変わった案は反映せず、再相談を案内する。
 
 入力検証後に確定した発言IDを`X-Chat-Message-Id`レスポンスヘッダーへ返す。LLM失敗後もこのIDを再送に使う。入力検証前の400・422では発言IDは確定せず、保存も行わない。
 
@@ -75,8 +79,8 @@ PR #60のイベントAPIと同じ`{ error: { code, message, details } }`でエ�
 
 ## 懸念点・未決定事項
 
-- 内部のLLM出力は`type`・`message`・`actions`を持つが、この送信APIの応答と履歴には本文だけを使う。承認待ち案の管理、`type`・`actions`を返すHTTP契約、制約の適用・Solver実行は後続。未承認のactionsを履歴や完成済み制約として保存しない。
-- frontendは引き続き`reply`を表示できるが、画面の名簿はモックのためDBイベントとの同期は#19で接続する。画面での履歴復元・再送IDの保持も後続。IDを省略した送信では、本文が同じでも新しい発言になる。
+- 履歴には本文だけを使い、新規応答に限って変更案を一時的に返す。提案の自然文での再編集と、チャット発言によるSolver実行は後続。未確認のactionsを完成済み制約として保存しない。
+- frontendのAPIモードはDBの名簿と履歴を取得し、送信に`messageId`を指定する。返信後は履歴を再取得し、失敗後・再読込後の未回答発言も同じID・本文で再試行できる。未保存の出演順は右上の保存ボタンから保存し、制約の自動保存完了後に送信する。IDを省略した送信では、本文が同じでも新しい発言になる。
 - 内部の生成・検証は[AIチャット入出力](../AIチャット入出力.md)を参照。GETの履歴取得は[イベントAPI](events.md)を参照。
 - ローカルではD1のmigrationとイベントの準備に加えて、ルートの`.env`または`.dev.vars`に`GOOGLE_AI_API_TOKEN`を設定する。Cloudflare上はdevelop/mainごとに同名のSecretを登録する。`wrangler.jsonc`は必要なSecret名だけを宣言し、値を含めない。
 - 通常テストは隔離したD1とLLMモックを使う。frontendのブラウザテストでも外部LLMは呼ばない。
