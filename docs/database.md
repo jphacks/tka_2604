@@ -55,6 +55,7 @@ erDiagram
         TEXT band_id PK "必須"
         TEXT event_id FK "必須"
         TEXT band_name "必須"
+        TEXT description "追加・任意・バンド紹介"
         TEXT request_text "追加・任意・希望の原文"
         TEXT request_status "追加・任意・変換状態"
     }
@@ -146,6 +147,8 @@ Constraints.source_band_idは任意の希望元。FKと挿入・更新トリガ�
 chat_messagesはmessage_idをPK、(event_id, seq)・reply_to_message_idをそれぞれ一意にする。seqは0以上の整数。userは返信先NULL、assistantは同イベントの先行userへの返信を必須とする。event_id・seq・role・返信先は保存後に変更しない。メッセージ保存・取得のHTTP APIや自動採番は#47で追加する。発言の保存だけでEvent.updatedAtを更新しない。
 
 0002_wishes_chat_and_part_nameはDrizzle生成SQLで、commentをpart_nameへリネームし、列・履歴テーブルを追加する。0003_chat_integrityは希望状態・由来・返信の整合性を保証するカスタムトリガー。親テーブルの作り直しを避け、既存の所属・配置・名前・NULLを維持する。適用済みの0000・0001は変更していない。
+
+Band.descriptionはジャンル・雰囲気などのバンド紹介（NULL可、#71）。チャットの並べ替え案でLLMへ渡す。出演順の希望であるrequest_textとは分け、saveEventの全件保存でも保持する。0004_band_descriptionはDrizzle生成の列追加のみ。書き込み用の画面・APIは未実装。
 
 イベント本体と表・制約・チャット履歴の個別取得APIを実装済み。各DTOでpartName・希望状態・由来を返し、パスワードハッシュや所有者・論理削除等のDB管理項目を公開しない。契約は[イベントAPI](../apps/backend/docs/api/events.md)を参照。
 

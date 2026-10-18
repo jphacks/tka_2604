@@ -218,7 +218,11 @@ it('keeps server-managed wishes and provenance through event-wide replacement', 
   saved = await save()
   await db
     .update(bands)
-    .set({ requestText: '第2部を希望', requestStatus: 'converted' })
+    .set({
+      description: 'メロコア',
+      requestText: '第2部を希望',
+      requestStatus: 'converted',
+    })
     .where(eq(bands.bandId, 'b1'))
   await db
     .update(constraints)
@@ -226,6 +230,7 @@ it('keeps server-managed wishes and provenance through event-wide replacement', 
     .where(eq(constraints.constraintId, 'c1'))
   const forgedBand = {
     ...input.bands[0],
+    description: 'Must not replace',
     requestText: 'Must not replace',
     requestStatus: 'failed' as const,
   }
@@ -234,6 +239,7 @@ it('keeps server-managed wishes and provenance through event-wide replacement', 
   input.constraints[0] = forgedConstraint
   const result = await save()
   expect(result.bands.find((band) => band.bandId === 'b1')).toMatchObject({
+    description: 'メロコア',
     requestText: '第2部を希望',
     requestStatus: 'converted',
   })

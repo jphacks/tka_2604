@@ -1205,12 +1205,14 @@
                     {
                       "bandId": "band-1",
                       "bandName": "バンドA",
+                      "description": null,
                       "requestText": null,
                       "requestStatus": null
                     },
                     {
                       "bandId": "band-2",
                       "bandName": "バンドB",
+                      "description": null,
                       "requestText": null,
                       "requestStatus": null
                     }
@@ -1480,12 +1482,14 @@
                     {
                       "bandId": "band-1",
                       "bandName": "バンドA",
+                      "description": null,
                       "requestText": null,
                       "requestStatus": null
                     },
                     {
                       "bandId": "band-2",
                       "bandName": "バンドB",
+                      "description": null,
                       "requestText": null,
                       "requestStatus": null
                     }
@@ -4615,6 +4619,10 @@
                   "type": "string",
                   "minLength": 1
                 },
+                "description": {
+                  "type": ["string", "null"],
+                  "description": "ジャンル・雰囲気などのバンド紹介。並べ替え案で使用する"
+                },
                 "requestText": {
                   "type": ["string", "null"]
                 },
@@ -4629,7 +4637,13 @@
                   ]
                 }
               },
-              "required": ["bandId", "bandName", "requestText", "requestStatus"]
+              "required": [
+                "bandId",
+                "bandName",
+                "description",
+                "requestText",
+                "requestStatus"
+              ]
             }
           },
           "members": {

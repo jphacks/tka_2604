@@ -23,6 +23,7 @@ const fixture = (): Snapshot => ({
     bandId,
     eventId: 'event',
     bandName: bandId,
+    description: null,
     requestText: null,
     requestStatus: null,
   })),

@@ -29,9 +29,10 @@ export function scheduleResponse(s: Snapshot): EventSchedule {
     updatedAt: s.event.updatedAt,
     bands: s.bands
       .toSorted((a, b) => compareId(a.bandId, b.bandId))
-      .map(({ bandId, bandName, requestText, requestStatus }) => ({
+      .map(({ bandId, bandName, description, requestText, requestStatus }) => ({
         bandId,
         bandName,
+        description,
         requestText,
         requestStatus,
       })),

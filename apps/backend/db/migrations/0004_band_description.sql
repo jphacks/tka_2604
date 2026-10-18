@@ -1,0 +1,1 @@
+ALTER TABLE `bands` ADD `description` text;

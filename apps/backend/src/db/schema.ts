@@ -68,6 +68,8 @@ export const bands = sqliteTable('bands', {
     .notNull()
     .references(() => events.eventId),
   bandName: text('band_name').notNull(),
+  // ジャンル・雰囲気などの紹介文。LLMの並べ替え案で使う。
+  description: text('description'),
   // 希望の原文と変換状態。組合せの整合性はカスタムmigrationのトリガーで保証。
   requestText: text('request_text'),
   requestStatus: text('request_status', {

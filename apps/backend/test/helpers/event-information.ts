@@ -30,12 +30,14 @@ export async function seedEventInformation(
     {
       bandId: `${prefix}-b2`,
       bandName: 'B',
+      description: null,
       requestText: null,
       requestStatus: null,
     },
     {
       bandId: `${prefix}-b1`,
       bandName: 'A',
+      description: '明るいポップス。客席を盛り上げる',
       requestText: '先頭に固定',
       requestStatus: 'converted' as const,
     },

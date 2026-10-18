@@ -83,6 +83,7 @@ export function snapshot(): ChatEventSnapshot {
       updatedAt,
       bands: state.bands.map((band) => ({
         ...band,
+        description: null,
         requestText: null,
         requestStatus: null,
       })),
