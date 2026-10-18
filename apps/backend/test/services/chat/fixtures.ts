@@ -71,7 +71,6 @@ export function snapshot(): ChatEventSnapshot {
     event: {
       eventId,
       title: state.event.title,
-      status: 'planning',
       date: null,
       venue: null,
       description: null,

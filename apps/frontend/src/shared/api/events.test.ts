@@ -7,7 +7,6 @@ import { createEventsApi } from './events'
 const details = {
   eventId: 'event-1',
   title: 'ライブ',
-  status: 'planning',
   date: null,
   venue: null,
   description: null,
@@ -69,7 +68,6 @@ describe('events RPC adapter', () => {
         date: '',
         venue: '',
         description: '',
-        status: 'planning',
         updatedAt: details.updatedAt,
         performanceCount: 2,
         assignedCount: 1,

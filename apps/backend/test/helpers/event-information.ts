@@ -18,7 +18,6 @@ export async function seedEventInformation(
   const event = {
     eventId: `${prefix}-event`,
     title: 'Live',
-    status: 'planning' as const,
     date: null,
     venue: null,
     description: null,

@@ -29,7 +29,6 @@ describe('event repository', () => {
     const created = await repository.create('owner', { title: 'Live' })
     expect(created).toMatchObject({
       title: 'Live',
-      status: 'planning',
       date: null,
       venue: null,
       description: null,
@@ -101,13 +100,11 @@ describe('event repository', () => {
     const updated = await repository.update('owner', current.eventId, future, {
       title: 'Changed',
       venue: null,
-      status: 'confirmed',
     })
     expect(updated).toMatchObject({
       title: 'Changed',
       venue: null,
       description: 'Keep',
-      status: 'confirmed',
       updatedAt: '2099-01-01T00:00:00.001Z',
     })
     expect(await repository.get('owner', current.eventId)).toEqual(updated)

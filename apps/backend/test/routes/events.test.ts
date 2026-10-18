@@ -170,9 +170,9 @@ describe('event HTTP API', () => {
 
   it('creates, lists, retrieves and partially updates the same basic event through D1', async () => {
     const created = await create()
+    expect(created).not.toHaveProperty('status')
     expect(created).toMatchObject({
       title: 'Live',
-      status: 'planning',
       date: '2026-11-01',
       venue: 'Hall',
       description: 'About',
@@ -204,7 +204,6 @@ describe('event HTTP API', () => {
       expectedUpdatedAt: created.updatedAt,
       title: 'Renamed',
       venue: null,
-      status: 'confirmed',
     })
     expect(updated.status).toBe(200)
     await expectJsonResponse(
@@ -216,7 +215,6 @@ describe('event HTTP API', () => {
       ...created,
       title: 'Renamed',
       venue: null,
-      status: 'confirmed',
       updatedAt: body.updatedAt,
     })
     expect(body.updatedAt).not.toBe(created.updatedAt)
@@ -275,7 +273,7 @@ describe('event HTTP API', () => {
     const path = `/api/events/${created.eventId}`
     for (const input of [
       { expectedUpdatedAt: created.updatedAt, title: ' ' },
-      { expectedUpdatedAt: created.updatedAt, status: 'unknown' },
+      { expectedUpdatedAt: created.updatedAt, status: 'confirmed' },
       { expectedUpdatedAt: created.updatedAt, bands: [] },
       { expectedUpdatedAt: created.updatedAt },
       { title: 'Missing timestamp' },

@@ -15,7 +15,6 @@ export const updateEventSchema = z
   .strictObject({
     ...settings,
     title: settings.title.optional(),
-    status: z.enum(['planning', 'adjusting', 'confirmed']).optional(),
     expectedUpdatedAt: z.iso.datetime(),
   })
   .refine(

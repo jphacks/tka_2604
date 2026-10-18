@@ -16,7 +16,6 @@ function toDetails(event: ApiDetails): EventDetails {
   return {
     id: event.eventId,
     name: event.title,
-    status: event.status,
     date: event.date ?? '',
     venue: event.venue ?? '',
     description: event.description ?? '',
@@ -146,7 +145,6 @@ export function createEventsApi(client: ApiClient) {
         json: {
           expectedUpdatedAt: patch.updatedAt,
           ...(patch.name !== undefined && { title: patch.name }),
-          ...(patch.status !== undefined && { status: patch.status }),
           ...(patch.date !== undefined && { date: patch.date || null }),
           ...(patch.venue !== undefined && { venue: patch.venue || null }),
           ...(patch.description !== undefined && {

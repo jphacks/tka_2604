@@ -20,7 +20,6 @@ beforeEach(async () => {
   saved = await createEvent(db, 'owner', { title: 'Live' })
   input = {
     title: 'Edited',
-    status: 'adjusting',
     date: null,
     venue: null,
     description: null,

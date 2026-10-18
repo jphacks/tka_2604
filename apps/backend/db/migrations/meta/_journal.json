@@ -50,6 +50,13 @@
       "when": 1792298183356,
       "tag": "0006_band_description",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1792355575104,
+      "tag": "0007_remove_event_status",
+      "breakpoints": true
     }
   ]
 }

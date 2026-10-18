@@ -35,7 +35,7 @@ GUIの入力チェックだけに頼らず、backendで外部入力を検証す�
 | `npm run test`          | frontend・backendのVitest                                   |
 | `npm run build`         | frontendビルドとWorkersのdry-run。公開はしない              |
 
-実Geminiを呼ぶAIチャットの回帰評価`npm run eval:chat`は、料金がかかるため`npm run check`・CIに含めず、指示を変えたときに手動で実行する。[AIチャット入出力](../apps/backend/docs/AIチャット入出力.md#実llmの回帰評価)を参照。
+実Geminiを呼ぶAIチャットの回帰評価`npm run eval:chat`は、料金がかかるため`npm run check`・CIに含めず、指示を変えたときに手動で実行する。実行条件と評価内容は[回帰評価](../apps/backend/eval/chat/chat.eval.ts)・[評価ケース](../apps/backend/eval/chat/cases.ts)を参照。
 
 ESLintは型を使った検査、React Hooks、アクセシビリティ、import順序・依存関係、frontend/backend間の実装importの禁止を含む。
 

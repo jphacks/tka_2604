@@ -68,10 +68,6 @@
                             "pattern": "\\S",
                             "description": "前後の空白を除去したイベント名"
                           },
-                          "status": {
-                            "type": "string",
-                            "enum": ["planning", "adjusting", "confirmed"]
-                          },
                           "date": {
                             "type": ["string", "null"],
                             "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
@@ -114,7 +110,6 @@
                         "required": [
                           "eventId",
                           "title",
-                          "status",
                           "date",
                           "venue",
                           "description",
@@ -137,7 +132,6 @@
                     {
                       "eventId": "event-1",
                       "title": "秋ライブ",
-                      "status": "planning",
                       "date": "2026-11-01",
                       "venue": null,
                       "description": null,
@@ -230,10 +224,6 @@
                       "pattern": "\\S",
                       "description": "前後の空白を除去したイベント名"
                     },
-                    "status": {
-                      "type": "string",
-                      "enum": ["planning", "adjusting", "confirmed"]
-                    },
                     "date": {
                       "type": ["string", "null"],
                       "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
@@ -257,7 +247,6 @@
                   "required": [
                     "eventId",
                     "title",
-                    "status",
                     "date",
                     "venue",
                     "description",
@@ -269,7 +258,6 @@
                 "example": {
                   "eventId": "event-1",
                   "title": "秋ライブ",
-                  "status": "planning",
                   "date": "2026-11-01",
                   "venue": null,
                   "description": null,
@@ -535,10 +523,6 @@
                       "pattern": "\\S",
                       "description": "前後の空白を除去したイベント名"
                     },
-                    "status": {
-                      "type": "string",
-                      "enum": ["planning", "adjusting", "confirmed"]
-                    },
                     "date": {
                       "type": ["string", "null"],
                       "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
@@ -562,7 +546,6 @@
                   "required": [
                     "eventId",
                     "title",
-                    "status",
                     "date",
                     "venue",
                     "description",
@@ -574,7 +557,6 @@
                 "example": {
                   "eventId": "event-1",
                   "title": "秋ライブ",
-                  "status": "planning",
                   "date": "2026-11-01",
                   "venue": null,
                   "description": null,
@@ -712,10 +694,6 @@
                       "pattern": "\\S",
                       "description": "前後の空白を除去したイベント名"
                     },
-                    "status": {
-                      "type": "string",
-                      "enum": ["planning", "adjusting", "confirmed"]
-                    },
                     "date": {
                       "type": ["string", "null"],
                       "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
@@ -739,7 +717,6 @@
                   "required": [
                     "eventId",
                     "title",
-                    "status",
                     "date",
                     "venue",
                     "description",
@@ -751,7 +728,6 @@
                 "example": {
                   "eventId": "event-1",
                   "title": "秋ライブ2026",
-                  "status": "planning",
                   "date": "2026-11-01",
                   "venue": null,
                   "description": null,
@@ -1045,10 +1021,6 @@
                   },
                   "description": {
                     "type": ["string", "null"]
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": ["planning", "adjusting", "confirmed"]
                   },
                   "expectedUpdatedAt": {
                     "type": "string",
@@ -2343,7 +2315,10 @@
             "name": "eventId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "minLength": 1 }
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
           }
         ],
         "requestBody": {
@@ -2382,8 +2357,12 @@
                   "required": ["messageId", "text"],
                   "additionalProperties": false,
                   "properties": {
-                    "messageId": { "type": "string" },
-                    "text": { "type": "string" }
+                    "messageId": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
                   }
                 },
                 "example": {
@@ -2397,7 +2376,9 @@
             "description": "JSONの形式が不正です。",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ChatDecisionError" }
+                "schema": {
+                  "$ref": "#/components/schemas/ChatDecisionError"
+                }
               }
             }
           },
@@ -2405,7 +2386,9 @@
             "description": "イベントが見つかりません。",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ChatDecisionError" }
+                "schema": {
+                  "$ref": "#/components/schemas/ChatDecisionError"
+                }
               }
             }
           },
@@ -2413,7 +2396,9 @@
             "description": "発言IDが別の内容に使われています。",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ChatDecisionError" }
+                "schema": {
+                  "$ref": "#/components/schemas/ChatDecisionError"
+                }
               }
             }
           },
@@ -2421,7 +2406,9 @@
             "description": "入力データが不正です。",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ChatDecisionError" }
+                "schema": {
+                  "$ref": "#/components/schemas/ChatDecisionError"
+                }
               }
             }
           },
@@ -2429,7 +2416,9 @@
             "description": "記録に失敗しました。",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ChatDecisionError" }
+                "schema": {
+                  "$ref": "#/components/schemas/ChatDecisionError"
+                }
               }
             }
           }
@@ -4881,7 +4870,9 @@
                   "internal_error"
                 ]
               },
-              "message": { "type": "string" },
+              "message": {
+                "type": "string"
+              },
               "details": {
                 "type": "array",
                 "items": {
@@ -4889,8 +4880,12 @@
                   "required": ["path", "reason"],
                   "additionalProperties": false,
                   "properties": {
-                    "path": { "type": "string" },
-                    "reason": { "type": "string" }
+                    "path": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": "string"
+                    }
                   }
                 }
               }

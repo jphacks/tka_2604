@@ -15,7 +15,6 @@ import {
 type Database = ReturnType<typeof createDb>
 export interface EventChanges {
   title: string
-  status: typeof events.$inferSelect.status
   date: string | null
   venue: string | null
   description: string | null
@@ -135,7 +134,6 @@ export async function saveEvent(
         .update(events)
         .set({
           title: sql`CASE WHEN ${events.updatedAt} = ${expectedUpdatedAt} AND ${events.createdUserId} = ${userId} AND ${events.isDeleted} = 0 THEN ${input.title} ELSE NULL END`,
-          status: input.status,
           date: input.date,
           venue: input.venue,
           description: input.description,

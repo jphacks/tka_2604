@@ -1,4 +1,3 @@
-export type EventStatus = 'planning' | 'adjusting' | 'confirmed'
 export interface Session {
   name: string
   email: string
@@ -9,7 +8,6 @@ export interface EventDetails {
   date: string
   venue: string
   description: string
-  status: EventStatus
   updatedAt?: string
 }
 export interface EventSummary extends EventDetails {
@@ -18,13 +16,8 @@ export interface EventSummary extends EventDetails {
   partCount: number
   responseCount: number | null
 }
-export type EventDraft = Omit<EventDetails, 'id' | 'status' | 'updatedAt'> & {
+export type EventDraft = Omit<EventDetails, 'id' | 'updatedAt'> & {
   bandCounts?: number[]
-}
-export const statusLabels: Record<EventStatus, string> = {
-  planning: '準備中',
-  adjusting: '調整中',
-  confirmed: '確定',
 }
 /** イベント名を省略したときの名前。作成日時（日本時間）から作る。 */
 export function defaultEventName(now: Date) {
