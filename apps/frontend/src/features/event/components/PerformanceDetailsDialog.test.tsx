@@ -64,6 +64,9 @@ it('shows band details and opens editing in the same dialog', async () => {
       '気分上々↑↑',
     ),
   )
+  expect(
+    screen.queryByRole('combobox', { name: '更新するバンド' }),
+  ).not.toBeInTheDocument()
 })
 
 it('requires a second confirmation before deleting and allows cancellation', async () => {

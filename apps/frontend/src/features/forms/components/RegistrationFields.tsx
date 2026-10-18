@@ -10,8 +10,10 @@ import {
 
 export function RegistrationFields({
   controller,
+  fixedBand = false,
 }: {
   controller: PublicRegistrationController
+  fixedBand?: boolean
 }) {
   const { data, draft, mode } = controller
   const change = (patch: Parameters<typeof controller.change>[0]) =>
@@ -25,7 +27,7 @@ export function RegistrationFields({
     })
   return (
     <>
-      {mode === 'update' && (
+      {mode === 'update' && !fixedBand && (
         <div className="mb-7 rounded-lg bg-wash p-4">
           <label className="block text-sm font-medium">
             更新するバンド

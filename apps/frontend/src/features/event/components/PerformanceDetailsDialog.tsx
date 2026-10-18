@@ -195,7 +195,9 @@ function PerformanceEditForm({
         disabled={unavailable || controller.busy || controller.refreshing}
         className="space-y-5 disabled:opacity-60"
       >
-        {controller.data && <RegistrationFields controller={controller} />}
+        {controller.data && (
+          <RegistrationFields controller={controller} fixedBand />
+        )}
         {controller.formError && (
           <p role="alert" className="text-xs leading-5 text-red-700">
             {controller.formError}
