@@ -1,7 +1,12 @@
 import os
 import secrets
+import sys
 import time
+from pathlib import Path
 from typing import Annotated
+
+# Vercel imports this file from the project root, so make sibling modules importable.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import ortools
 from fastapi import FastAPI, Header, HTTPException, Request
