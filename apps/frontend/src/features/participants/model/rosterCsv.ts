@@ -3,22 +3,31 @@ import type { Member } from '../../../shared/model/event'
 export interface RosterRow {
   line: number
   name: string
+  /** ジャンル・雰囲気などの紹介。AIの並べ替え案で使う。 */
+  description: string | null
   members: string[]
 }
 
-export const rosterHeader = '曲名,メンバー1,メンバー2,…'
+export const rosterHeader = '曲名,紹介,メンバー1,メンバー2,…'
+const DESCRIPTION_HEADER = '紹介'
 
 /** 取込と同じ形式の雛形。Excelで開けるようBOM・CRLFを付ける。 */
 export function rosterTemplate() {
   const columns = Array.from({ length: 7 }, (_, i) => `メンバー${i + 1}`)
   const rows = [
-    ['曲名', ...columns],
-    ['気分上々↑↑/mihimaru GT', '佐藤', '田中', '鈴木'],
-    ['ソロギターメドレー', '田中'],
+    ['曲名', DESCRIPTION_HEADER, ...columns],
+    [
+      '気分上々↑↑/mihimaru GT',
+      '明るいポップス。手拍子で盛り上がる',
+      '佐藤',
+      '田中',
+      '鈴木',
+    ],
+    ['ソロギターメドレー', 'アコースティックのしっとりした演奏', '田中'],
   ]
   return (
     '\uFEFF' +
-    rows.map((row) => row.join(',') + ','.repeat(8 - row.length)).join('\r\n') +
+    rows.map((row) => row.join(',') + ','.repeat(9 - row.length)).join('\r\n') +
     '\r\n'
   )
 }
@@ -63,7 +72,8 @@ function parseCsv(text: string) {
 }
 
 /**
- * 「曲名,メンバー1,…」の名簿CSVを読む。1行目は見出し、1行1出演枠。
+ * 「曲名,紹介,メンバー1,…」の名簿CSVを読む。1行目は見出し、1行1出演枠。
+ * 2列目の見出しが「紹介」でなければ、従来どおり2列目以降を全てメンバーとする。
  * 空欄・前後の空白は無視し、出演枠の入力と同じ上限で検証する。
  */
 export function parseRosterCsv(
@@ -74,12 +84,14 @@ export function parseRosterCsv(
     return {
       error: `1行目は「${rosterHeader}」の見出しにしてください。形式は「雛形をダウンロード」で確認できます。`,
     }
+  const described = head[1]?.trim() === DESCRIPTION_HEADER
   const rows: RosterRow[] = []
   for (const [index, cells] of body.entries()) {
     const line = index + 2
     const [name = '', ...rest] = cells.map((cell) => cell.trim())
+    const description = (described ? rest.shift() : '') || null
     const members = [...new Set(rest.filter(Boolean))]
-    if (!name && !members.length) continue
+    if (!name && !members.length && !description) continue
     if (!name) return { error: `${line}行目: 出演名を入力してください。` }
     if (name.length > 80)
       return { error: `${line}行目: 出演名は80文字以内にしてください。` }
@@ -94,7 +106,9 @@ export function parseRosterCsv(
       return {
         error: `${line}行目: 名前に「、」「,」は使えません。1つのセルに1人ずつ入力してください。`,
       }
-    rows.push({ line, name, members })
+    if (description && description.length > 500)
+      return { error: `${line}行目: 紹介は500文字以内にしてください。` }
+    rows.push({ line, name, description, members })
   }
   if (!rows.length) return { error: '出演枠が1行もありません。' }
   return { rows }
