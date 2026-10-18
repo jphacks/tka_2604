@@ -25,6 +25,7 @@ test('configured part counts survive creation, cancellation, explicit saving and
   await dialog
     .getByRole('button', { name: 'イベントを作成', exact: true })
     .click()
+  await expect(page).toHaveURL(/\/event\/[^/?]+$/)
   await expect(
     page.getByRole('heading', { name: '部構成の保存確認', exact: true }),
   ).toBeVisible()
@@ -62,9 +63,9 @@ test('configured part counts survive creation, cancellation, explicit saving and
       .fill('6')
     await dialog.getByRole('button', { name: '適用', exact: true }).click()
     expect(await counts()).toEqual([2, 3])
-    await page
-      .getByRole('button', { name: '出演順を保存', exact: true })
-      .click()
+    await autoSave(page, `${path}/schedule`, () =>
+      page.getByRole('button', { name: '出演順を保存', exact: true }).click(),
+    )
     await expect(
       page.getByRole('button', { name: '出演順を保存', exact: true }),
     ).toBeDisabled()
