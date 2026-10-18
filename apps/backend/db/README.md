@@ -5,7 +5,7 @@
 | 環境    | Worker | D1                     | SQLの配置                  |
 | ------- | ------ | ---------------------- | -------------------------- |
 | develop | dev    | jphack-2026-develop-db | apps/backend/db/migrations |
-| main    | main   | jphack-2026-main-db    | apps/backend/db/migrations |
+| main    | setly  | jphack-2026-main-db    | apps/backend/db/migrations |
 
 ## schemaはどこを編集するか
 
@@ -118,12 +118,15 @@ Drizzle Kitの間接依存`@esbuild-kit/core-utils`が使うesbuildだけを、�
 
 Cloudflareの `workers.dev` URLで公開します。frontendとbackendは同じWorkerで配信します。
 
-| 環境            | frontend                             | backendの疎通確認                               |
-| --------------- | ------------------------------------ | ----------------------------------------------- |
-| develop（検証） | https://dev.jphack-2026.workers.dev  | https://dev.jphack-2026.workers.dev/api/health  |
-| main（本番）    | https://main.jphack-2026.workers.dev | https://main.jphack-2026.workers.dev/api/health |
+| 環境            | frontend                              | backendの疎通確認                                |
+| --------------- | ------------------------------------- | ------------------------------------------------ |
+| develop（検証） | https://dev.jphack-2026.workers.dev   | https://dev.jphack-2026.workers.dev/api/health   |
+| main（本番）    | https://setly.jphack-2026.workers.dev | https://setly.jphack-2026.workers.dev/api/health |
 
-アカウントのWorkersサブドメインは `jphack-2026`、Worker名は検証用が `dev`、本番用が `main` です。
+アカウントのWorkersサブドメインは `jphack-2026`、Worker名は検証用が `dev`、本番用が `setly` です。
+Wranglerの環境名は引き続き `main`、本番D1も `jphack-2026-main-db` を使います。ドメイン変更に伴う新しいmigrationは不要ですが、既存の未適用migrationは公開前に別途適用します。
+`npm run deploy:main` は新ドメインを `SITE_URL` に指定し、OGP画像は `https://setly.jphack-2026.workers.dev/og.png` になります（画像パス `/og.png` は共通）。
+初回公開時は `setly` Workerへ `.env.main` の必要なSecretsを登録します。旧WorkerのSecrets移行や旧URLからのリダイレクトは、この設定変更だけでは行われません。
 独自ドメインは後から追加・変更できます。
 アカウントの「Manage account → Members → Invite members」からメンバーを招待できます。
 招待先に応じた権限を選択してください。

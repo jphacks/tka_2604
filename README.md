@@ -75,20 +75,23 @@ Setly は、**絶対に守りたいこと**と**なんとなくこうしたい�
 
 #### API・データ
 
-- Gemini API（Google AI Studio / Gemini 3.5 Flash-Lite）
-- Cloudflare D1
+- **Gemini API（Google AI Studio）**：自然言語で入力された要望を解釈し、出演順の条件の追加・変更を提案。
+- **Cloudflare D1**：イベント、バンド、出演者、所属関係、制約、出演順、チャット履歴を保存。
+- **Cloudflare Workers / Vercel**：Webアプリ・業務APIと、Pythonによる出演順の計算APIをそれぞれ実行。
 
 #### フレームワーク・ライブラリ・モジュール
 
-- フロントエンド：React / TypeScript / Vite / Tailwind CSS / React Router / dnd-kit
-- バックエンド：Hono / Cloudflare Workers / Zod / Drizzle / Swagger UI
-- ソルバー：Python / FastAPI / OR-Tools CP-SAT / Pydantic / uv（Vercel で公開）
-- 共通：JSON Schema（json-schema-to-typescript / datamodel-code-generator で TypeScript と Python の型を生成）
-- テスト：Vitest / Testing Library / Playwright
+- **React / TypeScript / Vite**：フロントエンドの開発。
+- **Tailwind CSS / dnd-kit**：画面のスタイリングと、ドラッグ＆ドロップによる出演順の編集。
+- **Hono / Hono RPC**：業務APIの実装と、フロントエンド・バックエンド間の型共有。
+- **FastAPI / Pydantic**：Pythonの計算APIと入力データの検証。
+- **Google OR-Tools CP-SAT**：出演間隔、前後関係、位置固定などの条件を考慮した出演順の探索。
+- **Drizzle ORM / Zod / JSON Schema**：DB操作、入力検証、TypeScriptとPythonで共有する制約形式の定義。
+- **Vitest / Testing Library / Playwright / pytest**：単体テスト、API・DBの結合テスト、ブラウザ操作のテスト。
 
 #### デバイス
 
-- PC のブラウザ（出演者フォームはスマホからも回答できます）
+- PC・スマートフォンのWebブラウザ。専用デバイスは不要。
 
 ### 独自技術
 
