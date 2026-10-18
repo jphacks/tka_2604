@@ -112,9 +112,10 @@ describe('application navigation', () => {
   it('registers after password confirmation and opens the authenticated workspace', async () => {
     const user = userEvent.setup()
     render(<App />)
-    await user.click(
-      await screen.findByRole('button', { name: 'アカウントを作成する' }),
-    )
+    expect(await screen.findByRole('radio', { name: 'ログイン' })).toBeChecked()
+    const registerMode = screen.getByRole('radio', { name: '新規登録' })
+    await user.click(registerMode)
+    expect(registerMode).toBeChecked()
     await user.type(
       screen.getByRole('textbox', { name: 'ログインID' }),
       'new-user',

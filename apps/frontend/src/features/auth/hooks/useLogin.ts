@@ -35,16 +35,16 @@ export function useLogin() {
       setBusy(false)
     }
   }
-  function switchMode() {
-    if (inFlight.current) return
-    setRegistering((value) => !value)
+  function selectMode(nextRegistering: boolean) {
+    if (inFlight.current || nextRegistering === registering) return
+    setRegistering(nextRegistering)
     setPassword('')
     setConfirmation('')
     setError('')
   }
   return {
     registering,
-    switchMode,
+    selectMode,
     userId,
     setUserId,
     password,

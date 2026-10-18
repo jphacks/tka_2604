@@ -105,7 +105,7 @@ test('registration isolates ownership, protects API docs, and keeps participant 
     }
     expect((await anonymous.get('/api/auth/session')).status()).toBe(401)
     await page.goto('/login')
-    await page.getByRole('button', { name: 'アカウントを作成する' }).click()
+    await page.getByRole('radio', { name: '新規登録', exact: true }).check()
     await page
       .getByRole('textbox', { name: 'ログインID', exact: true })
       .fill(userId)
