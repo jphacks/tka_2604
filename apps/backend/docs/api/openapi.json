@@ -3,7 +3,7 @@
   "info": {
     "title": "Setly API",
     "version": "0.0.0",
-    "description": "実装済みのAPIは17操作です。イベント一覧・作成・設定変更・論理削除、出演順と制約の取得・保存、チャット履歴・送信、保存済みデータからの計算、公開フォームの名簿取得・バンド登録・更新を提供します。\n\n公開フォーム（Form）はURLを知る人が認証なしで利用できます。その他のイベント操作も認証APIは未接続で、現在はサーバー側の仮所有者demo-ownerを使います。固定のモックイベントを返すAPIではなく、配信環境のD1を読み書きします。\n\nバンド本体の削除は管理用DELETE /api/events/{eventId}/bands/{bandId}を使います。メンバー本体の削除APIは未実装です。更新フォームでの削除はバンドとメンバーの所属解除であり、バンド・メンバーのレコードは残ります。\n\n更新系APIのexpectedUpdatedAtには編集元データのGET応答に含まれるupdatedAtを指定してください。更新競合は409です。Try it outでの保存・計算・イベント削除は、この配信環境のDBへ反映されます。"
+    "description": "実装済みのAPIは18操作です。イベント一覧・作成・設定変更・論理削除、出演順と制約の取得・保存、チャット履歴・送信、保存済みデータからの計算、公開フォームの名簿取得・バンド登録・更新を提供します。\n\n公開フォーム（Form）はURLを知る人が認証なしで利用できます。その他のイベント操作も認証APIは未接続で、現在はサーバー側の仮所有者demo-ownerを使います。固定のモックイベントを返すAPIではなく、配信環境のD1を読み書きします。\n\nバンド本体の削除は管理用DELETE /api/events/{eventId}/bands/{bandId}を使います。メンバー本体の削除APIは未実装です。更新フォームでの削除はバンドとメンバーの所属解除であり、バンド・メンバーのレコードは残ります。\n\n更新系APIのexpectedUpdatedAtには編集元データのGET応答に含まれるupdatedAtを指定してください。更新競合は409です。Try it outでの保存・計算・イベント削除は、この配信環境のDBへ反映されます。"
   },
   "servers": [
     {
@@ -2332,6 +2332,110 @@
         }
       }
     },
+    "/api/events/{eventId}/chat/decision": {
+      "post": {
+        "operationId": "recordChatDecision",
+        "summary": "制約提案の適用・破棄をuser発言として記録する",
+        "description": "固定文を既存のチャット履歴へ保存する。LLM・Solverを呼ばず、Event.updatedAtを変更しない。同じmessageIdとdecisionの再送は同じ発言を返す。",
+        "tags": ["Chat"],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "minLength": 1 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["messageId", "decision"],
+                "additionalProperties": false,
+                "properties": {
+                  "messageId": {
+                    "type": "string",
+                    "pattern": "^decision-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "decision": {
+                    "type": "string",
+                    "enum": ["applied", "discarded"]
+                  }
+                }
+              },
+              "example": {
+                "messageId": "decision-123e4567-e89b-42d3-a456-426614174000",
+                "decision": "applied"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "保存済みのuser発言",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["messageId", "text"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "messageId": { "type": "string" },
+                    "text": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "messageId": "decision-123e4567-e89b-42d3-a456-426614174000",
+                  "text": "制約の変更案を適用しました。"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSONの形式が不正です。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ChatDecisionError" }
+              }
+            }
+          },
+          "404": {
+            "description": "イベントが見つかりません。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ChatDecisionError" }
+              }
+            }
+          },
+          "409": {
+            "description": "発言IDが別の内容に使われています。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ChatDecisionError" }
+              }
+            }
+          },
+          "422": {
+            "description": "入力データが不正です。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ChatDecisionError" }
+              }
+            }
+          },
+          "500": {
+            "description": "記録に失敗しました。",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ChatDecisionError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events/{eventId}/chat": {
       "get": {
         "operationId": "getEventChat",
@@ -2523,7 +2627,7 @@
                     "minLength": 1,
                     "maxLength": 128,
                     "description": "再送で同じ値を使う発言ID。省略時はBEで発行する。",
-                    "pattern": "^[A-Za-z0-9_-]+$"
+                    "pattern": "^(?!decision-)[A-Za-z0-9_-]+$"
                   }
                 },
                 "required": ["message"],
@@ -4758,6 +4862,42 @@
   },
   "components": {
     "schemas": {
+      "ChatDecisionError": {
+        "type": "object",
+        "required": ["error"],
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code", "message", "details"],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "invalid_input",
+                  "event_not_found",
+                  "chat_message_conflict",
+                  "internal_error"
+                ]
+              },
+              "message": { "type": "string" },
+              "details": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["path", "reason"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "path": { "type": "string" },
+                    "reason": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "EventSchedule": {
         "type": "object",
         "properties": {

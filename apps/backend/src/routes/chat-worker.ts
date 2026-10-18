@@ -3,7 +3,10 @@ import { createGeminiChatModel } from '../integrations/llm/gemini'
 import { solverClient } from '../integrations/solver'
 import { chatRepository } from '../repositories/chat'
 import { eventsRepository } from '../repositories/events'
-import { chatMessageService } from '../services/chat/messages'
+import {
+  chatMessageService,
+  recordChatDecision,
+} from '../services/chat/messages'
 import { createChatRoutes } from './chat'
 
 export const chatRoutes = createChatRoutes<CloudflareBindings>(
@@ -30,5 +33,9 @@ export const chatRoutes = createChatRoutes<CloudflareBindings>(
         : undefined,
     )
     return service.send(eventId, input)
+  },
+  async (eventId, input, bindings) => {
+    const db = createDb(bindings.DB)
+    return recordChatDecision(chatRepository(db), 'demo-owner', eventId, input)
   },
 )

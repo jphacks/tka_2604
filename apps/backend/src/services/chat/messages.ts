@@ -3,6 +3,19 @@ import type { SolverClient } from '../solver/contract'
 import { chatService } from './service'
 import type { ChatModel, ChatRepository, ChatResponse } from './types'
 
+export function recordChatDecision(
+  messages: ChatRepository,
+  userId: string,
+  eventId: string,
+  input: { messageId: string; decision: 'applied' | 'discarded' },
+) {
+  const text =
+    input.decision === 'applied'
+      ? '制約の変更案を適用しました。'
+      : '制約の変更案を破棄しました。'
+  return messages.saveUser(userId, eventId, input.messageId, text)
+}
+
 export function chatMessageService(
   eventRepository: EventRepository,
   messages: ChatRepository,
