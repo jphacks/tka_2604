@@ -1175,7 +1175,7 @@
       "get": {
         "operationId": "getEventSchedule",
         "summary": "表情報を取得する",
-        "description": "認証は#57で追加する。現在はdemo-ownerの所有する未削除イベントに限定し、クライアントから所有者IDを受け取らない。取得でデータ保存・LLM・Solverの呼出しを行わない。 バンド・メンバー・所属・部・配置・未配置を返す。バンドと未配置はbandId昇順、メンバーはmemberId昇順、所属はbandId・memberId昇順、部はsortOrder昇順、配置は部の順・order昇順。sortOrder・orderは0始まり。枠数・空き枠は保存しない。",
+        "description": "認証は#57で追加する。現在はdemo-ownerの所有する未削除イベントに限定し、クライアントから所有者IDを受け取らない。取得でデータ保存・LLM・Solverの呼出しを行わない。 バンド・メンバー・所属・部・配置・未配置を返す。バンドと未配置はbandId昇順、メンバーはmemberId昇順、所属はbandId・memberId昇順、部はsortOrder昇順、配置は部の順・order昇順。sortOrder・orderは0始まり。枠数は保存しない。orderの欠番は未設定の位置として保持する。",
         "tags": ["Schedule"],
         "security": [],
         "parameters": [
@@ -1357,7 +1357,7 @@
       "post": {
         "operationId": "saveEventSchedule",
         "summary": "表を保存する",
-        "description": "demo-ownerの未削除イベントに限定。expectedUpdatedAtによる競合検出を行う。成功応答のupdatedAtを次の保存・計算リクエストへ渡す。保存ではSolverを呼ばない。各リクエストは原子的だが、2つの保存をまたぐトランザクションは設けない。",
+        "description": "demo-ownerの未削除イベントに限定。expectedUpdatedAtによる競合検出を行う。成功応答のupdatedAtを次の保存・計算リクエストへ渡す。保存ではSolverを呼ばない。各リクエストは原子的だが、2つの保存をまたぐトランザクションは設けない。 部内orderは重複のない0始まりの整数。欠番を未設定位置として保持し、自動で詰めない。orderは20・登録バンド数・保存済み最大order+1の最大値未満。",
         "tags": ["Schedule"],
         "security": [],
         "parameters": [
@@ -4314,7 +4314,7 @@
         "summary": "バンド本体を削除する",
         "tags": ["Events"],
         "security": [],
-        "description": "現在は仮所有者demo-ownerの未削除イベントに限定する管理用API。公開フォームの所属解除とは別。expectedUpdatedAtで競合を検出し、バンド本体・希望・所属・配置とイベント更新日時を同じD1 batchで変更する。残る配置は削除した部だけorderを0から詰める。メンバー名簿、他バンドの所属、部、制約、チャットを保持する。有効・無効を問わず対象またはsourceBandIdとして参照されるバンドと、残る制約の位置が登録バンド数の範囲外になる削除は409。制約を先に変更・削除する。残る制約を自動変更せず、配置変化による達成状況は再評価する。最後のバンドも削除できる。取得時の更新日時から変更があれば409、別所有者・削除済みイベント・別イベントのバンドは404。",
+        "description": "現在は仮所有者demo-ownerの未削除イベントに限定する管理用API。公開フォームの所属解除とは別。expectedUpdatedAtで競合を検出し、バンド本体・希望・所属・配置とイベント更新日時を同じD1 batchで変更する。残る配置のorderは変更せず、削除した位置を未設定のまま残す。メンバー名簿、他バンドの所属、部、制約、チャットを保持する。有効・無効を問わず対象またはsourceBandIdとして参照されるバンドと、残る制約の位置が登録バンド数の範囲外になる削除は409。制約を先に変更・削除する。残る制約を自動変更せず、配置変化による達成状況は再評価する。最後のバンドも削除できる。取得時の更新日時から変更があれば409、別所有者・削除済みイベント・別イベントのバンドは404。",
         "requestBody": {
           "required": true,
           "content": {

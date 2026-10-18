@@ -70,9 +70,9 @@ export function createEventsApi(client: ApiClient) {
             partName: part.name ?? null,
           })),
           placements: event.sections.flatMap((part) =>
-            part.slots
-              .filter((bandId) => bandId !== null)
-              .map((bandId, order) => ({ bandId, partId: part.id, order })),
+            part.slots.flatMap((bandId, order) =>
+              bandId === null ? [] : [{ bandId, partId: part.id, order }],
+            ),
           ),
           unassignedBandIds: event.unassigned,
         },
@@ -216,16 +216,22 @@ export function createEventsApi(client: ApiClient) {
         sections: schedule.parts
           .toSorted((a, b) => a.sortOrder - b.sortOrder)
           .map((part) => {
-            const bands = schedule.placements
-              .filter((placement) => placement.partId === part.partId)
-              .toSorted((a, b) => a.order - b.order)
-              .map((placement) => placement.bandId)
+            const placements = schedule.placements.filter(
+              (placement) => placement.partId === part.partId,
+            )
+
             return {
               id: part.partId,
               name: part.partName,
               slots: Array.from(
-                { length: Math.max(4, bands.length) },
-                (_, index) => bands[index] ?? null,
+                {
+                  length: Math.max(
+                    4,
+                    ...placements.map((row) => row.order + 1),
+                  ),
+                },
+                (_, index) =>
+                  placements.find((row) => row.order === index)?.bandId ?? null,
               ),
             }
           }),

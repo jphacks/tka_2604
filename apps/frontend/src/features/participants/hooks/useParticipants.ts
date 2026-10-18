@@ -45,18 +45,12 @@ export function useParticipants(eventId: string) {
             unassigned: current.unassigned.filter(
               (id) => id !== deleteTarget.id,
             ),
-            sections: current.sections.map((section) => {
-              const slots = section.slots.filter(
-                (id) => id !== null && id !== deleteTarget.id,
-              )
-              return {
-                ...section,
-                slots: Array.from(
-                  { length: section.slots.length },
-                  (_, i) => slots[i] ?? null,
-                ),
-              }
-            }),
+            sections: current.sections.map((section) => ({
+              ...section,
+              slots: section.slots.map((id) =>
+                id === deleteTarget.id ? null : id,
+              ),
+            })),
           },
       )
       setDeleteTarget(null)

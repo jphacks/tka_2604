@@ -2,7 +2,7 @@ import { and, eq, exists, sql } from 'drizzle-orm'
 
 import { loadEvent } from '../db/events'
 import type { createDb } from '../db/index'
-import { bandOrder, bands, events } from '../db/schema'
+import { bands, events } from '../db/schema'
 import { BandError } from '../services/bands/errors'
 import type { BandRepository } from '../services/bands/service'
 import { EventError } from '../services/events/errors'
@@ -21,17 +21,6 @@ export function bandsRepository(
         .select({ bandId: bands.bandId })
         .from(bands)
         .where(and(eq(bands.eventId, eventId), eq(bands.bandId, bandId)))
-      const partId = snapshot.placements.find(
-        (row) => row.bandId === bandId,
-      )?.partId
-      const remaining = snapshot.placements
-        .filter((row) => row.partId === partId && row.bandId !== bandId)
-        .toSorted((a, b) => a.order - b.order)
-        .map((row, order) => ({ ...row, order }))
-      const batches = Array.from(
-        { length: Math.ceil(remaining.length / 20) },
-        (_, i) => remaining.slice(i * 20, (i + 1) * 20),
-      )
       try {
         await db.batch([
           // Any changed owner, deletion state, revision or band aborts the entire batch.
@@ -45,12 +34,6 @@ export function bandsRepository(
           db
             .delete(bands)
             .where(and(eq(bands.bandId, bandId), eq(bands.eventId, eventId))),
-          ...(partId
-            ? [
-                db.delete(bandOrder).where(eq(bandOrder.partId, partId)),
-                ...batches.map((rows) => db.insert(bandOrder).values(rows)),
-              ]
-            : []),
         ])
       } catch (error) {
         const current = await loadEvent(db, userId, eventId)

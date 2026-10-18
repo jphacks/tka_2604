@@ -2,6 +2,7 @@ import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
 
 import type { FormRoster } from '../src/features/forms/repositories/types'
+import type { SolveResponse } from '../src/shared/api/events'
 import { expect, test } from './database-fixture'
 
 test('confirms or cancels band deletion, retains the roster and persists assigned/unassigned deletions', async ({
@@ -14,6 +15,10 @@ test('confirms or cancels band deletion, retains the roster and persists assigne
   const constraints = (await (
     await request.get(`${url}/constraints`)
   ).json()) as { constraints: unknown[] }
+  type Schedule = NonNullable<SolveResponse['schedule']>
+  const originalSchedule = (await (
+    await request.get(`${url}/schedule`)
+  ).json()) as Schedule
   let deletes = 0
   page.on('request', (r) => {
     if (
@@ -71,7 +76,49 @@ test('confirms or cancels band deletion, retains the roster and persists assigne
       }
     ).constraints,
   ).toEqual(constraints.constraints)
-  await page.reload()
+  const remainingSchedule = (await (
+    await request.get(`${url}/schedule`)
+  ).json()) as Schedule
+  expect(remainingSchedule.placements).toEqual(
+    originalSchedule.placements.filter(
+      (row) => row.bandId !== databaseEvent.bandIds.p2,
+    ),
+  )
+  const resaved = await request.post(`${url}/schedule`, {
+    data: {
+      expectedUpdatedAt: remainingSchedule.updatedAt,
+      parts: remainingSchedule.parts.map(({ partId, partName }) => ({
+        partId,
+        partName,
+      })),
+      placements: remainingSchedule.placements,
+      unassignedBandIds: remainingSchedule.unassignedBandIds,
+    },
+  })
+  expect(resaved.status()).toBe(200)
+  await page.goto(`/event/${databaseEvent.eventId}`)
+  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  const deleted = originalSchedule.placements.find(
+    (row) => row.bandId === databaseEvent.bandIds.p2,
+  )!
+  const partIndex = originalSchedule.parts.findIndex(
+    (part) => part.partId === deleted.partId,
+  )
+  const part = page.getByRole('region', {
+    name: `第${partIndex + 1}部`,
+    exact: true,
+  })
+  await expect(
+    part.locator(':scope > div').nth(deleted.order + 1),
+  ).toContainText('空き枠')
+  for (const placement of remainingSchedule.placements.filter(
+    (row) => row.partId === deleted.partId,
+  ))
+    await expect(
+      part.locator(':scope > div').nth(placement.order + 1),
+    ).toHaveAttribute('data-performance', placement.bandId)
+  await page.goto(`/event/${databaseEvent.eventId}/performances`)
+
   await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
   await expect(button).toHaveCount(0)
   const unassigned = page.getByRole('button', {

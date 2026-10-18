@@ -406,3 +406,19 @@ describe('solve from persisted event data', () => {
     expect(after.placements).toEqual(before.placements)
   })
 })
+
+it('normalizes vacant display slots only in Solver hints', async () => {
+  await local.binding
+    .prepare('UPDATE band_order SET "order" = "order" + 10')
+    .run()
+  const before = (await snapshot())!
+  const send = vi.fn<typeof fetch>().mockResolvedValue(Response.json(solved()))
+  vi.stubGlobal('fetch', send)
+  expect(
+    (await request({ expectedUpdatedAt: before.event.updatedAt })).status,
+  ).toBe(200)
+  const sent = JSON.parse(send.mock.calls[0][1]!.body as string) as {
+    currentPlacements: { order: number }[]
+  }
+  expect(sent.currentPlacements.map((row) => row.order)).toEqual([0, 1])
+})

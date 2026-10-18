@@ -78,7 +78,7 @@ it('deletes an unassigned band, retaining members, other memberships, constraint
   expect(after.constraints).toEqual(before.constraints)
   expect(await db.select().from(chatMessages)).toEqual(messages)
 })
-it('deletes an assigned band and compacts only its part without losing another band', async () => {
+it('deletes an assigned band and leaves a vacant slot and preserves every other placement', async () => {
   await db.insert(bands).values([
     { eventId: seed.event.eventId, bandId: 'a-b3', bandName: 'C' },
     { eventId: seed.event.eventId, bandId: 'a-b4', bandName: 'D' },
@@ -91,7 +91,7 @@ it('deletes an assigned band and compacts only its part without losing another b
   expect((await remove()).status).toBe(200)
   expect((await snapshot())!.placements).toEqual([
     { bandId: 'a-b1', partId: 'a-p1', order: 0 },
-    { bandId: 'a-b3', partId: 'a-p1', order: 1 },
+    { bandId: 'a-b3', partId: 'a-p1', order: 2 },
     { bandId: 'a-b4', partId: 'a-p2', order: 0 },
   ])
 })
@@ -184,7 +184,7 @@ it('rolls back deletion, memberships, order and timestamp on a late D1 failure',
   const before = await snapshot()
   await local.binding
     .prepare(
-      "CREATE TRIGGER fail_reinsert BEFORE INSERT ON band_order BEGIN SELECT RAISE(ABORT, 'test_failure'); END",
+      "CREATE TRIGGER fail_delete AFTER DELETE ON bands BEGIN SELECT RAISE(ABORT, 'test_failure'); END",
     )
     .run()
   expect((await remove()).status).toBe(500)

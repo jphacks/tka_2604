@@ -164,7 +164,7 @@ describe('events RPC adapter', () => {
           { partId: 'p2', partName: '後半', sortOrder: 1 },
           { partId: 'p1', partName: '前半', sortOrder: 0 },
         ],
-        placements: [{ bandId: 'b1', partId: 'p1', order: 0 }],
+        placements: [{ bandId: 'b1', partId: 'p1', order: 2 }],
         unassignedBandIds: [],
       }),
       json({
@@ -186,7 +186,7 @@ describe('events RPC adapter', () => {
     // Chat history has its own sequence; it does not participate in updatedAt.
     const event = await api.getEvent('event-1')
     expect(event.sections).toEqual([
-      { id: 'p1', name: '前半', slots: ['b1', null, null, null] },
+      { id: 'p1', name: '前半', slots: [null, null, 'b1', null] },
       { id: 'p2', name: '後半', slots: [null, null, null, null] },
     ])
     expect(event.performances[0]).toMatchObject({
@@ -223,7 +223,7 @@ describe('events RPC adapter', () => {
   })
 })
 
-it('saves dense parts and placements with the displayed revision, then constraints with the new revision', async () => {
+it('saves parts and placements without closing vacant slots with the displayed revision, then constraints with the new revision', async () => {
   const savedAt = '2026-10-17T00:00:00.001Z'
   const { api, fetcher } = setup([
     json({ updatedAt: savedAt }),
@@ -253,7 +253,7 @@ it('saves dense parts and placements with the displayed revision, then constrain
     ],
     placements: [
       { bandId: 'b2', partId: 'part-1', order: 0 },
-      { bandId: 'b1', partId: 'part-1', order: 1 },
+      { bandId: 'b1', partId: 'part-1', order: 2 },
     ],
     unassignedBandIds: ['b3'],
   })

@@ -42,7 +42,7 @@ it('opening and cancelling confirmation never deletes a band', async () => {
   expect(result.current.deleteTarget).toBeNull()
   expect(api.deleteBand).not.toHaveBeenCalled()
 })
-it('commits once, blocks cancellation during sending, updates order and keeps members', async () => {
+it('commits once, blocks cancellation during sending, leaves the deleted slot empty and keeps members', async () => {
   let complete!: (value: {
     eventId: string
     bandId: string
@@ -75,6 +75,12 @@ it('commits once, blocks cancellation during sending, updates order and keeps me
   expect(result.current.deleteTarget).toBeNull()
   expect(result.current.rows.map((row) => row.id)).toEqual(['b', 'c'])
   expect(result.current.rows[0].position?.order).toBe(1)
+  expect(result.current.data?.sections[0].slots).toEqual([
+    null,
+    'b',
+    null,
+    null,
+  ])
   expect(result.current.stats.members).toBe(1)
   expect(result.current.data?.updatedAt).toBe('2026-10-18T00:01:00.000Z')
 })

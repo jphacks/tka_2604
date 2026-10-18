@@ -214,7 +214,7 @@ describe('separate schedule and constraint saves', () => {
     },
   )
 
-  it('rejects missing/duplicate/foreign bands, gaps, duplicate parts and zero parts without writes', async () => {
+  it('rejects missing/duplicate/foreign bands, duplicate positions, duplicate parts and zero parts without writes', async () => {
     const before = await snapshot()
     const body = await input()
     for (const invalid of [
@@ -229,10 +229,24 @@ describe('separate schedule and constraint saves', () => {
       { ...body, unassignedBandIds: ['foreign'] },
       {
         ...body,
-        placements: [{ ...body.placements[0], order: 2 }, body.placements[1]],
+        placements: [
+          body.placements[0],
+          {
+            ...body.placements[1],
+            partId: body.placements[0].partId,
+            order: body.placements[0].order,
+          },
+        ],
       },
       { ...body, parts: [body.parts[0], body.parts[0]] },
       { ...body, parts: [] },
+      {
+        ...body,
+        placements: body.placements.map((row) => ({
+          ...row,
+          order: 1_000_000,
+        })),
+      },
     ]) {
       const response = await request('schedule', invalid)
       expect(response.status).toBe(422)
@@ -327,4 +341,15 @@ describe('separate schedule and constraint saves', () => {
     ).toBe(422)
     expect(await snapshot()).toEqual(before)
   })
+})
+
+it('saves and reloads leading and internal vacancies without compacting placements', async () => {
+  const body = await input()
+  body.placements = body.placements.map((row, index) => ({
+    ...row,
+    order: index * 2 + 1,
+  }))
+  const response = await request('schedule', body)
+  expect(response.status).toBe(200)
+  expect((await snapshot())!.placements).toEqual(body.placements)
 })
