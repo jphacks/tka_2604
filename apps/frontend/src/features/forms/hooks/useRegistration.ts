@@ -33,7 +33,7 @@ export function useFormEditor(eventId: string) {
       setBusy(false)
     }
   }
-  const formUrl = `${window.location.origin}/event/${eventId}/forms`
+  const formUrl = `${window.location.origin}/event/${eventId}/forms/demo`
   const responseCount =
     resource.data?.submissions.filter((item) => item.source === 'form')
       .length ?? 0

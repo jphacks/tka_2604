@@ -25,7 +25,7 @@ export function FormEditorPage() {
             出演者から、必要な情報と希望を集めましょう。
           </p>
         </div>
-        <LinkButton to={`/event/${eventId}/forms`}>
+        <LinkButton to={`/event/${eventId}/forms/demo`}>
           <Icon name="form" />
           回答フォームを開く
         </LinkButton>

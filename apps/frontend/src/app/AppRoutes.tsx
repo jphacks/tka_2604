@@ -13,7 +13,10 @@ import { EventPage } from '../features/event/pages/EventPage'
 import { EventSettingsPage } from '../features/events/pages/EventSettingsPage'
 import { EventsPage } from '../features/events/pages/EventsPage'
 import { FormEditorPage } from '../features/forms/pages/FormEditorPage'
-import { RegistrationPage } from '../features/forms/pages/RegistrationPage'
+import {
+  DemoRegistrationPage,
+  RegistrationPage,
+} from '../features/forms/pages/RegistrationPage'
 import { ParticipantsPage } from '../features/participants/pages/ParticipantsPage'
 import { Brand } from '../shared/ui/Brand'
 import { LinkButton } from '../shared/ui/LinkButton'
@@ -72,6 +75,10 @@ export function AppRoutes() {
       <Route
         path="/event/:eventId/forms"
         element={<EventScopedRoute component={RegistrationPage} />}
+      />
+      <Route
+        path="/event/:eventId/forms/demo"
+        element={<EventScopedRoute component={DemoRegistrationPage} />}
       />
       <Route element={<ProtectedRoutes />}>
         <Route

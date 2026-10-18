@@ -28,7 +28,7 @@ export function ParticipantsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <LinkButton to={`/event/${eventId}/forms`}>
+          <LinkButton to={`/event/${eventId}/forms/demo`}>
             <Icon name="form" />
             回答フォーム
           </LinkButton>
