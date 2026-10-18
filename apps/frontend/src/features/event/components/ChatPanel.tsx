@@ -6,17 +6,26 @@ import type { EventController } from '../hooks/useEvent'
 import { ChatProposal } from './ChatProposal'
 import { ReorderDialog } from './ReorderDialog'
 
-export function ChatPanel({ controller }: { controller: EventController }) {
+export function ChatPanel({
+  controller,
+  onShowConstraints,
+  active,
+}: {
+  controller: EventController
+  onShowConstraints: () => void
+  active: boolean
+}) {
   const endRef = useChatScroll(
     controller.event?.messages.length ?? 0,
     controller.sending,
+    active,
   )
   if (!controller.event || !controller.schedule) return null
   return (
-    <Panel title="AIチャット">
+    <Panel title="AIチャット" className="xl:border-r-0">
       <div
         ref={endRef}
-        className="max-h-[55dvh] min-h-64 scrollbar-thin overflow-y-auto p-3 xl:max-h-none xl:min-h-0 xl:flex-1"
+        className="min-h-0 flex-1 scrollbar-thin overflow-y-auto p-3 wrap-anywhere"
       >
         <div
           role="log"
@@ -78,7 +87,7 @@ export function ChatPanel({ controller }: { controller: EventController }) {
           <Button
             variant="subtle"
             className="mt-3 text-xs"
-            onClick={() => controller.setShowUnmet(true)}
+            onClick={onShowConstraints}
           >
             未達成の条件を確認
           </Button>

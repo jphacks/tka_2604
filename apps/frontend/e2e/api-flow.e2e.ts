@@ -134,6 +134,7 @@ test('real API: create, failed save, retry, reload, conflict and delete', async 
     .getByRole('dialog')
     .getByRole('button', { name: 'イベントを作成', exact: true })
     .click()
+  await expect(page).toHaveURL(/\/event\/[^/?]+$/)
   await expect(
     page.getByRole('heading', { name: 'RPCブラウザ確認', exact: true }),
   ).toBeVisible()

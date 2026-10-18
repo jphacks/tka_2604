@@ -29,7 +29,11 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
       title="出演順"
       headerClassName="flex-wrap py-2"
       action={
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div
+          role="group"
+          aria-label="出演順の操作"
+          className="flex w-full max-w-full min-w-0 items-center gap-2 overflow-x-auto pb-1 xl:w-auto xl:pb-0"
+        >
           <Button
             aria-label="出演順を保存"
             className="text-xs"
@@ -83,7 +87,9 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
       <ScheduleDragSurface controller={controller}>
         <div
           ref={scrollRef}
-          className="max-h-[65dvh] min-h-64 scrollbar-thin overflow-auto xl:max-h-none xl:min-h-0 xl:flex-1"
+          role="region"
+          aria-label="出演順の表"
+          className="min-h-0 flex-1 scrollbar-thin overflow-auto"
         >
           <div
             className={`${rowColumns} sticky top-0 z-10 min-h-9 border-b border-line bg-white text-xs text-muted`}
