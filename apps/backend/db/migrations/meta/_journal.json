@@ -29,6 +29,20 @@
       "when": 1792177745500,
       "tag": "0003_chat_integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1792293286388,
+      "tag": "0004_part_band_count",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1792293287090,
+      "tag": "0005_part_band_count_integrity",
+      "breakpoints": true
     }
   ]
 }

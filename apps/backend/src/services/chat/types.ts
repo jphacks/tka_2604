@@ -38,7 +38,7 @@ export type ConstraintProposalAction =
 export type AIChatInput = {
   context: {
     event: Pick<EventDetails, 'title'>
-    parts: EventSchedule['parts']
+    parts: Omit<EventSchedule['parts'][number], 'bandCount'>[]
     bands: Pick<EventSchedule['bands'][number], 'bandId' | 'bandName'>[]
     members: EventSchedule['members']
     memberships: EventSchedule['memberships']

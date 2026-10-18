@@ -68,6 +68,7 @@ export function createEventsApi(client: ApiClient) {
           parts: event.sections.map((part) => ({
             partId: part.id,
             partName: part.name ?? null,
+            bandCount: part.slots.length,
           })),
           placements: event.sections.flatMap((part) =>
             part.slots.flatMap((bandId, order) =>
@@ -123,6 +124,7 @@ export function createEventsApi(client: ApiClient) {
           date: draft.date || null,
           venue: draft.venue || null,
           description: draft.description || null,
+          bandCounts: draft.bandCounts ?? [4],
         },
       })
       await ensureOk(response)
@@ -224,12 +226,7 @@ export function createEventsApi(client: ApiClient) {
               id: part.partId,
               name: part.partName,
               slots: Array.from(
-                {
-                  length: Math.max(
-                    4,
-                    ...placements.map((row) => row.order + 1),
-                  ),
-                },
+                { length: part.bandCount },
                 (_, index) =>
                   placements.find((row) => row.order === index)?.bandId ?? null,
               ),

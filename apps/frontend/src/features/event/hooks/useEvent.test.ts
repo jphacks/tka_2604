@@ -138,7 +138,7 @@ it('retains validation errors and prevents edits during a confirmed reload after
   confirm.mockRestore()
 })
 
-it('keeps local frame capacity without a server write, including after order saving', async () => {
+it('marks a frame count edit dirty and persists it on explicit saving', async () => {
   api.getEvent.mockResolvedValueOnce({
     ...event,
     scheduleMode: 'dense',
@@ -151,7 +151,7 @@ it('keeps local frame capacity without a server write, including after order sav
   await waitFor(() => expect(result.current.event).not.toBeNull())
   act(() => result.current.resize(6, 'p1'))
   expect(result.current.event?.sections[0].slots).toHaveLength(6)
-  expect(result.current.scheduleDirty).toBe(false)
+  expect(result.current.scheduleDirty).toBe(true)
   expect(api.saveSchedule).not.toHaveBeenCalled()
   act(() => result.current.setOrder('b', 1))
   await act(() => result.current.saveSchedule())

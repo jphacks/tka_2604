@@ -28,7 +28,15 @@ const fixture = (): Snapshot => ({
   })),
   members: [{ eventId: 'event', memberId: 'a', memberName: 'Same string ID' }],
   memberships: [],
-  parts: [{ partId: 'p', eventId: 'event', sortOrder: 0, partName: null }],
+  parts: [
+    {
+      partId: 'p',
+      eventId: 'event',
+      sortOrder: 0,
+      partName: null,
+      bandCount: 4,
+    },
+  ],
   placements: [],
   constraints: [],
 })

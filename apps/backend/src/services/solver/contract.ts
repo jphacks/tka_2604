@@ -43,7 +43,7 @@ export interface SolverRequest {
   bands: { bandId: string }[]
   members: { memberId: string }[]
   memberships: { bandId: string; memberId: string }[]
-  parts: { partId: string; sortOrder: number }[]
+  parts: { partId: string; sortOrder: number; bandCount: number }[]
   constraints: Constraint[]
   currentPlacements: z.infer<typeof placementSchema>[]
 }

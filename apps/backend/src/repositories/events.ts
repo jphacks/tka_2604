@@ -156,6 +156,7 @@ export function eventsRepository(db: Database): EventRepository {
           .select({
             partId: parts.partId,
             partName: parts.partName,
+            bandCount: parts.bandCount,
             sortOrder: parts.sortOrder,
           })
           .from(parts)

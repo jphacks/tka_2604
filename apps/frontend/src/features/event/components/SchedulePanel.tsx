@@ -1,9 +1,9 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 
 import { Button } from '../../../shared/ui/Button'
-import { NumberField } from '../../../shared/ui/NumberField'
 import { Panel } from '../../../shared/ui/Panel'
 import type { EventController } from '../hooks/useEvent'
+import { LiveInfoDialog } from './LiveInfoDialog'
 import {
   EmptyPerformanceRow,
   PerformanceRow,
@@ -13,7 +13,8 @@ import { ScheduleDragSurface, UnassignedDropZone } from './ScheduleDragSurface'
 
 export function SchedulePanel({ controller }: { controller: EventController }) {
   const unassignedRef = useRef<HTMLElement>(null)
-  const { event, schedule, setOrder, setFixed, resize } = controller
+  const { event, schedule, setOrder, setFixed } = controller
+  const [editingLive, setEditingLive] = useState(false)
   if (!event || !schedule) return null
   return (
     <Panel
@@ -24,8 +25,9 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
         controller.sending
       }
       title="出演順"
+      headerClassName="flex-wrap py-2"
       action={
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button
             aria-label="出演順を保存"
             className="text-xs"
@@ -41,6 +43,26 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
           >
             {controller.savingSchedule ? '保存中…' : '保存'}
             {controller.scheduleDirty && ' *'}
+          </Button>
+          <Button
+            disabled={
+              !event.performances.length ||
+              controller.saving ||
+              controller.solving ||
+              controller.refreshing ||
+              controller.sending
+            }
+            title="出演順・制約を保存してから計算します"
+            className="text-xs"
+            onClick={() => void controller.generate()}
+          >
+            {controller.solving ? '計算中…' : '自動生成'}
+          </Button>
+          <Button onClick={controller.exportCsv} className="text-xs">
+            CSVを出力
+          </Button>
+          <Button onClick={() => setEditingLive(true)} className="text-xs">
+            ライブ情報の編集
           </Button>
           {schedule.unassigned.length > 0 ? (
             <Button
@@ -64,50 +86,12 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
         </span>
       }
     >
-      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-line bg-canvas/50 px-3 py-2 text-xs">
-        <Button
-          disabled={
-            !event.performances.length ||
-            controller.saving ||
-            controller.solving ||
-            controller.refreshing ||
-            controller.sending
-          }
-          title="出演順・制約を保存してから計算します"
-          className="text-xs"
-          onClick={() => void controller.generate()}
-        >
-          {controller.solving ? '計算中…' : '自動生成'}
-        </Button>
-        <Button onClick={controller.exportCsv} className="text-xs">
-          CSVを出力
-        </Button>
-        <label className="flex items-center gap-2">
-          部数
-          <NumberField
-            label="部数"
-            value={event.sections.length}
-            max={8}
-            onCommit={(value) => {
-              if (value !== null) resize(value)
-            }}
-          />
-        </label>
-        {schedule.sections.map((section, index) => (
-          <label key={section.id} className="flex items-center gap-2">
-            第{index + 1}部
-            <NumberField
-              label={`第${index + 1}部の組数`}
-              value={section.capacity}
-              max={20}
-              onCommit={(value) => {
-                if (value !== null) resize(value, section.id)
-              }}
-            />
-            組
-          </label>
-        ))}
-      </div>
+      {editingLive && (
+        <LiveInfoDialog
+          controller={controller}
+          onClose={() => setEditingLive(false)}
+        />
+      )}
       <ScheduleDragSurface controller={controller}>
         <div className="max-h-[65dvh] min-h-64 scrollbar-thin overflow-auto xl:max-h-none xl:min-h-0 xl:flex-1">
           <div

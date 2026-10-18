@@ -8,7 +8,7 @@ const input: SolverRequest = {
   bands: [{ bandId: 'a' }],
   members: [],
   memberships: [],
-  parts: [{ partId: 'p', sortOrder: 0 }],
+  parts: [{ partId: 'p', bandCount: 4, sortOrder: 0 }],
   constraints: [],
   currentPlacements: [],
 }
