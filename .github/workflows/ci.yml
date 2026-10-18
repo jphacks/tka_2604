@@ -33,3 +33,48 @@ jobs:
         working-directory: apps/solver
       - run: npm ci
       - run: npm run check
+
+  e2e:
+    name: E2E (${{ matrix.mode }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [mock, api]
+    env:
+      CI: 'true'
+      HUSKY: '0'
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Prepare local API and D1
+        if: matrix.mode == 'api'
+        run: |
+          npm run cf:typegen
+          npm run build --workspace=@jphack-2026/frontend
+          npm run db:migrate:local
+          npm run db:seed:local
+      - name: Run mock E2E
+        if: matrix.mode == 'mock'
+        run: npm run test:e2e -- --workers=1 --reporter=list,html
+      - name: Run API E2E
+        if: matrix.mode == 'api'
+        run: npm run test:e2e:api -- --workers=1 --reporter=list,html
+      - name: Upload Playwright results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-${{ matrix.mode }}
+          path: |
+            apps/frontend/playwright-report/
+            apps/frontend/test-results/
+          retention-days: 7
+          if-no-files-found: ignore

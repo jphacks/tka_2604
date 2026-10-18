@@ -39,7 +39,8 @@
     "test:coverage": "vitest run --coverage",
     "test:frontend": "vitest run --project frontend",
     "test:backend": "vitest run --project backend",
-    "test:e2e": "npm run test:e2e --workspace=@jphack-2026/frontend",
+    "test:e2e": "npm run test:e2e --workspace=@jphack-2026/frontend --",
+    "test:e2e:api": "npm run test:e2e:api --workspace=@jphack-2026/frontend --",
     "db:generate": "npm run db:generate --workspace=@jphack-2026/backend --",
     "db:seed:local": "wrangler d1 execute DB --env develop --local --file apps/backend/db/seed.sql"
   },
