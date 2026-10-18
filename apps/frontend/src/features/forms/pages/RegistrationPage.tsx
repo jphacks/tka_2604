@@ -21,7 +21,7 @@ export function RegistrationPage() {
   const updating = controller.mode === 'update'
   return (
     <div className="min-h-dvh bg-canvas">
-      <header className="flex h-16 items-center justify-between border-b border-line bg-white px-5 sm:px-8">
+      <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-line bg-white px-5 sm:px-8">
         <Brand to={session ? '/event' : '/login'} />
         {session ? (
           <LinkButton to={`/event/${eventId}/forms/edit`} className="text-xs">

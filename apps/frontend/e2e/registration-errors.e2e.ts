@@ -138,3 +138,26 @@ test('registration remains usable at mobile width without horizontal overflow', 
     ),
   ).toBe(true)
 })
+
+for (const width of [390, 1280]) {
+  test(`registration header remains visible while scrolling a long form at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 844 })
+    await mockRegistrationApi(page)
+    await page.goto('/event/public-live/forms')
+    const header = page.getByRole('banner')
+    await expect(header).toBeVisible()
+    for (let row = 0; row < 4; row++)
+      await page.getByRole('button', { name: 'メンバーの行を追加' }).click()
+    const submit = page.getByRole('button', { name: '出演登録を送信' })
+    await submit.scrollIntoViewIfNeeded()
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(500)
+    await expect(submit).toBeInViewport()
+    await expect(header).toBeInViewport({ ratio: 1 })
+    expect((await header.boundingBox())?.y).toBe(0)
+    await page.screenshot({
+      path: `test-results/registration-sticky-${width}.png`,
+    })
+  })
+}
