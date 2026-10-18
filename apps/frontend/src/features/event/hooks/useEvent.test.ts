@@ -198,8 +198,11 @@ it('persists order then constraints before invoking Solver with the last revisio
   const { result } = renderHook(() => useEvent('e'))
   await waitFor(() => expect(result.current.event).not.toBeNull())
   act(() => result.current.setOrder('b', 1))
+  const revision = result.current.reorderRevision
   await act(() => result.current.generate())
   expect(calls).toEqual(['schedule', 'constraints', 'solve'])
+  // 計算結果の反映も並べ替えアニメーションの対象にする
+  expect(result.current.reorderRevision).toBe(revision + 1)
   expect(result.current.scheduleDirty).toBe(false)
   expect(result.current.notice).toContain('探索が完了していません')
 })
