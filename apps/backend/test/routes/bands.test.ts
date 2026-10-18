@@ -8,6 +8,7 @@ import {
   bandOrder,
   bands,
   chatMessages,
+  constraints,
   events,
   users,
 } from '../../src/db/schema'
@@ -94,7 +95,7 @@ it('deletes an assigned band and leaves a vacant slot and preserves every other 
     { bandId: 'a-b4', partId: 'a-p2', order: 0 },
   ])
 })
-it('can delete the final band while preserving the member roster, parts and constraints', async () => {
+it('can delete the final band while preserving the member roster, parts and constraints without a source', async () => {
   const before = (await snapshot())!
   expect((await remove('a-b1')).status).toBe(200)
   const revision = (await snapshot())!.event.updatedAt
@@ -107,19 +108,38 @@ it('can delete the final band while preserving the member roster, parts and cons
   expect(after.members).toHaveLength(1)
   expect(after.parts).toHaveLength(2)
   expect(after.constraints).toEqual(
-    before.constraints.map((row) => ({ ...row, sourceBandId: null })),
+    before.constraints.filter((row) => row.sourceBandId === null),
   )
 })
-it('deletes a referenced band, retaining constraint JSON and clearing only its source link', async () => {
+it('deletes all constraints sourced from the band, retaining target-only and other-source constraints', async () => {
+  await db.insert(constraints).values([
+    {
+      constraintId: 'a-c3',
+      eventId: seed.event.eventId,
+      sourceBandId: 'a-b1',
+      constraintJson: JSON.stringify({
+        ...seed.constraints.constraints[0].constraint,
+        constraint_id: 'a-c3',
+        enabled: false,
+        targets: { band_id: 'a-b2' },
+      }),
+    },
+    {
+      constraintId: 'a-c4',
+      eventId: seed.event.eventId,
+      sourceBandId: 'a-b2',
+      constraintJson: JSON.stringify({
+        ...seed.constraints.constraints[0].constraint,
+        constraint_id: 'a-c4',
+      }),
+    },
+  ])
   const before = (await snapshot())!
   expect((await remove('a-b1')).status).toBe(200)
   const after = (await snapshot())!
   expect(after.bands.map((band) => band.bandId)).toEqual(['a-b2'])
   expect(after.constraints).toEqual(
-    before.constraints.map((row) => ({
-      ...row,
-      sourceBandId: row.sourceBandId === 'a-b1' ? null : row.sourceBandId,
-    })),
+    before.constraints.filter((row) => row.sourceBandId !== 'a-b1'),
   )
   expect(after.members).toEqual(before.members)
 })

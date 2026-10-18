@@ -174,7 +174,7 @@ export function ParticipantsPage() {
       {controller.deleteTarget && (
         <ConfirmDialog
           title="バンドを削除"
-          message={`「${controller.deleteTarget.name}」を削除しますか？所属・配置と希望も削除し、空いた出演枠は未設定のまま残します。メンバー名簿と他バンドの所属は残ります。この操作は取り消せません。`}
+          message={`「${controller.deleteTarget.name}」を削除しますか？所属・配置・希望と、このバンドの希望から作られた制約も削除し、空いた出演枠は未設定のまま残します。メンバー名簿と他バンドの所属は残ります。この操作は取り消せません。`}
           error={controller.deleteError}
           busy={controller.deleteBusy}
           onCancel={controller.cancelDelete}

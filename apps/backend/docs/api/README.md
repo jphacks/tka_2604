@@ -37,7 +37,7 @@ MarkdownのAPI定義書は[共通テンプレート](template.md)を使い、次
 
 実装済みのAPIは17操作。`Health`、`Events`、`Form`、`Schedule`、`Constraints`、`Chat`、`Solver`に分類する。チャット履歴GETと送信POSTは同じ`Chat`欄に表示する。
 
-- `Events`の`DELETE /api/events/{eventId}/bands/{bandId}`はバンド本体の削除。確認元の`expectedUpdatedAt`を渡す。制約参照があっても削除でき、制約JSONは保持する。生成元sourceBandIdだけ削除対象への参照を解除する。
+- `Events`の`DELETE /api/events/{eventId}/bands/{bandId}`はバンド本体の削除。確認元の`expectedUpdatedAt`を渡す。制約参照があっても削除でき、生成元sourceBandIdが削除対象を指す制約は一緒に削除する。それ以外の制約JSONは保持する。
 - `Form`のPATCHは名前と所属の編集で、空配列は全員の所属解除。こちらはバンドとメンバー本体を残す。
 - `Events`の`DELETE /api/events/{eventId}`はイベント全体の論理削除。バンド1件の削除には使わない。
 - `Form`のPOST／PATCHには具体的なリクエスト例を用意する。実行時はGETで得たイベントID・バンド／メンバーID・`updatedAt`へ差し替える。`expectedUpdatedAt`が古い場合は409となる。

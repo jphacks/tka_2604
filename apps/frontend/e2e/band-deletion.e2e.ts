@@ -36,6 +36,7 @@ test('confirms or cancels band deletion, retains the roster and persists assigne
   await button.click()
   const dialog = page.getByRole('dialog', { name: 'バンドを削除', exact: true })
   await expect(dialog).toContainText('「Pretender」を削除しますか？')
+  await expect(dialog).toContainText('このバンドの希望から作られた制約も削除')
   await page.keyboard.press('Escape')
   await expect(dialog).toHaveCount(0)
   await expect(button).toBeFocused()

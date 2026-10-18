@@ -31,11 +31,8 @@ export function bandsRepository(
               updatedAt: sql`CASE WHEN ${events.createdUserId} = ${userId} AND ${events.isDeleted} = 0 AND ${events.updatedAt} = ${expected} AND ${exists(target)} THEN ${updatedAt} ELSE NULL END`,
             })
             .where(eq(events.eventId, eventId)),
-          // Keep the constraint JSON; only detach its foreign-key source metadata.
-          db
-            .update(constraints)
-            .set({ sourceBandId: null })
-            .where(eq(constraints.sourceBandId, bandId)),
+          // Delete constraints originating from this band; target-only references remain.
+          db.delete(constraints).where(eq(constraints.sourceBandId, bandId)),
           db
             .delete(bands)
             .where(and(eq(bands.bandId, bandId), eq(bands.eventId, eventId))),
