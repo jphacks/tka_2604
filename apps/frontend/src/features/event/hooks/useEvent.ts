@@ -321,7 +321,7 @@ export function useEvent(eventId: string) {
         (view.status === 'unmet' || view.status === 'invalid'),
     ).length,
     exportCsv: () => {
-      if (event) {
+      if (event && window.confirm('出演順をCSVでエクスポートしますか？')) {
         exportEventCsv(event)
         dispatch({
           type: 'notice',

@@ -88,7 +88,7 @@ for (const width of [320, 390, 768, 1279]) {
     for (const name of [
       '出演順を保存',
       '自動生成',
-      'CSVを出力',
+      '共有',
       'ライブ情報の編集',
     ]) {
       const button = schedule.getByRole('button', { name, exact: true })

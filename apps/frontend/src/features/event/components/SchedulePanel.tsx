@@ -65,7 +65,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
             {controller.solving ? '計算中…' : '自動生成'}
           </Button>
           <Button onClick={controller.exportCsv} className="text-xs">
-            CSVを出力
+            共有
           </Button>
           <Button onClick={() => setEditingLive(true)} className="text-xs">
             ライブ情報の編集
