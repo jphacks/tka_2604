@@ -8,7 +8,7 @@ export const prefersReducedMotion = () =>
 export function slideFrom(
   element: HTMLElement,
   dy: number,
-  options: { duration: number },
+  options: { duration: number; highlight?: string },
 ) {
   if (!dy || prefersReducedMotion() || typeof element.animate !== 'function')
     return
@@ -17,4 +17,9 @@ export function slideFrom(
     [{ transform: `translateY(${dy}px)` }, { transform: 'translateY(0)' }],
     { duration: options.duration, easing },
   )
+  if (options.highlight)
+    element.animate(
+      [{ backgroundColor: options.highlight }, { backgroundColor: 'white' }],
+      { duration: options.duration * 2.5, easing: 'ease-out' },
+    )
 }

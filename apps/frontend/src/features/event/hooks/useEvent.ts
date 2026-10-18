@@ -54,6 +54,8 @@ export function useEvent(eventId: string) {
   const [loadError, setLoadError] = useState('')
   const [retry, setRetry] = useState(0)
   const [showUnmet, setShowUnmet] = useState(false)
+  // Bumped on each approved AI reorder so the schedule animates the move.
+  const [reorderRevision, setReorderRevision] = useState(0)
   useEffect(() => {
     const controller = new AbortController()
     lifetime.current = controller
@@ -289,6 +291,7 @@ export function useEvent(eventId: string) {
         return
       }
       chat.dismissReorder()
+      setReorderRevision((value) => value + 1)
       dispatch({ type: 'loaded', event: next })
       if (await save('schedule', next))
         dispatch({
@@ -296,6 +299,7 @@ export function useEvent(eventId: string) {
           message: '並べ替え案を出演順に保存しました。',
         })
     },
+    reorderRevision,
     loadError,
     saving,
     savingSchedule: savingKind === 'schedule',
