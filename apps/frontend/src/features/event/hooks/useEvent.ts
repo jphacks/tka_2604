@@ -130,15 +130,14 @@ export function useEvent(eventId: string) {
 
   const save = useCallback(
     async (kind: 'schedule' | 'constraints', snapshot = event) => {
-      if (!snapshot || busy.current || refreshing || chat.sending) return false
+      if (!snapshot || busy.current || refreshing || chat.sending) return null
       busy.current = true
       setSavingKind(kind)
       setSaveError('')
       dispatch({ type: 'notice', message: '' })
       const signal = lifetime.current?.signal
       try {
-        await persist(snapshot, kind)
-        return true
+        return await persist(snapshot, kind)
       } catch (error) {
         if (!signal?.aborted) {
           setFailedKind(kind)
@@ -150,7 +149,7 @@ export function useEvent(eventId: string) {
         busy.current = false
         if (!signal?.aborted) setSavingKind(null)
       }
-      return false
+      return null
     },
     [event, refreshing, chat.sending, persist],
   )
@@ -280,12 +279,11 @@ export function useEvent(eventId: string) {
       chat.dismissProposal()
       void chat.recordDecision('discarded')
     },
-    // Approving a reorder replaces the schedule and saves it at once; on a
-    // save failure the edit stays local with the usual retry notice.
     applyReorder: async () => {
       if (
         !event ||
         !chat.chatReorder ||
+        chat.pendingDecision ||
         chat.chatBlocked ||
         busy.current ||
         refreshing ||
@@ -306,14 +304,27 @@ export function useEvent(eventId: string) {
         })
         return
       }
+      const saved = await save('schedule', next)
+      if (!saved) return
       chat.dismissReorder()
       setReorderRevision((value) => value + 1)
-      dispatch({ type: 'loaded', event: next })
-      if (await save('schedule', next))
-        dispatch({
-          type: 'notice',
-          message: '並べ替え案を出演順に保存しました。',
-        })
+      dispatch({ type: 'loaded', event: saved })
+      dispatch({
+        type: 'notice',
+        message: '並べ替え案を出演順に保存しました。',
+      })
+      await chat.recordDecision('applied')
+    },
+    dismissReorder: () => {
+      if (
+        !chat.chatReorder ||
+        chat.pendingDecision ||
+        chat.chatBlocked ||
+        busy.current
+      )
+        return
+      chat.dismissReorder()
+      void chat.recordDecision('discarded')
     },
     reorderRevision,
     loadError,

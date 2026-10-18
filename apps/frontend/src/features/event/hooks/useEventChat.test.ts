@@ -68,7 +68,7 @@ it('keeps decision logs in history without offering an AI retry', () => {
   const decision = {
     id: 'decision-123e4567-e89b-42d3-a456-426614174000',
     role: 'user' as const,
-    text: '制約の変更案を破棄しました。',
+    text: '提案を破棄しました。',
     replyToMessageId: null,
   }
   const ordinary = { ...decision, id: 'decision-old', text: '通常の発言' }

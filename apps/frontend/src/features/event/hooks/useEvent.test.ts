@@ -251,10 +251,13 @@ async function receiveReorder(result: {
 
 it('saves an approved reorder through the schedule API and keeps the order on rejection', async () => {
   api.saveSchedule.mockResolvedValue({ updatedAt: '2026-10-17T00:00:00.001Z' })
+  api.recordDecision.mockResolvedValue(undefined)
   const { result } = renderHook(() => useEvent('e'))
   await waitFor(() => expect(result.current.event).not.toBeNull())
   await receiveReorder(result)
   act(() => result.current.dismissReorder())
+  await waitFor(() => expect(result.current.pendingDecision).toBeNull())
+  expect(api.recordDecision.mock.calls[0][1]).toBe('discarded')
   expect(result.current.event?.sections[0].slots).toEqual(['a', 'b'])
   expect(api.saveSchedule).not.toHaveBeenCalled()
 
@@ -267,6 +270,27 @@ it('saves an approved reorder through the schedule API and keeps the order on re
   expect(result.current.chatReorder).toBeNull()
   expect(result.current.scheduleDirty).toBe(false)
   expect(result.current.notice).toBe('並べ替え案を出演順に保存しました。')
+  expect(api.recordDecision.mock.calls[1][1]).toBe('applied')
+})
+
+it('keeps a reorder proposal open and does not log acceptance until schedule saving succeeds', async () => {
+  api.saveSchedule.mockRejectedValueOnce(new Error('保存失敗'))
+  api.saveSchedule.mockResolvedValueOnce({
+    updatedAt: '2026-10-17T00:00:00.001Z',
+  })
+  api.recordDecision.mockResolvedValue(undefined)
+  const { result } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
+  await receiveReorder(result)
+  await act(() => result.current.applyReorder())
+  expect(result.current.chatReorder).not.toBeNull()
+  expect(result.current.event?.sections[0].slots).toEqual(['a', 'b'])
+  expect(api.recordDecision).not.toHaveBeenCalled()
+  await act(() => result.current.applyReorder())
+  expect(result.current.chatReorder).toBeNull()
+  expect(result.current.event?.sections[0].slots).toEqual(['b', 'a'])
+  expect(result.current.event?.updatedAt).toBe('2026-10-17T00:00:00.001Z')
+  expect(api.recordDecision.mock.calls[0][1]).toBe('applied')
 })
 
 it('does not apply a reorder proposed for an older version', async () => {
@@ -283,6 +307,7 @@ it('does not apply a reorder proposed for an older version', async () => {
   )
   await act(() => result.current.applyReorder())
   expect(api.saveSchedule).not.toHaveBeenCalled()
+  expect(api.recordDecision).not.toHaveBeenCalled()
   expect(result.current.error).toContain('イベントが更新されました')
   expect(result.current.event?.sections[0].slots).toEqual(['a', 'b'])
 })
