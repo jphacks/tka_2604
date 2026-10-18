@@ -1,7 +1,7 @@
 import { useParams, useSearchParams } from 'react-router'
 
 import { useSession } from '../../../app/sessionContext'
-import { Brand } from '../../../shared/ui/Brand'
+import { AppHeader } from '../../../shared/ui/AppHeader'
 import { Button } from '../../../shared/ui/Button'
 import { Icon } from '../../../shared/ui/Icon'
 import { LinkButton } from '../../../shared/ui/LinkButton'
@@ -21,8 +21,7 @@ export function RegistrationPage() {
   const updating = controller.mode === 'update'
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-canvas">
-      <header className="z-20 flex h-16 shrink-0 items-center justify-between border-b border-line bg-white px-5 sm:px-8">
-        <Brand to={session ? '/event' : '/login'} />
+      <AppHeader brandTo={session ? '/event' : '/login'}>
         {session ? (
           <LinkButton to={`/event/${eventId}/forms/edit`} className="text-xs">
             フォーム管理へ
@@ -30,7 +29,7 @@ export function RegistrationPage() {
         ) : (
           <span className="text-xs text-muted">出演者向けフォーム</span>
         )}
-      </header>
+      </AppHeader>
       <main className="min-h-0 flex-1 overflow-y-auto overscroll-y-none">
         <div className="mx-auto max-w-[680px] px-4 py-8 sm:px-6 sm:py-10">
           {controller.loading || controller.error ? (

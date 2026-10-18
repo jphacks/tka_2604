@@ -140,14 +140,29 @@ test('registration remains usable at mobile width without horizontal overflow', 
 })
 
 for (const width of [390, 1280]) {
-  test(`registration header stays fixed while only the form scrolls at both edges of a long form at ${width}px`, async ({
+  test(`registration shares header geometry with other screens and stays fixed at both scroll edges at ${width}px`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 844 })
+    await page.goto('/login')
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await expect(page).toHaveURL(/\/event$/)
+    await page.evaluate(() => document.fonts.ready)
+    const expectedHeader = await page.getByRole('banner').boundingBox()
+    const expectedBrand = await page
+      .getByRole('link', { name: 'Setly ホーム' })
+      .boundingBox()
     await mockRegistrationApi(page)
     await page.goto('/event/public-live/forms')
     const header = page.getByRole('banner')
     await expect(header).toBeVisible()
+    expect(await header.boundingBox()).toEqual(expectedHeader)
+    expect(
+      await page.getByRole('link', { name: 'Setly ホーム' }).boundingBox(),
+    ).toEqual(expectedBrand)
+    await expect(
+      page.getByText('出演者向けフォーム', { exact: true }),
+    ).toBeVisible()
     for (let row = 0; row < 4; row++)
       await page.getByRole('button', { name: 'メンバーの行を追加' }).click()
     const submit = page.getByRole('button', { name: '出演登録を送信' })
