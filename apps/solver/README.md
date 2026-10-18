@@ -1,6 +1,6 @@
 # Python ソルバー
 
-Python 3.13・uv で管理するプロジェクトです。FastAPI のアプリ（`src/main.py`）と、JSON Schema から生成した Pydantic v2 の制約モデルがあります。現在の API は実行先の疎通確認用で、出演順の計算 API は #20・#27 で用意します。
+Python 3.13・uv で管理するプロジェクトです。FastAPI のアプリ（`src/main.py`）と、JSON Schema から生成した Pydantic v2 の制約モデルがあります。`/solve`で出演順を計算し、BE経由でフロントの「自動生成」から呼び出します。`count`の探索・評価は未対応で、#75で方針を検討中です。
 
 ## 構成
 
