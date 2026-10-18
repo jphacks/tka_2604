@@ -7,7 +7,7 @@ export interface FormRoster {
   eventId: string
   eventTitle: string
   updatedAt: string
-  bands: { bandId: string; bandName: string }[]
+  bands: { bandId: string; bandName: string; description: string | null }[]
   members: FormMember[]
   memberships: { bandId: string; memberId: string }[]
 }
@@ -15,6 +15,7 @@ export interface FormRoster {
 export interface CreateFormBandInput {
   expectedUpdatedAt: string
   bandName: string
+  description?: string | null
   memberIds: string[]
   newMembers: { memberName: string }[]
 }
@@ -22,6 +23,7 @@ export interface CreateFormBandInput {
 export interface UpdateFormBandInput {
   expectedUpdatedAt: string
   bandName?: string
+  description?: string | null
   memberIds?: string[]
   newMembers?: { memberName: string }[]
 }
@@ -29,6 +31,7 @@ export interface UpdateFormBandInput {
 export interface FormBandChanges {
   bandId: string
   bandName: string
+  description: string | null
   create: boolean
   newMembers: FormMember[]
   // undefined preserves current memberships; [] removes all of them.
@@ -38,7 +41,12 @@ export interface FormBandChanges {
 export interface SavedFormBand {
   eventId: string
   updatedAt: string
-  band: { bandId: string; bandName: string; memberIds: string[] }
+  band: {
+    bandId: string
+    bandName: string
+    description: string | null
+    memberIds: string[]
+  }
   members: FormMember[]
 }
 

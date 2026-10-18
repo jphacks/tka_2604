@@ -28,7 +28,11 @@ export function formRepository(
           .from(events)
           .where(active(eventId)),
         db
-          .select({ bandId: bands.bandId, bandName: bands.bandName })
+          .select({
+            bandId: bands.bandId,
+            bandName: bands.bandName,
+            description: bands.description,
+          })
           .from(bands)
           .where(inArray(bands.eventId, ids))
           .orderBy(asc(bands.bandId)),
@@ -84,12 +88,16 @@ export function formRepository(
                   eventId,
                   bandId: changes.bandId,
                   bandName: changes.bandName,
+                  description: changes.description,
                 }),
               ]
             : [
                 db
                   .update(bands)
-                  .set({ bandName: changes.bandName })
+                  .set({
+                    bandName: changes.bandName,
+                    description: changes.description,
+                  })
                   .where(bandScope(eventId, changes.bandId)),
               ]),
           ...(changes.newMembers.length

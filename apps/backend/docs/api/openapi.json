@@ -5761,7 +5761,7 @@
       "FormBand": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["bandId", "bandName"],
+        "required": ["bandId", "bandName", "description"],
         "properties": {
           "bandId": {
             "type": "string",
@@ -5769,6 +5769,10 @@
           },
           "bandName": {
             "type": "string"
+          },
+          "description": {
+            "type": ["string", "null"],
+            "description": "ジャンル・雰囲気などのバンド紹介。AIの並べ替え案で使用する"
           }
         }
       },
@@ -5843,7 +5847,7 @@
           "band": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["bandId", "bandName", "memberIds"],
+            "required": ["bandId", "bandName", "description", "memberIds"],
             "properties": {
               "bandId": {
                 "type": "string",
@@ -5851,6 +5855,10 @@
               },
               "bandName": {
                 "type": "string"
+              },
+              "description": {
+                "type": ["string", "null"],
+                "description": "ジャンル・雰囲気などのバンド紹介。AIの並べ替え案で使用する"
               },
               "memberIds": {
                 "type": "array",
@@ -5889,6 +5897,11 @@
             "minLength": 1,
             "maxLength": 80,
             "pattern": "\\S"
+          },
+          "description": {
+            "type": ["string", "null"],
+            "maxLength": 500,
+            "description": "ジャンル・雰囲気などのバンド紹介（500文字まで）。空文字・nullで消去。省略時は変更しない（追加時はnull）"
           },
           "memberIds": {
             "type": "array",
@@ -5953,6 +5966,11 @@
             "minLength": 1,
             "maxLength": 80,
             "pattern": "\\S"
+          },
+          "description": {
+            "type": ["string", "null"],
+            "maxLength": 500,
+            "description": "ジャンル・雰囲気などのバンド紹介（500文字まで）。空文字・nullで消去。省略時は変更しない（追加時はnull）"
           },
           "memberIds": {
             "type": "array",

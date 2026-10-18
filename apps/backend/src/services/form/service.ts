@@ -44,9 +44,14 @@ export function formService(repository: FormRepository) {
             .map((item) => item.memberId)
         : [...input.memberIds, ...newMembers.map((member) => member.memberId)]
     const bandName = input.bandName ?? band!.bandName
+    const description =
+      input.description === undefined
+        ? (band?.description ?? null)
+        : input.description
     const saved = await repository.save(eventId, input.expectedUpdatedAt, {
       bandId: savedBandId,
       bandName,
+      description,
       create: bandId === undefined,
       newMembers,
       ...(input.memberIds === undefined ? {} : { memberIds }),
@@ -65,6 +70,7 @@ export function formService(repository: FormRepository) {
       band: {
         bandId: savedBandId,
         bandName,
+        description,
         memberIds: people.map((member) => member.memberId),
       },
       members: people,
