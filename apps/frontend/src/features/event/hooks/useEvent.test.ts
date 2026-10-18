@@ -6,6 +6,7 @@ import type { EventRepository } from '../repositories/types'
 
 const api = vi.hoisted(() => ({
   getEvent: vi.fn(),
+  deleteBand: vi.fn<EventRepository['deleteBand']>(),
   solve: vi.fn<EventRepository['solve']>(),
   saveSchedule: vi.fn<EventRepository['saveSchedule']>(),
   saveConstraints: vi.fn<EventRepository['saveConstraints']>(),
@@ -167,6 +168,58 @@ it('marks a frame count edit dirty and persists it on explicit saving', async ()
     null,
     null,
   ])
+})
+
+it('deletes a band with the current version and synchronizes the schedule baseline', async () => {
+  const withSource: EventData = {
+    ...structuredClone(event),
+    constraintSources: { generated: 'a', manual: null },
+    constraints: [
+      {
+        schema_version: '1.0.0',
+        constraint_id: 'generated',
+        event_id: 'e',
+        type: 'at_position',
+        hardness: 'hard',
+        priority: null,
+        enabled: true,
+        targets: { band_id: 'a' },
+        params: { position: 0 },
+      },
+      {
+        schema_version: '1.0.0',
+        constraint_id: 'manual',
+        event_id: 'e',
+        type: 'at_position',
+        hardness: 'hard',
+        priority: null,
+        enabled: true,
+        targets: { band_id: 'b' },
+        params: { position: 1 },
+      },
+    ],
+  }
+  api.getEvent.mockResolvedValueOnce(withSource)
+  api.deleteBand.mockResolvedValueOnce({
+    eventId: 'e',
+    bandId: 'a',
+    updatedAt: '2026-10-17T00:01:00.000Z',
+  })
+  const { result } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
+  await act(() => result.current.deleteBand('a'))
+  expect(api.deleteBand).toHaveBeenCalledWith('e', 'a', withSource.updatedAt)
+  expect(result.current.event?.sections[0].slots).toEqual([null, 'b'])
+  expect(result.current.event?.performances.map((band) => band.id)).toEqual([
+    'b',
+  ])
+  expect(
+    result.current.event?.constraints.map((item) => item.constraint_id),
+  ).toEqual(['manual'])
+  expect(result.current.event?.members).toEqual([])
+  expect(result.current.event?.updatedAt).toBe('2026-10-17T00:01:00.000Z')
+  expect(result.current.scheduleDirty).toBe(false)
+  expect(result.current.constraintsDirty).toBe(false)
 })
 
 it('persists order then constraints before invoking Solver with the last revision', async () => {

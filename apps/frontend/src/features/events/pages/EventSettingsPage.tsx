@@ -1,7 +1,8 @@
+import { useEffect } from 'react'
 import { useParams } from 'react-router'
 
+import { useEventName } from '../../../app/eventNameContext'
 import type { EventStatus } from '../../../shared/model/workspace'
-import { AppFrame } from '../../../shared/ui/AppFrame'
 import { Button } from '../../../shared/ui/Button'
 import { ConfirmDialog } from '../../../shared/ui/ConfirmDialog'
 import { Icon } from '../../../shared/ui/Icon'
@@ -14,8 +15,12 @@ export function EventSettingsPage() {
   const controller = useEventSettings(eventId)
   const deletion = useEventDeletion(eventId)
   const settings = controller.settings
+  const setEventName = useEventName()
+  useEffect(() => {
+    if (controller.data?.name) setEventName?.(controller.data.name)
+  }, [controller.data?.name, setEventName])
   return (
-    <AppFrame eventId={eventId} eventName={controller.data?.name}>
+    <>
       <div className="mb-7">
         <p className="mb-2 text-[11px] font-semibold tracking-[0.16em] text-muted">
           EVENT SETTINGS
@@ -151,6 +156,6 @@ export function EventSettingsPage() {
           onConfirm={() => void deletion.remove()}
         />
       )}
-    </AppFrame>
+    </>
   )
 }
