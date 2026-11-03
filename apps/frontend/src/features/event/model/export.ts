@@ -9,8 +9,26 @@ const cell = (value: string) => {
 
 export function eventCsv(event: EventData) {
   const schedule = buildSchedule(event)
+  const performances = [
+    ...schedule.sections.flatMap((section) =>
+      section.rows.flatMap((row) => (row.performance ? [row.performance] : [])),
+    ),
+    ...schedule.unassigned.map((row) => row.performance),
+  ]
+  const memberCount = Math.max(
+    0,
+    ...performances.map((performance) => performance.members.length),
+  )
   const rows = [
-    ['部', '出演順', '出演名', 'メンバー', '固定'],
+    [
+      '部',
+      '出演順',
+      '出演名',
+      ...Array.from(
+        { length: memberCount },
+        (_, index) => `メンバー${index + 1}`,
+      ),
+    ],
     ...schedule.sections.flatMap((section) =>
       section.rows
         .filter((row) => row.performance)
@@ -18,16 +36,14 @@ export function eventCsv(event: EventData) {
           section.name,
           String(row.order),
           row.performance!.name,
-          row.performance!.members.join('・'),
-          row.performance!.fixed ? '固定' : '',
+          ...row.performance!.members,
         ]),
     ),
     ...schedule.unassigned.map((row) => [
       '未配置',
       '',
       row.performance.name,
-      row.performance.members.join('・'),
-      row.performance.fixed ? '固定' : '',
+      ...row.performance.members,
     ]),
   ]
   return '\uFEFF' + rows.map((row) => row.map(cell).join(',')).join('\r\n')
