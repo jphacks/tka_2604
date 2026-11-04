@@ -15,7 +15,11 @@ test('all unassigned bands are discoverable from the initial schedule view', asy
   const saved = await request.post(url, {
     data: {
       expectedUpdatedAt: current.updatedAt,
-      parts: current.parts,
+      parts: current.parts.map(({ partId, partName, bandCount }) => ({
+        partId,
+        partName,
+        bandCount,
+      })),
       placements: [],
       unassignedBandIds: current.bands.map((b) => b.bandId),
     },
