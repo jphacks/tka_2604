@@ -8,7 +8,6 @@ import { isFixed } from '../../../shared/model/event'
 import { Button } from '../../../shared/ui/Button'
 import { Panel } from '../../../shared/ui/Panel'
 import { RosterImportDialog } from '../../participants/components/RosterImportDialog'
-import { downloadRosterTemplate } from '../../participants/model/rosterTemplate'
 import type { EventController } from '../hooks/useEvent'
 import { useScheduleFlip } from '../hooks/useScheduleFlip'
 import { LiveInfoDialog } from './LiveInfoDialog'
@@ -79,9 +78,6 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
         >
           <Button onClick={() => setEditingLive(true)} className="text-xs">
             ライブ情報の編集
-          </Button>
-          <Button onClick={downloadRosterTemplate} className="text-xs">
-            CSV雛形
           </Button>
           <Button
             onClick={() => setImportingCsv(true)}
@@ -199,7 +195,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
           aria-label="出演順の表"
           className="min-h-0 flex-1 scrollbar-thin overflow-auto"
         >
-          <div className="min-w-[680px]">
+          <div className="min-w-170">
             <div
               className={`${rowColumns} sticky top-0 z-10 min-h-9 border-b border-line bg-white text-xs text-muted`}
             >

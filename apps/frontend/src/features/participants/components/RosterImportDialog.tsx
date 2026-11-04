@@ -28,6 +28,8 @@ export function RosterImportDialog({
   const [progress, setProgress] = useState<number | null>(null)
   const [attempted, setAttempted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [fileName, setFileName] = useState('')
+  const fileInput = useRef<HTMLInputElement>(null)
   const busy = useRef(false)
   const reading = useRef(0)
   const plan = planRosterImport(rows, event.members)
@@ -91,20 +93,31 @@ export function RosterImportDialog({
       <Button onClick={downloadRosterTemplate} disabled={attempted}>
         テンプレートをダウンロード
       </Button>
-      <label className="my-4 block text-sm">
-        追加する名簿CSV
+      <div className="my-4 text-sm">
+        <p className="mb-2">追加する名簿CSV</p>
+        <Button disabled={attempted} onClick={() => fileInput.current?.click()}>
+          ファイルを選択
+        </Button>
+        <span className="ml-2 text-muted">
+          {fileName || '選択されていません'}
+        </span>
         <input
+          ref={fileInput}
           type="file"
           accept=".csv,text/csv"
-          className="mt-2 block w-full"
+          aria-label="追加する名簿CSV"
+          className="hidden"
           disabled={attempted}
           onChange={(e) => {
             const file = e.target.files?.[0]
-            if (file) void read(file)
+            if (file) {
+              setFileName(file.name)
+              void read(file)
+            }
             e.target.value = ''
           }}
         />
-      </label>
+      </div>
       {rows.length > 0 && (
         <p className="my-3 text-sm">
           {plan.bands}組・{plan.people}人を追加します（既存メンバーとの一致：

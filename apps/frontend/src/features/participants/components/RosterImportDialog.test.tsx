@@ -7,6 +7,26 @@ const upload = vi.hoisted(() => vi.fn())
 vi.mock('../hooks/useRosterImport', () => ({ importRoster: upload }))
 import { RosterImportDialog } from './RosterImportDialog'
 
+it('keeps the dialog open when the file picker is cancelled, but closes on dialog cancel', () => {
+  const onClose = vi.fn()
+  render(
+    <RosterImportDialog
+      event={eventFixture}
+      onBusy={vi.fn()}
+      onClose={onClose}
+      onImported={vi.fn()}
+    />,
+  )
+  const input = screen.getByLabelText('追加する名簿CSV')
+  fireEvent(input, new Event('cancel', { bubbles: true }))
+  expect(onClose).not.toHaveBeenCalled()
+  fireEvent(
+    screen.getByRole('dialog'),
+    new Event('cancel', { cancelable: true }),
+  )
+  expect(onClose).toHaveBeenCalledOnce()
+})
+
 it('shows invalid input and submits the selected additions only once while pending', async () => {
   const completed = vi.fn()
   const pending = new Promise<void>(() => {})
