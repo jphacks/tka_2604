@@ -8,6 +8,10 @@ import {
 import { type EventData, scheduleContent } from '../../../shared/model/event'
 import { applyChatProposal } from '../model/chatProposal'
 import { applyChatReorder } from '../model/chatReorder'
+import {
+  emptyConstraintFilters,
+  filterConstraintViews,
+} from '../model/constraintFilters'
 import { skipHistoryWarning, skipsHistoryWarning } from '../model/editHistory'
 import {
   type ConstraintPatch,
@@ -60,6 +64,9 @@ export function useEvent(eventId: string) {
   )
   const [loadError, setLoadError] = useState('')
   const [retry, setRetry] = useState(0)
+  const [constraintFilters, setConstraintFilters] = useState({
+    ...emptyConstraintFilters,
+  })
   const [showUnmet, setShowUnmet] = useState(false)
   // Bumped on each approved AI reorder so the schedule animates the move.
   const [reorderRevision, setReorderRevision] = useState(0)
@@ -454,10 +461,12 @@ export function useEvent(eventId: string) {
     scheduleDirty,
     constraintsDirty,
     schedule: event ? buildSchedule(event) : null,
-    constraintViews: views.filter(
-      (view) =>
-        !showUnmet || view.status === 'unmet' || view.status === 'invalid',
-    ),
+    constraintFilters,
+    setConstraintFilters,
+    allConstraintViews: views,
+    constraintViews: event
+      ? filterConstraintViews(views, event, constraintFilters, showUnmet)
+      : [],
     unmetCount: views.filter(
       (view) => view.status === 'unmet' || view.status === 'invalid',
     ).length,
