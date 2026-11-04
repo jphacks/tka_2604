@@ -6,6 +6,11 @@ import {
   evaluateConstraint,
 } from '../../../shared/model/constraints'
 import { type EventData, scheduleContent } from '../../../shared/model/event'
+import {
+  canAutoApprove,
+  readAutoApproval,
+  storeAutoApproval,
+} from '../model/autoApproval'
 import { applyChatProposal } from '../model/chatProposal'
 import { applyChatReorder } from '../model/chatReorder'
 import {
@@ -26,6 +31,8 @@ import { eventRepository } from '../repositories/eventRepository'
 import { useEventChat } from './useEventChat'
 
 export function useEvent(eventId: string) {
+  const [autoApprove, setAutoApprove] = useState(readAutoApproval)
+  const autoAttempted = useRef(new Set<string>())
   const [state, dispatch] = useReducer(eventReducer, initialState)
   const [historyConfirmation, setHistoryConfirmation] = useState<
     'undo' | 'redo' | null
@@ -318,9 +325,82 @@ export function useEvent(eventId: string) {
       setDeletingBand(false)
     }
   }
+  const applyProposal = useCallback(async () => {
+    if (
+      !event ||
+      !chat.chatProposal ||
+      chat.pendingDecision ||
+      chat.chatBlocked ||
+      busy.current ||
+      refreshing ||
+      chat.sending
+    )
+      return
+    try {
+      const constraints = applyChatProposal(event, chat.chatProposal)
+      if (await save('constraints', { ...event, constraints })) {
+        dispatch({ type: 'constraints-replaced', constraints })
+        chat.dismissProposal()
+        await chat.recordDecision('applied')
+      }
+    } catch (error) {
+      dispatch({
+        type: 'notice',
+        error: true,
+        message:
+          error instanceof Error
+            ? error.message
+            : '提案を反映できませんでした。',
+      })
+    }
+  }, [event, chat, refreshing, save])
+
+  useEffect(() => {
+    const proposal = chat.chatProposal
+    if (
+      !autoApprove ||
+      !proposal ||
+      !canAutoApprove(proposal) ||
+      chat.sending ||
+      chat.chatBlocked ||
+      chat.pendingDecision ||
+      saving ||
+      solving ||
+      refreshing ||
+      importing ||
+      deletingBand
+    )
+      return
+    let cancelled = false
+    queueMicrotask(() => {
+      if (cancelled || autoAttempted.current.has(proposal.messageId)) return
+      autoAttempted.current.add(proposal.messageId)
+      void applyProposal()
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [
+    autoApprove,
+    chat.chatProposal,
+    chat.sending,
+    chat.chatBlocked,
+    chat.pendingDecision,
+    saving,
+    solving,
+    refreshing,
+    importing,
+    deletingBand,
+    applyProposal,
+  ])
   return {
     ...state,
     ...chat,
+    autoApprove,
+    setAutoApprove: (value: boolean) => {
+      storeAutoApproval(value)
+      setAutoApprove(value)
+    },
     importing,
     setImporting,
     canUndo: state.past.length > 0 && !historyBlocked,
@@ -361,35 +441,7 @@ export function useEvent(eventId: string) {
     solving,
     deletingBand,
     deleteBand,
-    applyProposal: async () => {
-      if (
-        !event ||
-        !chat.chatProposal ||
-        chat.pendingDecision ||
-        chat.chatBlocked ||
-        busy.current ||
-        refreshing ||
-        chat.sending
-      )
-        return
-      try {
-        const constraints = applyChatProposal(event, chat.chatProposal)
-        if (await save('constraints', { ...event, constraints })) {
-          dispatch({ type: 'constraints-replaced', constraints })
-          chat.dismissProposal()
-          await chat.recordDecision('applied')
-        }
-      } catch (error) {
-        dispatch({
-          type: 'notice',
-          error: true,
-          message:
-            error instanceof Error
-              ? error.message
-              : '提案を反映できませんでした。',
-        })
-      }
-    },
+    applyProposal,
     dismissProposal: () => {
       if (
         !chat.chatProposal ||
