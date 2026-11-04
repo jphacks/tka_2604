@@ -3,6 +3,8 @@ import type { SVGProps } from 'react'
 const paths = {
   chevron: <path d="m9 5 7 7-7 7" />,
   back: <path d="m15 5-7 7 7 7" />,
+  undo: <path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3" />,
+  redo: <path d="m15 14 5-5-5-5m5 5H10a6 6 0 0 0 0 12h3" />,
   calendar: (
     <>
       <rect x="3" y="5" width="18" height="16" rx="2" />

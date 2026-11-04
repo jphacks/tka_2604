@@ -6,6 +6,7 @@ import {
 } from '../../../shared/model/constraints'
 import { isFixed } from '../../../shared/model/event'
 import { Button } from '../../../shared/ui/Button'
+import { Icon } from '../../../shared/ui/Icon'
 import { Panel } from '../../../shared/ui/Panel'
 import { RosterImportDialog } from '../../participants/components/RosterImportDialog'
 import type { EventController } from '../hooks/useEvent'
@@ -80,16 +81,20 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
           <Button
             onClick={controller.undo}
             disabled={!controller.canUndo}
-            className="text-xs"
+            aria-label="戻る"
+            title="戻る"
+            className="px-2.5"
           >
-            戻る
+            <Icon name="undo" />
           </Button>
           <Button
             onClick={controller.redo}
             disabled={!controller.canRedo}
-            className="text-xs"
+            aria-label="進む"
+            title="進む"
+            className="px-2.5"
           >
-            進む
+            <Icon name="redo" />
           </Button>
           <Button onClick={() => setEditingLive(true)} className="text-xs">
             ライブ情報の編集
