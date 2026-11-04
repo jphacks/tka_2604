@@ -57,6 +57,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
   }
   return (
     <Panel
+      busyMessage={controller.processingMessage}
       inert={
         controller.saving ||
         controller.solving ||

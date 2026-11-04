@@ -379,6 +379,17 @@ export function useEvent(eventId: string) {
     },
     reorderRevision,
     loadError,
+    processingMessage: chat.sending
+      ? 'AIが考えています。返信が届くまで編集できません。'
+      : saving
+        ? '変更を保存しています。'
+        : solving
+          ? '出演順を計算しています。'
+          : refreshing
+            ? '最新の状態を取得しています。'
+            : deletingBand
+              ? '出演枠を削除しています。'
+              : undefined,
     saving,
     savingSchedule: savingKind === 'schedule',
     refreshing,
