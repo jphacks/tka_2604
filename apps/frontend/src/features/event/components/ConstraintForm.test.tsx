@@ -99,3 +99,27 @@ it('shows the recommendation as already added when every member has a gap', () =
   expect(recommended).toBeDisabled()
   expect(recommended).toHaveTextContent('追加済み')
 })
+
+it('preselects the related band and saves its completed constraint as one operation', async () => {
+  const user = userEvent.setup()
+  const saveMany = vi.fn()
+  render(
+    <ConstraintForm
+      event={eventFixture}
+      initialDraft={{ type: 'at_position', bandIds: ['p2'], position: '1' }}
+      onSave={vi.fn()}
+      onSaveMany={saveMany}
+      onClose={vi.fn()}
+    />,
+  )
+  expect(screen.queryByText('推奨', { exact: true })).toBeNull()
+  expect(screen.getByText('Pretenderを1番にする')).toBeVisible()
+  await user.click(screen.getByRole('button', { name: 'この条件を追加' }))
+  expect(saveMany).toHaveBeenCalledTimes(1)
+  expect(saveMany).toHaveBeenCalledWith([
+    expect.objectContaining({
+      type: 'at_position',
+      targets: { band_id: 'p2' },
+    }),
+  ])
+})
