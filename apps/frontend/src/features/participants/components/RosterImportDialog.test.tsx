@@ -23,7 +23,7 @@ it('shows invalid input and submits the selected additions only once while pendi
   function select(text: string) {
     const file = new File([], 'roster.csv')
     Object.defineProperty(file, 'arrayBuffer', {
-      value: async () => new TextEncoder().encode(text).buffer,
+      value: () => Promise.resolve(new TextEncoder().encode(text).buffer),
     })
     fireEvent.change(input, { target: { files: [file] } })
   }
