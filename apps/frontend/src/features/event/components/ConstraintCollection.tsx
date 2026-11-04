@@ -4,6 +4,7 @@ import type { Constraint } from '../../../generated/constraint'
 import { describeConstraint } from '../../../shared/model/constraints'
 import { ConfirmDialog } from '../../../shared/ui/ConfirmDialog'
 import type { EventController } from '../hooks/useEvent'
+import type { ConstraintDraft } from '../model/constraintDraft'
 import { groupConstraintViews } from '../model/constraintGroups'
 import { ConstraintCard } from './ConstraintCard'
 import { ConstraintGroupCard } from './ConstraintGroupCard'
@@ -11,11 +12,13 @@ import { ConstraintGroupCard } from './ConstraintGroupCard'
 export function ConstraintCollection({
   controller,
   views,
+  initialDraft,
   onEdit,
   emptyMessage = '制約はまだありません。「手動追加」から種類を選んで追加できます。',
 }: {
   controller: EventController
   views: EventController['constraintViews']
+  initialDraft?: Partial<ConstraintDraft>
   onEdit: (constraint: Constraint) => void
   emptyMessage?: string
 }) {
@@ -61,6 +64,16 @@ export function ConstraintCollection({
           </p>
         )}
       </div>
+      {editing !== undefined && (
+        <ConstraintForm
+          event={event}
+          constraint={editing ?? undefined}
+          initialDraft={editing === null ? initialDraft : undefined}
+          onSaveMany={controller.saveConstraintBatch}
+          onSave={controller.saveConstraint}
+          onClose={() => setEditing(undefined)}
+        />
+      )}
       {deleting && (
         <ConfirmDialog
           title="制約を削除"
