@@ -10,6 +10,7 @@ import { Panel } from '../../../shared/ui/Panel'
 import { RosterImportDialog } from '../../participants/components/RosterImportDialog'
 import type { EventController } from '../hooks/useEvent'
 import { useScheduleFlip } from '../hooks/useScheduleFlip'
+import { HistoryConfirmation } from './HistoryConfirmation'
 import { LiveInfoDialog } from './LiveInfoDialog'
 import { PerformanceDetailsDialog } from './PerformanceDetailsDialog'
 import {
@@ -76,6 +77,20 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
           aria-label="出演順の操作"
           className="flex w-full max-w-full min-w-0 items-center gap-2 overflow-x-auto pb-1 xl:w-auto xl:pb-0"
         >
+          <Button
+            onClick={controller.undo}
+            disabled={!controller.canUndo}
+            className="text-xs"
+          >
+            戻る
+          </Button>
+          <Button
+            onClick={controller.redo}
+            disabled={!controller.canRedo}
+            className="text-xs"
+          >
+            進む
+          </Button>
           <Button onClick={() => setEditingLive(true)} className="text-xs">
             ライブ情報の編集
           </Button>
@@ -135,6 +150,9 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
         </span>
       }
     >
+      {controller.historyConfirmation && (
+        <HistoryConfirmation controller={controller} />
+      )}
       {importingCsv && (
         <RosterImportDialog
           event={event}

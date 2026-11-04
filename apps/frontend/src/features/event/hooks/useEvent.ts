@@ -8,6 +8,7 @@ import {
 import { type EventData, scheduleContent } from '../../../shared/model/event'
 import { applyChatProposal } from '../model/chatProposal'
 import { applyChatReorder } from '../model/chatReorder'
+import { skipHistoryWarning,skipsHistoryWarning } from '../model/editHistory'
 import {
   type ConstraintPatch,
   eventReducer,
@@ -22,6 +23,9 @@ import { useEventChat } from './useEventChat'
 
 export function useEvent(eventId: string) {
   const [state, dispatch] = useReducer(eventReducer, initialState)
+  const [historyConfirmation, setHistoryConfirmation] = useState<
+    'undo' | 'redo' | null
+  >(null)
   const [baseline, setBaseline] = useState<EventData | null>(null)
   const [savingKind, setSavingKind] = useState<
     'schedule' | 'constraints' | null
@@ -223,7 +227,7 @@ export function useEvent(eventId: string) {
       if (signal?.aborted) return
       const next = applySolverSchedule(current, result)
       setReorderRevision((value) => value + 1)
-      dispatch({ type: 'loaded', event: next })
+      dispatch({ type: 'loaded', event: next, keepHistory: true })
       setBaseline(next)
       dispatch({ type: 'notice', message: solveMessages[result.result.status] })
     } catch (error) {
@@ -253,6 +257,22 @@ export function useEvent(eventId: string) {
     if (busy.current || refreshing || chat.sending || deletingBand || importing)
       return
     dispatch(action)
+  }
+  const historyBlocked =
+    saving || solving || refreshing || chat.sending || deletingBand || importing
+  function requestHistory(direction: 'undo' | 'redo') {
+    if (!event || historyBlocked) return
+    const target = (direction === 'undo' ? state.past : state.future).at(-1)
+    if (!target) return
+    if (
+      JSON.stringify(target.constraints) !==
+        JSON.stringify(event.constraints) &&
+      !skipsHistoryWarning()
+    ) {
+      setHistoryConfirmation(direction)
+      return
+    }
+    dispatch({ type: 'history', direction })
   }
   async function deleteBand(bandId: string) {
     const snapshot = event
@@ -296,6 +316,28 @@ export function useEvent(eventId: string) {
     ...chat,
     importing,
     setImporting,
+    canUndo: state.past.length > 0 && !historyBlocked,
+    canRedo: state.future.length > 0 && !historyBlocked,
+    undo: () => requestHistory('undo'),
+    redo: () => requestHistory('redo'),
+    historyConfirmation,
+    cancelHistory: () => setHistoryConfirmation(null),
+    confirmHistory: (skip: boolean) => {
+      if (historyBlocked || !historyConfirmation) return
+      if (skip) skipHistoryWarning()
+      dispatch({ type: 'history', direction: historyConfirmation })
+      setHistoryConfirmation(null)
+    },
+    updateConstraints: (ids: string[], patch: ConstraintPatch) =>
+      edit({
+        type: 'batch',
+        actions: ids.map((id) => ({ type: 'constraint-update', id, patch })),
+      }),
+    deleteConstraints: (ids: string[]) =>
+      edit({
+        type: 'batch',
+        actions: ids.map((id) => ({ type: 'constraint-delete', id })),
+      }),
     error: state.error || saveError,
     saveFailed: Boolean(saveError),
     retrySave: () => save(failedKind),
@@ -373,7 +415,7 @@ export function useEvent(eventId: string) {
       if (!saved) return
       chat.dismissReorder()
       setReorderRevision((value) => value + 1)
-      dispatch({ type: 'loaded', event: saved })
+      dispatch({ type: 'loaded', event: saved, keepHistory: true })
       dispatch({
         type: 'notice',
         message: '並べ替え案を出演順に保存しました。',
