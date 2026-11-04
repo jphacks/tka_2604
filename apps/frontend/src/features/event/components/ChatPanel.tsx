@@ -29,6 +29,7 @@ export function ChatPanel({
     <Panel
       title="AIチャット"
       busy={controller.sending}
+      busyMessage={controller.processingMessage}
       className="xl:border-r-0"
     >
       <div
