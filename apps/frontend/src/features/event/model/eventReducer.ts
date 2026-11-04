@@ -6,7 +6,7 @@ import {
   fixedConstraints,
   positions,
 } from '../../../shared/model/event'
-import { type EditSnapshot,editSnapshot, sameEdits } from './editHistory'
+import { type EditSnapshot, editSnapshot, sameEdits } from './editHistory'
 import {
   movePersistedPerformance,
   setPersistedOrder,
@@ -301,7 +301,7 @@ export function eventReducer(
     return { ...next, past: state.past, future: state.future }
   return {
     ...next,
-    past: [...state.past.slice(-99), editSnapshot(current)],
+    past: [...state.past, editSnapshot(current)],
     future: [],
   }
 }
