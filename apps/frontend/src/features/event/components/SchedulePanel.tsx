@@ -24,6 +24,7 @@ import { ScheduleDragSurface, UnassignedDropZone } from './ScheduleDragSurface'
 export function SchedulePanel({ controller }: { controller: EventController }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const focusAfterDelete = useRef(false)
+  const unassignedRef = useRef<HTMLElement>(null)
   const [selectedBandId, setSelectedBandId] = useState<string | null>(null)
   useScheduleFlip(scrollRef, controller.reorderRevision)
   const { event, schedule, setOrder, setFixed } = controller
@@ -211,6 +212,28 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
           onClose={() => setSelectedBandId(null)}
         />
       )}
+      {schedule.unassigned.length > 0 && (
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-amber-200 bg-amber-50 px-3 py-2 text-xs">
+          <p>
+            未配置のバンドが{schedule.unassigned.length}組あります。
+            {schedule.assignedCount === 0
+              ? '登録済みのバンドは未配置一覧にあります。'
+              : ''}
+          </p>
+          <Button
+            className="text-xs"
+            onClick={() => {
+              unassignedRef.current?.scrollIntoView({
+                block: 'start',
+                behavior: 'smooth',
+              })
+              unassignedRef.current?.focus({ preventScroll: true })
+            }}
+          >
+            未配置一覧へ
+          </Button>
+        </div>
+      )}
       <ScheduleDragSurface controller={controller}>
         <div
           ref={scrollRef}
@@ -257,7 +280,12 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
               </section>
             ))}
             <UnassignedDropZone>
-              <section aria-label="未配置">
+              <section
+                ref={unassignedRef}
+                tabIndex={-1}
+                aria-label="未配置"
+                className="scroll-mt-10 focus-visible:outline-2 focus-visible:outline-brand"
+              >
                 <div className="flex min-h-9 items-center gap-3 bg-slate-100 px-4 text-xs">
                   <h3 className="font-semibold">
                     未配置 · {schedule.unassigned.length}組
