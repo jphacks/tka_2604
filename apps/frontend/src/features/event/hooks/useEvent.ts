@@ -335,6 +335,14 @@ export function useEvent(eventId: string) {
       dispatch({ type: 'history', direction: historyConfirmation })
       setHistoryConfirmation(null)
     },
+    saveConstraintBatch: (constraints: Constraint[]) =>
+      edit({
+        type: 'batch',
+        actions: constraints.map((constraint) => ({
+          type: 'constraint-save',
+          constraint,
+        })),
+      }),
     updateConstraints: (ids: string[], patch: ConstraintPatch) =>
       edit({
         type: 'batch',
