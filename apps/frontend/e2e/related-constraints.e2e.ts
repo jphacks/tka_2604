@@ -18,6 +18,6 @@ test('band details expose related constraints and preselect the band for additio
   await expect(form).toBeVisible()
   await expect(form.getByText('推奨', { exact: true })).toHaveCount(0)
   await expect(
-    form.getByRole('button', { name: '追加する', exact: true }),
+    form.getByRole('button', { name: 'この条件を追加', exact: true }),
   ).toBeVisible()
 })
