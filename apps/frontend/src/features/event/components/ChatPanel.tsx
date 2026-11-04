@@ -26,7 +26,11 @@ export function ChatPanel({
   )
   if (!controller.event || !controller.schedule) return null
   return (
-    <Panel title="AIチャット" className="xl:border-r-0">
+    <Panel
+      title="AIチャット"
+      busy={controller.sending}
+      className="xl:border-r-0"
+    >
       <div
         ref={endRef}
         className="flex min-h-0 flex-1 scrollbar-thin flex-col overflow-y-auto p-3 wrap-anywhere"
@@ -102,6 +106,7 @@ export function ChatPanel({
                 key={prompt}
                 variant="subtle"
                 className="mt-3 text-xs"
+                disabled={controller.sending}
                 onClick={() => controller.setChatDraft(prompt)}
               >
                 {prompt}
@@ -128,6 +133,7 @@ export function ChatPanel({
             placeholder="要望や調整したいことを入力…"
             value={controller.chatDraft}
             onChange={(event) => controller.setChatDraft(event.target.value)}
+            disabled={controller.sending}
             maxLength={1000}
             rows={2}
             onKeyDown={(event) => {
@@ -149,7 +155,7 @@ export function ChatPanel({
               type="submit"
               disabled={!controller.canSend}
               aria-label="メッセージを送信"
-              className="size-[34px] min-h-0 p-0"
+              className="size-8.5 min-h-0 p-0"
             >
               <Icon name="arrow" />
             </Button>

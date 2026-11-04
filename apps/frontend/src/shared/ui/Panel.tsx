@@ -1,5 +1,16 @@
 import type { ReactNode } from 'react'
 
+type PanelType = {
+  title: string
+  detail?: ReactNode
+  action?: ReactNode
+  children: ReactNode
+  className?: string
+  inert?: boolean
+  busy?: boolean
+  headerClassName?: string
+}
+
 export function Panel({
   title,
   detail,
@@ -8,19 +19,12 @@ export function Panel({
   className = '',
   inert,
   headerClassName = '',
-}: {
-  title: string
-  detail?: ReactNode
-  action?: ReactNode
-  children: ReactNode
-  className?: string
-  inert?: boolean
-  headerClassName?: string
-}) {
+  busy,
+}: PanelType) {
   return (
     <section
       aria-label={title}
-      inert={inert}
+      aria-busy={Boolean(busy || inert)}
       className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden border-b border-line bg-white xl:border-r ${className}`}
     >
       <div
@@ -30,9 +34,14 @@ export function Panel({
           <h2 className="text-base font-semibold">{title}</h2>
           {detail}
         </div>
-        {action}
+        <div inert={inert}>{action}</div>
       </div>
-      {children}
+      <div
+        inert={inert}
+        className={`flex min-h-0 flex-1 flex-col ${inert ? 'opacity-60' : ''}`}
+      >
+        {children}
+      </div>
     </section>
   )
 }
