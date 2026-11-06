@@ -8,7 +8,7 @@ import {
 import { type EventData, scheduleContent } from '../../../shared/model/event'
 import { applyChatProposal } from '../model/chatProposal'
 import { applyChatReorder } from '../model/chatReorder'
-import { skipHistoryWarning,skipsHistoryWarning } from '../model/editHistory'
+import { skipHistoryWarning, skipsHistoryWarning } from '../model/editHistory'
 import {
   type ConstraintPatch,
   eventReducer,
