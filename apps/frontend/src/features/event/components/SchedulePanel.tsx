@@ -6,10 +6,12 @@ import {
 } from '../../../shared/model/constraints'
 import { isFixed } from '../../../shared/model/event'
 import { Button } from '../../../shared/ui/Button'
+import { Icon } from '../../../shared/ui/Icon'
 import { Panel } from '../../../shared/ui/Panel'
 import { RosterImportDialog } from '../../participants/components/RosterImportDialog'
 import type { EventController } from '../hooks/useEvent'
 import { useScheduleFlip } from '../hooks/useScheduleFlip'
+import { HistoryConfirmation } from './HistoryConfirmation'
 import { LiveInfoDialog } from './LiveInfoDialog'
 import { PerformanceDetailsDialog } from './PerformanceDetailsDialog'
 import {
@@ -76,6 +78,24 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
           aria-label="出演順の操作"
           className="flex w-full max-w-full min-w-0 items-center gap-2 overflow-x-auto pb-1 xl:w-auto xl:pb-0"
         >
+          <Button
+            onClick={controller.undo}
+            disabled={!controller.canUndo}
+            aria-label="戻る"
+            title="戻る"
+            className="px-2.5"
+          >
+            <Icon name="undo" />
+          </Button>
+          <Button
+            onClick={controller.redo}
+            disabled={!controller.canRedo}
+            aria-label="進む"
+            title="進む"
+            className="px-2.5"
+          >
+            <Icon name="redo" />
+          </Button>
           <Button onClick={() => setEditingLive(true)} className="text-xs">
             ライブ情報の編集
           </Button>
@@ -135,6 +155,9 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
         </span>
       }
     >
+      {controller.historyConfirmation && (
+        <HistoryConfirmation controller={controller} />
+      )}
       {importingCsv && (
         <RosterImportDialog
           event={event}

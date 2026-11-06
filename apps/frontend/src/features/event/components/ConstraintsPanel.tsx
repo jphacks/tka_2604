@@ -62,11 +62,10 @@ export function ConstraintsPanel({
                 event={event}
                 views={views}
                 onUpdate={(patch) => {
-                  for (const view of views)
-                    controller.updateConstraint(
-                      view.constraint.constraint_id,
-                      patch,
-                    )
+                  controller.updateConstraints(
+                    views.map((view) => view.constraint.constraint_id),
+                    patch,
+                  )
                 }}
                 onEdit={setEditing}
                 onDelete={setDeleting}
@@ -166,8 +165,9 @@ export function ConstraintsPanel({
           }
           onCancel={() => setDeleting(null)}
           onConfirm={() => {
-            for (const constraint of deleting)
-              controller.deleteConstraint(constraint.constraint_id)
+            controller.deleteConstraints(
+              deleting.map((constraint) => constraint.constraint_id),
+            )
             setDeleting(null)
           }}
         />
