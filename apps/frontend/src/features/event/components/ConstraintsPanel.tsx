@@ -25,6 +25,7 @@ export function ConstraintsPanel({
   if (!event) return null
   return (
     <Panel
+      busyMessage={controller.processingMessage}
       inert={
         controller.saving ||
         controller.solving ||

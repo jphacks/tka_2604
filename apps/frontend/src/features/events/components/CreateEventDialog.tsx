@@ -3,6 +3,7 @@ import { Dialog } from '../../../shared/ui/Dialog'
 import { Icon } from '../../../shared/ui/Icon'
 import { Input, Select, Textarea } from '../../../shared/ui/Input'
 import { PartCountFields } from '../../../shared/ui/PartCountFields'
+import { downloadRosterTemplate } from '../../participants/model/rosterTemplate'
 import type { EventsController } from '../hooks/useEvents'
 import { rosterSamples } from '../model/samples'
 
@@ -110,6 +111,9 @@ function RosterFields({ controller }: { controller: EventsController }) {
       <p className="text-xs leading-5 text-muted">
         取り込むと出演枠とメンバーをまとめて登録し、部の組数も組数に合わせます。
       </p>
+      <Button onClick={downloadRosterTemplate} disabled={controller.busy}>
+        テンプレートをダウンロード
+      </Button>
       <div className="flex flex-wrap items-center gap-2">
         <Select
           aria-label="サンプル名簿"

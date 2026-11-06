@@ -27,6 +27,7 @@ export function useEvent(eventId: string) {
     'schedule' | 'constraints' | null
   >(null)
   const saving = savingKind !== null
+  const [importing, setImporting] = useState(false)
   const [deletingBand, setDeletingBand] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [failedKind, setFailedKind] = useState<'schedule' | 'constraints'>(
@@ -51,7 +52,7 @@ export function useEvent(eventId: string) {
     eventId,
     dispatch,
     event,
-    dirty || saving || solving || refreshing || deletingBand,
+    dirty || saving || solving || refreshing || deletingBand || importing,
   )
   const [loadError, setLoadError] = useState('')
   const [retry, setRetry] = useState(0)
@@ -137,7 +138,8 @@ export function useEvent(eventId: string) {
         busy.current ||
         refreshing ||
         chat.sending ||
-        deletingBand
+        deletingBand ||
+        importing
       )
         return null
       busy.current = true
@@ -160,7 +162,7 @@ export function useEvent(eventId: string) {
       }
       return null
     },
-    [event, refreshing, chat.sending, deletingBand, persist],
+    [event, refreshing, chat.sending, deletingBand, importing, persist],
   )
 
   useEffect(() => {
@@ -171,6 +173,7 @@ export function useEvent(eventId: string) {
       refreshing ||
       chat.sending ||
       deletingBand ||
+      importing ||
       saveError
     )
       return
@@ -188,12 +191,20 @@ export function useEvent(eventId: string) {
     refreshing,
     chat.sending,
     deletingBand,
+    importing,
     saveError,
     save,
   ])
 
   async function generate() {
-    if (!event || busy.current || refreshing || chat.sending || deletingBand)
+    if (
+      !event ||
+      busy.current ||
+      refreshing ||
+      chat.sending ||
+      deletingBand ||
+      importing
+    )
       return
     busy.current = true
     setSolving(true)
@@ -239,7 +250,8 @@ export function useEvent(eventId: string) {
       }))
     : []
   const edit: typeof dispatch = (action) => {
-    if (busy.current || refreshing || chat.sending || deletingBand) return
+    if (busy.current || refreshing || chat.sending || deletingBand || importing)
+      return
     dispatch(action)
   }
   async function deleteBand(bandId: string) {
@@ -282,6 +294,8 @@ export function useEvent(eventId: string) {
   return {
     ...state,
     ...chat,
+    importing,
+    setImporting,
     error: state.error || saveError,
     saveFailed: Boolean(saveError),
     retrySave: () => save(failedKind),
@@ -379,6 +393,19 @@ export function useEvent(eventId: string) {
     },
     reorderRevision,
     loadError,
+    processingMessage: importing
+      ? '名簿CSVを登録しています。'
+      : chat.sending
+        ? 'AIが考えています。返信が届くまで編集できません。'
+        : saving
+          ? '変更を保存しています。'
+          : solving
+            ? '出演順を計算しています。'
+            : refreshing
+              ? '最新の状態を取得しています。'
+              : deletingBand
+                ? '出演枠を削除しています。'
+                : undefined,
     saving,
     savingSchedule: savingKind === 'schedule',
     refreshing,

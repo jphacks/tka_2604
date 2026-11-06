@@ -55,6 +55,7 @@ export function Dialog({
         backdropPointer.current = null
       }}
       onCancel={(event) => {
+        if (event.target !== event.currentTarget) return
         event.preventDefault()
         onClose()
       }}

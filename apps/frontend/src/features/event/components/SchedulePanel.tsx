@@ -7,6 +7,7 @@ import {
 import { isFixed } from '../../../shared/model/event'
 import { Button } from '../../../shared/ui/Button'
 import { Panel } from '../../../shared/ui/Panel'
+import { RosterImportDialog } from '../../participants/components/RosterImportDialog'
 import type { EventController } from '../hooks/useEvent'
 import { useScheduleFlip } from '../hooks/useScheduleFlip'
 import { LiveInfoDialog } from './LiveInfoDialog'
@@ -24,6 +25,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
   const [selectedBandId, setSelectedBandId] = useState<string | null>(null)
   useScheduleFlip(scrollRef, controller.reorderRevision)
   const { event, schedule, setOrder, setFixed } = controller
+  const [importingCsv, setImportingCsv] = useState(false)
   const [editingLive, setEditingLive] = useState(false)
   if (!event || !schedule) return null
   const selectedBand = event.performances.find(
@@ -42,7 +44,8 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
     controller.solving ||
     controller.refreshing ||
     controller.sending ||
-    controller.deletingBand
+    controller.deletingBand ||
+    controller.importing
   const violationByBand = new Map<string, 'hard' | 'soft'>()
   for (const constraint of event.constraints) {
     if (evaluateConstraint(constraint, event).status !== 'unmet') continue
@@ -57,11 +60,13 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
   }
   return (
     <Panel
+      busyMessage={controller.processingMessage}
       inert={
         controller.saving ||
         controller.solving ||
         controller.refreshing ||
-        controller.sending
+        controller.sending ||
+        controller.importing
       }
       title="出演順"
       headerClassName="flex-wrap py-2 xl:flex-nowrap xl:py-0"
@@ -73,6 +78,18 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
         >
           <Button onClick={() => setEditingLive(true)} className="text-xs">
             ライブ情報の編集
+          </Button>
+          <Button
+            onClick={() => setImportingCsv(true)}
+            disabled={unavailable}
+            title={
+              unavailable
+                ? '未保存の変更を保存し、処理完了後に追加してください'
+                : undefined
+            }
+            className="text-xs"
+          >
+            CSVから追加
           </Button>
           <Button onClick={controller.exportCsv} className="text-xs">
             CSVを出力
@@ -86,7 +103,8 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
               controller.saving ||
               controller.solving ||
               controller.refreshing ||
-              controller.sending
+              controller.sending ||
+              controller.importing
             }
             onClick={() => void controller.saveSchedule()}
           >
@@ -99,7 +117,8 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
               controller.saving ||
               controller.solving ||
               controller.refreshing ||
-              controller.sending
+              controller.sending ||
+              controller.importing
             }
             title="出演順・制約を保存してから計算します"
             variant="primary"
@@ -116,6 +135,17 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
         </span>
       }
     >
+      {importingCsv && (
+        <RosterImportDialog
+          event={event}
+          onBusy={controller.setImporting}
+          onClose={() => setImportingCsv(false)}
+          onImported={() => {
+            setImportingCsv(false)
+            controller.retryLoad()
+          }}
+        />
+      )}
       {editingLive && (
         <LiveInfoDialog
           controller={controller}
@@ -165,7 +195,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
           aria-label="出演順の表"
           className="min-h-0 flex-1 scrollbar-thin overflow-auto"
         >
-          <div className="min-w-[680px]">
+          <div className="min-w-170">
             <div
               className={`${rowColumns} sticky top-0 z-10 min-h-9 border-b border-line bg-white text-xs text-muted`}
             >

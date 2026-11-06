@@ -26,3 +26,23 @@ it('dims and disables controls while the panel is inert', () => {
   ).toBe('false')
   expect(screen.getByText('編集').closest('[inert]')).toBeNull()
 })
+
+it('keeps the processing reason accessible while its controls are inert', () => {
+  const { rerender } = render(
+    <Panel title="出演順" inert busyMessage="AIが考えています">
+      <button>編集</button>
+    </Panel>,
+  )
+  expect(
+    screen.getByRole('region', { name: '出演順' }).getAttribute('aria-busy'),
+  ).toBe('true')
+  expect(screen.getByRole('status').closest('[inert]')).toBeNull()
+  expect(screen.getByText('編集').closest('[inert]')).not.toBeNull()
+  rerender(
+    <Panel title="出演順">
+      <button>編集</button>
+    </Panel>,
+  )
+  expect(screen.queryByRole('status')).toBeNull()
+  expect(screen.getByText('編集').closest('[inert]')).toBeNull()
+})
