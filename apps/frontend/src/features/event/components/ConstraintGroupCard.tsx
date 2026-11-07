@@ -63,9 +63,9 @@ export function ConstraintGroupCard({
       : ''
   return (
     <article
-      className={`rounded-lg border p-3 ${constraintTone(enabled, hardness, status)}`}
+      className={`rounded-lg border p-2 ${constraintTone(enabled, hardness, status)}`}
     >
-      <div className="mb-3 flex items-start gap-2">
+      <div className="mb-1 flex items-start gap-2">
         <input
           type="checkbox"
           className="mt-1"
@@ -74,7 +74,7 @@ export function ConstraintGroupCard({
           onChange={(change) => onUpdate({ enabled: change.target.checked })}
         />
         <h3
-          className={`min-w-0 flex-1 text-sm leading-6 ${enabled ? '' : 'text-muted line-through'}`}
+          className={`min-w-0 flex-1 text-sm leading-5 ${enabled ? '' : 'text-muted line-through'}`}
         >
           {title}
         </h3>
@@ -87,7 +87,7 @@ export function ConstraintGroupCard({
         onPriority={(value) => onUpdate({ priority: value })}
       />
       <p
-        className={`mt-3 text-xs leading-6 ${status === 'met' ? 'text-emerald-700' : status === 'unmet' ? 'text-red-700' : 'text-muted'}`}
+        className={`mt-1 text-xs leading-5 ${status === 'met' ? 'text-emerald-700' : status === 'unmet' ? 'text-red-700' : 'text-muted'}`}
       >
         {status === 'met' ? '✓ ' : ''}
         {detail}
@@ -140,7 +140,7 @@ export function ConstraintGroupCard({
           })}
         </ul>
       )}
-      <div className="mt-2 flex justify-end gap-1 border-t border-line/60 pt-2">
+      <div className="mt-1 flex justify-end gap-1">
         <Button
           variant="ghost"
           className="px-2"
