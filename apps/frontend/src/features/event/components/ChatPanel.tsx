@@ -3,6 +3,7 @@ import { Icon } from '../../../shared/ui/Icon'
 import { Panel } from '../../../shared/ui/Panel'
 import { useChatScroll } from '../hooks/useChatScroll'
 import type { EventController } from '../hooks/useEvent'
+import { ChatComposer } from './ChatComposer'
 import { ChatProposal } from './ChatProposal'
 import { ReorderDialog } from './ReorderDialog'
 
@@ -129,25 +130,12 @@ export function ChatPanel({
           </p>
         )}
         <div className="rounded-lg border border-[#cbd9ed] p-3 transition-colors focus-within:border-brand">
-          <textarea
-            aria-label="AIへのメッセージ"
-            placeholder="要望や調整したいことを入力…"
+          <ChatComposer
             value={controller.chatDraft}
-            onChange={(event) => controller.setChatDraft(event.target.value)}
+            onChange={controller.setChatDraft}
+            onSubmit={() => void controller.sendMessage()}
             disabled={controller.sending}
-            maxLength={1000}
-            rows={2}
-            onKeyDown={(event) => {
-              if (
-                event.key === 'Enter' &&
-                (event.ctrlKey || event.metaKey) &&
-                !event.nativeEvent.isComposing
-              ) {
-                event.preventDefault()
-                void controller.sendMessage()
-              }
-            }}
-            className="w-full resize-none bg-transparent text-[13px] leading-6 placeholder:text-muted focus-visible:ring-0"
+            active={active}
           />
           <div className="mt-1 flex items-center justify-between">
             <span className="text-xs text-muted">Ctrl / ⌘ + Enterで送信</span>
