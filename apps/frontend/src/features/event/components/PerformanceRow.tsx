@@ -8,6 +8,7 @@ import type {
   PerformanceRow as Row,
   PerformanceView,
 } from '../model/types'
+import { MemberList } from './MemberList'
 
 export const rowColumns =
   'grid grid-cols-[36px_45px_62px_minmax(140px,1fr)_minmax(120px,0.8fr)_minmax(160px,1.4fr)] items-center gap-1 px-3'
@@ -89,12 +90,7 @@ export function PerformanceRow({
       >
         {performance.name}
       </button>
-      <span
-        className="min-w-0 truncate text-[13px] text-muted"
-        title={performance.members.join('・')}
-      >
-        {performance.members.join('・')}
-      </span>
+      <MemberList bandName={performance.name} names={performance.members} />
       <span
         className="min-w-0 truncate text-[13px] text-muted"
         title={performance.description ?? undefined}
