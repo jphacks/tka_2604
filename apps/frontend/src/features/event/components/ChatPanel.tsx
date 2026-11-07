@@ -30,6 +30,23 @@ export function ChatPanel({
     <Panel
       title="AIチャット"
       busy={controller.sending}
+      headerClassName="flex-wrap gap-y-1 py-2"
+      action={
+        <label
+          className="flex items-center gap-1 text-xs"
+          title="制約の追加・変更を自動承認します。削除や設定不足の提案は手動で確認します。設定はこのブラウザに保存します。"
+        >
+          <input
+            type="checkbox"
+            checked={controller.autoApprove}
+            disabled={Boolean(controller.processingMessage)}
+            onChange={(event) =>
+              controller.setAutoApprove(event.target.checked)
+            }
+          />
+          制約の追加・変更を自動承認
+        </label>
+      }
       busyMessage={controller.processingMessage}
       className="xl:border-r-0"
     >
