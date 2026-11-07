@@ -56,14 +56,21 @@ export function ConstraintForm({
   constraint,
   onSave,
   onClose,
+  initialDraft,
+  onSaveMany,
 }: {
   event: EventData
+  initialDraft?: Partial<ConstraintDraft>
+  onSaveMany?: (values: Constraint[]) => void
   constraint?: Constraint
   onSave: (value: Constraint) => void
   onClose: () => void
 }) {
-  const [draft, setDraft] = useState(() => createConstraintDraft(constraint))
-  const [choosing, setChoosing] = useState(!constraint)
+  const [draft, setDraft] = useState(() => ({
+    ...createConstraintDraft(constraint),
+    ...(!constraint ? initialDraft : {}),
+  }))
+  const [choosing, setChoosing] = useState(!constraint && !initialDraft)
   const [recommending, setRecommending] = useState(false)
   const [error, setError] = useState('')
   const change = (patch: Partial<ConstraintDraft>) => {
@@ -85,16 +92,18 @@ export function ConstraintForm({
       setError(result.error)
       return
     }
-    for (const item of result.constraints) onSave(item)
+    if (onSaveMany) onSaveMany(result.constraints)
+    else for (const item of result.constraints) onSave(item)
     onClose()
   }
   const multiCount = multiMemberIds(event).length
   const missingCount = missingGapMemberIds(event).length
   function addRecommended() {
-    for (const item of buildRecommendedGapConstraints(event, () =>
+    const values = buildRecommendedGapConstraints(event, () =>
       crypto.randomUUID(),
-    ))
-      onSave(item)
+    )
+    if (onSaveMany) onSaveMany(values)
+    else for (const item of values) onSave(item)
     onClose()
   }
   return (

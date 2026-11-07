@@ -6,6 +6,7 @@ import { Button } from '../../../shared/ui/Button'
 import { ConfirmDialog } from '../../../shared/ui/ConfirmDialog'
 import { Icon } from '../../../shared/ui/Icon'
 import type { EventController } from '../hooks/useEvent'
+import type { ConstraintDraft } from '../model/constraintDraft'
 import { groupConstraintViews } from '../model/constraintGroups'
 import { ConstraintCard } from './ConstraintCard'
 import { ConstraintForm } from './ConstraintForm'
@@ -14,10 +15,12 @@ import { ConstraintGroupCard } from './ConstraintGroupCard'
 export function ConstraintCollection({
   controller,
   views,
+  initialDraft,
   emptyMessage = '制約はまだありません。「手動追加」から種類を選んで追加できます。',
 }: {
   controller: EventController
   views: EventController['constraintViews']
+  initialDraft?: Partial<ConstraintDraft>
   emptyMessage?: string
 }) {
   const [editing, setEditing] = useState<Constraint | null | undefined>(
@@ -75,6 +78,8 @@ export function ConstraintCollection({
         <ConstraintForm
           event={event}
           constraint={editing ?? undefined}
+          initialDraft={editing === null ? initialDraft : undefined}
+          onSaveMany={controller.saveConstraintBatch}
           onSave={controller.saveConstraint}
           onClose={() => setEditing(undefined)}
         />

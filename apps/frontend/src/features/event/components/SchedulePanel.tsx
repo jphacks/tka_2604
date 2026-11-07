@@ -178,6 +178,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
       )}
       {selectedBand && (
         <PerformanceDetailsDialog
+          controller={controller}
           event={event}
           performance={{
             ...selectedBand,
