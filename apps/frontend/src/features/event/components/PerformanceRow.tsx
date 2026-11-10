@@ -11,7 +11,7 @@ import type {
 import { MemberList } from './MemberList'
 
 export const rowColumns =
-  'grid grid-cols-[36px_45px_62px_minmax(140px,1fr)_minmax(120px,0.8fr)_minmax(160px,1.4fr)] items-center gap-1 px-3'
+  'grid grid-cols-[32px_45px_62px_minmax(140px,1fr)_minmax(240px,2fr)] items-center gap-1 px-3'
 
 export function PerformanceRow({
   row,
@@ -46,7 +46,7 @@ export function PerformanceRow({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       data-performance={performance.id}
-      className={`${rowColumns} relative min-h-[42px] border-b border-line/55 transition-colors ${violation === 'hard' ? 'bg-red-100/70 shadow-[inset_4px_0_0_var(--color-red-500)] hover:bg-red-100' : violation === 'soft' ? 'bg-amber-100/70 shadow-[inset_4px_0_0_var(--color-amber-400)] hover:bg-amber-100' : 'bg-white hover:bg-canvas/65'} ${isDragging ? 'z-10 bg-wash opacity-35' : ''}`}
+      className={`${rowColumns} relative min-h-10 border-b border-line/55 transition-colors ${violation === 'hard' ? 'bg-red-100/70 shadow-[inset_4px_0_0_var(--color-red-500)] hover:bg-red-100' : violation === 'soft' ? 'bg-amber-100/70 shadow-[inset_4px_0_0_var(--color-amber-400)] hover:bg-amber-100' : 'bg-white hover:bg-canvas/65'} ${isDragging ? 'z-10 bg-wash opacity-35' : ''}`}
     >
       <button
         ref={setActivatorNodeRef}
@@ -90,13 +90,7 @@ export function PerformanceRow({
       >
         {performance.name}
       </button>
-      <MemberList bandName={performance.name} names={performance.members} />
-      <span
-        className="min-w-0 truncate text-[13px] text-muted"
-        title={performance.description ?? undefined}
-      >
-        {performance.description}
-      </span>
+      <MemberList names={performance.members} />
     </div>
   )
 }
@@ -109,12 +103,12 @@ export function EmptyPerformanceRow({ row }: { row: Row }) {
   return (
     <div
       ref={setNodeRef}
-      className={`${rowColumns} min-h-[42px] border-b border-line/55 ${isOver ? 'bg-brand/10 ring-1 ring-brand/40 ring-inset' : 'bg-canvas/30'}`}
+      className={`${rowColumns} min-h-10 border-b border-line/55 ${isOver ? 'bg-brand/10 ring-1 ring-brand/40 ring-inset' : 'bg-canvas/30'}`}
     >
       <span />
       <span />
       <span className="pl-2 text-muted tabular-nums">{row.order ?? '—'}</span>
-      <span className="col-span-3 text-xs text-muted">
+      <span className="col-span-2 text-xs text-muted">
         空き枠 · ここにドラッグして配置
       </span>
     </div>
