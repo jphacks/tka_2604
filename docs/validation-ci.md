@@ -99,7 +99,7 @@ it('外部通信の成功・HTTPエラー・通信失敗を差し替える', asy
 
 ポート5175でVite、8789でWorkersを起動し、既存サーバーを再利用しない。結果・スクリーンショット・失敗時のtraceは `apps/frontend/test-results/` に出力し、Gitには含めない。CIでは1 workerで実行し、HTMLレポートも生成する。`test.only`が含まれると失敗させる。
 
-E2Eの型検査は `npm run typecheck` に含む。ブラウザテストの実行は `npm run check`・pre-commitには含めず、画面変更時に別途実行する。CIでは以下の独立ジョブで実行する。
+E2Eの型検査は `npm run typecheck` に含む。ブラウザテストはpre-commitで実行するが、`npm run check`には含めない。CIでは以下の独立ジョブで実行する。
 
 - `npm run test:e2e`：実装済みAPIとローカルD1を通す。事前にfrontendビルド・ローカルmigration・seedを実行する。専用Workersの8789と画面の5175を使い、通常開発のサーバーは再利用しない。新規LLM生成・Solver応答は差し替え、公開サービスは呼ばない。
 
@@ -113,8 +113,12 @@ E2Eの型検査は `npm run typecheck` に含む。ブラウザテストの実�
 2. `npm run codegen:check`。
 3. `npm run typecheck`。
 4. `npm run test`。
+5. `npm run build --workspace=@jphack-2026/frontend`：E2E用の配信アセットをビルド。
+6. `npm run test:e2e:api`：専用ローカルD1を準備し、API E2E全件を実行。
 
-生成物の比較・型検査・テストはstageしたファイルだけに限定されない。pre-pushは未設定で、ビルドはpre-commitに含まれないため、PR前は`npm run check`も実行する。命名規則の自動チェックは現在なく、レビューで確認する。
+途中のチェックやE2Eが失敗するとcommitを中止する。初回は `npx playwright install chromium` を実行する。E2Eではポート5175・8789を使用する。
+
+生成物の比較・型検査・テスト・E2Eはstageしたファイルだけに限定されない。pre-pushは未設定。Workersのdry-runビルドはpre-commitに含まれないため、PR前は`npm run check`も実行する。命名規則の自動チェックは現在なく、レビューで確認する。
 
 ## GitHub Actions
 

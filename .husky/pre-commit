@@ -4,3 +4,5 @@ npm run lint:staged
 npm run codegen:check
 npm run typecheck
 npm run test
+npm run build --workspace=@jphack-2026/frontend
+npm run test:e2e:api
