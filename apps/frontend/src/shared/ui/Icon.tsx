@@ -29,6 +29,7 @@ const paths = {
       <path d="m15 15 6 6" />
     </>
   ),
+  filter: <path d="M3 4h18l-7 8v7l-4 2v-9z" />,
   logout: (
     <>
       <path d="M9 3H4v18h5M9 12h12m-4-4 4 4-4 4" />
