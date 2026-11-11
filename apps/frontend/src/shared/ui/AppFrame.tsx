@@ -10,12 +10,14 @@ export function AppFrame({
   children,
   eventId,
   eventName,
+  eventStatus,
   wide = false,
   workspace = false,
 }: {
   children: ReactNode
   eventId?: string
   eventName?: string
+  eventStatus?: ReactNode
   wide?: boolean
   workspace?: boolean
 }) {
@@ -59,19 +61,22 @@ export function AppFrame({
             aria-label="イベント内の移動"
             className="flex min-w-0 flex-wrap items-center gap-x-4 px-3 sm:gap-x-5 sm:px-6"
           >
-            <Link
-              to={`/event/${eventId}`}
-              className="w-full min-w-0 truncate py-2 text-sm font-semibold sm:mr-auto sm:w-auto sm:flex-1 sm:py-4"
-              title={eventName || 'イベント'}
-            >
-              {workspace ? (
-                <h1 className="truncate text-sm font-semibold">
-                  {eventName || 'イベント'}
-                </h1>
-              ) : (
-                eventName || 'イベント'
-              )}
-            </Link>
+            <div className="flex w-full min-w-0 items-center gap-3 py-2 sm:mr-auto sm:w-auto sm:flex-1 sm:py-4">
+              <Link
+                to={`/event/${eventId}`}
+                className="min-w-0 truncate text-sm font-semibold"
+                title={eventName || 'イベント'}
+              >
+                {workspace ? (
+                  <h1 className="truncate text-sm font-semibold">
+                    {eventName || 'イベント'}
+                  </h1>
+                ) : (
+                  eventName || 'イベント'
+                )}
+              </Link>
+              {eventStatus}
+            </div>
             {[
               { path: `/event/${eventId}`, label: '出演順' },
               { path: `/event/${eventId}/forms/edit`, label: 'フォーム管理' },

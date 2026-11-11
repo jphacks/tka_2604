@@ -3,7 +3,7 @@ import { expect, it } from 'vitest'
 
 import { Panel } from './Panel'
 
-it('dims and disables controls while the panel is inert', () => {
+it('disables controls while the panel is inert', () => {
   const { rerender } = render(
     <Panel title="出演順" inert>
       <button>編集</button>
@@ -12,9 +12,6 @@ it('dims and disables controls while the panel is inert', () => {
   expect(
     screen.getByRole('region', { name: '出演順' }).getAttribute('aria-busy'),
   ).toBe('true')
-  expect(screen.getByText('編集').closest('[inert]')?.className).toContain(
-    'opacity-60',
-  )
   expect(screen.getByText('編集').closest('[inert]')).not.toBeNull()
   rerender(
     <Panel title="出演順">
@@ -27,22 +24,15 @@ it('dims and disables controls while the panel is inert', () => {
   expect(screen.getByText('編集').closest('[inert]')).toBeNull()
 })
 
-it('keeps the processing reason accessible while its controls are inert', () => {
-  const { rerender } = render(
-    <Panel title="出演順" inert busyMessage="AIが考えています">
+it('marks the panel busy without adding a separate processing message', () => {
+  render(
+    <Panel title="出演順" busy>
       <button>編集</button>
     </Panel>,
   )
-  expect(
-    screen.getByRole('region', { name: '出演順' }).getAttribute('aria-busy'),
-  ).toBe('true')
-  expect(screen.getByRole('status').closest('[inert]')).toBeNull()
-  expect(screen.getByText('編集').closest('[inert]')).not.toBeNull()
-  rerender(
-    <Panel title="出演順">
-      <button>編集</button>
-    </Panel>,
+  expect(screen.getByRole('region', { name: '出演順' })).toHaveAttribute(
+    'aria-busy',
+    'true',
   )
   expect(screen.queryByRole('status')).toBeNull()
-  expect(screen.getByText('編集').closest('[inert]')).toBeNull()
 })

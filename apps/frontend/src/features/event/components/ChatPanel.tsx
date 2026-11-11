@@ -29,7 +29,7 @@ export function ChatPanel({
   return (
     <Panel
       title="AIチャット"
-      busy={controller.sending}
+      busy={Boolean(controller.processingMessage)}
       headerClassName="flex-wrap gap-y-1 py-2"
       action={
         <label
@@ -47,7 +47,6 @@ export function ChatPanel({
           制約の追加・変更を自動承認
         </label>
       }
-      busyMessage={controller.processingMessage}
       className="xl:border-r-0"
     >
       <div
