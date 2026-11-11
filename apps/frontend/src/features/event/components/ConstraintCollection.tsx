@@ -2,38 +2,28 @@ import { useState } from 'react'
 
 import type { Constraint } from '../../../generated/constraint'
 import { describeConstraint } from '../../../shared/model/constraints'
-import { Button } from '../../../shared/ui/Button'
 import { ConfirmDialog } from '../../../shared/ui/ConfirmDialog'
-import { Icon } from '../../../shared/ui/Icon'
 import type { EventController } from '../hooks/useEvent'
 import { groupConstraintViews } from '../model/constraintGroups'
 import { ConstraintCard } from './ConstraintCard'
-import { ConstraintForm } from './ConstraintForm'
 import { ConstraintGroupCard } from './ConstraintGroupCard'
 
 export function ConstraintCollection({
   controller,
   views,
+  onEdit,
   emptyMessage = '制約はまだありません。「手動追加」から種類を選んで追加できます。',
 }: {
   controller: EventController
   views: EventController['constraintViews']
+  onEdit: (constraint: Constraint) => void
   emptyMessage?: string
 }) {
-  const [editing, setEditing] = useState<Constraint | null | undefined>(
-    undefined,
-  )
   const [deleting, setDeleting] = useState<Constraint[] | null>(null)
   const event = controller.event
   if (!event) return null
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 justify-end px-2 py-1">
-        <Button variant="subtle" onClick={() => setEditing(null)}>
-          <Icon name="plus" />
-          手動追加
-        </Button>
-      </div>
       <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-2 wrap-anywhere">
         {groupConstraintViews(views).map(({ key, views: group }) =>
           group.length > 1 ? (
@@ -47,7 +37,7 @@ export function ConstraintCollection({
                   patch,
                 )
               }
-              onEdit={setEditing}
+              onEdit={onEdit}
               onDelete={setDeleting}
             />
           ) : (
@@ -60,7 +50,7 @@ export function ConstraintCollection({
                   patch,
                 )
               }
-              onEdit={setEditing}
+              onEdit={onEdit}
               onDelete={setDeleting}
             />
           ),
@@ -71,14 +61,6 @@ export function ConstraintCollection({
           </p>
         )}
       </div>
-      {editing !== undefined && (
-        <ConstraintForm
-          event={event}
-          constraint={editing ?? undefined}
-          onSave={controller.saveConstraint}
-          onClose={() => setEditing(undefined)}
-        />
-      )}
       {deleting && (
         <ConfirmDialog
           title="制約を削除"
