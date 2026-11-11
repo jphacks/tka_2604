@@ -55,6 +55,7 @@ export function ConstraintsPanel({
         <ConstraintForm
           event={controller.event}
           constraint={editing ?? undefined}
+          onSaveMany={controller.saveConstraintBatch}
           onSave={controller.saveConstraint}
           onClose={() => setEditing(undefined)}
         />

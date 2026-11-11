@@ -1,19 +1,33 @@
 import { useState } from 'react'
 
-import { memberLabel } from '../../../shared/model/event'
-import { Select } from '../../../shared/ui/Input'
+import type { Constraint } from '../../../generated/constraint'
+import { Button } from '../../../shared/ui/Button'
+import { Icon } from '../../../shared/ui/Icon'
 import type { EventController } from '../hooks/useEvent'
 import { constraintTargets } from '../model/constraintFilters'
 import { ConstraintCollection } from './ConstraintCollection'
+import { ConstraintForm } from './ConstraintForm'
 
 export function RelatedConstraints({
   controller,
   bandId,
 }: {
-  controller: EventController
+  controller: Pick<
+    EventController,
+    | 'event'
+    | 'allConstraintViews'
+    | 'processingMessage'
+    | 'updateConstraints'
+    | 'updateConstraint'
+    | 'deleteConstraints'
+    | 'saveConstraint'
+    | 'saveConstraintBatch'
+  >
   bandId: string
 }) {
-  const [memberId, setMemberId] = useState('')
+  const [editing, setEditing] = useState<Constraint | null | undefined>(
+    undefined,
+  )
   const event = controller.event
   const band = event?.performances.find((item) => item.id === bandId)
   if (!event || !band) return null
@@ -28,40 +42,29 @@ export function RelatedConstraints({
       <h3 className="mb-2 text-sm font-semibold">
         関連する制約（{views.length}件）
       </h3>
-      <label className="text-xs">
-        追加する制約の対象
-        <Select
-          className="mt-1 w-full"
-          value={memberId}
-          onChange={(e) => setMemberId(e.target.value)}
-          disabled={Boolean(controller.processingMessage)}
-        >
-          <option value="">{band.name}（バンド）</option>
-          {event.members
-            .filter((m) => band.memberIds.includes(m.id))
-            .map((m) => (
-              <option key={m.id} value={m.id}>
-                {memberLabel(event, m)}
-              </option>
-            ))}
-        </Select>
-      </label>
       <div inert={Boolean(controller.processingMessage)}>
+        <div className="flex justify-end px-2 py-1">
+          <Button variant="subtle" onClick={() => setEditing(null)}>
+            <Icon name="plus" />
+            手動追加
+          </Button>
+        </div>
         <ConstraintCollection
           controller={controller}
           views={views}
-          initialDraft={
-            memberId
-              ? { type: 'min_gap_member', memberId }
-              : {
-                  type: 'in_range',
-                  bandIds: [bandId],
-                  beforeId: bandId,
-                  rangeKind: 'parts',
-                }
-          }
+          onEdit={setEditing}
           emptyMessage="このバンド・所属メンバーに関連する制約はありません。"
         />
+        {editing !== undefined && (
+          <ConstraintForm
+            event={event}
+            constraint={editing ?? undefined}
+            initialBandId={bandId}
+            onSave={controller.saveConstraint}
+            onSaveMany={controller.saveConstraintBatch}
+            onClose={() => setEditing(undefined)}
+          />
+        )}
       </div>
     </section>
   )

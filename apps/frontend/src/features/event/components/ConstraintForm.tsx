@@ -57,10 +57,12 @@ export function ConstraintForm({
   onSave,
   onClose,
   initialDraft,
+  initialBandId,
   onSaveMany,
 }: {
   event: EventData
   initialDraft?: Partial<ConstraintDraft>
+  initialBandId?: string
   onSaveMany?: (values: Constraint[]) => void
   constraint?: Constraint
   onSave: (value: Constraint) => void
@@ -73,6 +75,9 @@ export function ConstraintForm({
   const [choosing, setChoosing] = useState(!constraint && !initialDraft)
   const [recommending, setRecommending] = useState(false)
   const [error, setError] = useState('')
+  const initialBand = !constraint
+    ? event.performances.find((band) => band.id === initialBandId)
+    : undefined
   const change = (patch: Partial<ConstraintDraft>) => {
     setDraft((value) => ({ ...value, ...patch }))
     setError('')
@@ -128,27 +133,37 @@ export function ConstraintForm({
         </div>
       ) : choosing ? (
         <>
-          <h3 className="mb-2 text-xs font-semibold text-brand">推奨</h3>
-          <button
-            type="button"
-            disabled={missingCount === 0}
-            className="mb-6 w-full rounded-lg border-2 border-brand/40 bg-wash p-4 text-left hover:border-brand focus-visible:ring-2 disabled:cursor-not-allowed disabled:border-line disabled:bg-white disabled:opacity-70"
-            onClick={() => setRecommending(true)}
-          >
-            <span className="mb-1 flex flex-wrap items-center gap-2 text-sm font-semibold text-brand">
-              掛け持ちの人が連続しないようにする
-              {multiCount > 0 && missingCount === 0 && (
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-normal text-muted">
-                  追加済み
+          {initialBand && (
+            <p className="mb-3 text-sm text-muted">
+              {initialBand.name}
+              ・所属メンバーを対象に初期設定します。対象は変更できます。
+            </p>
+          )}
+          {!initialBand && (
+            <>
+              <h3 className="mb-2 text-xs font-semibold text-brand">推奨</h3>
+              <button
+                type="button"
+                disabled={missingCount === 0}
+                className="mb-6 w-full rounded-lg border-2 border-brand/40 bg-wash p-4 text-left hover:border-brand focus-visible:ring-2 disabled:cursor-not-allowed disabled:border-line disabled:bg-white disabled:opacity-70"
+                onClick={() => setRecommending(true)}
+              >
+                <span className="mb-1 flex flex-wrap items-center gap-2 text-sm font-semibold text-brand">
+                  掛け持ちの人が連続しないようにする
+                  {multiCount > 0 && missingCount === 0 && (
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-normal text-muted">
+                      追加済み
+                    </span>
+                  )}
                 </span>
-              )}
-            </span>
-            <span className="block text-xs leading-6 text-muted">
-              {multiCount === 0
-                ? '掛け持ちしているメンバーがいません。'
-                : `掛け持ち${multiCount}人の出演の間に1組以上空けます（必須）。`}
-            </span>
-          </button>
+                <span className="block text-xs leading-6 text-muted">
+                  {multiCount === 0
+                    ? '掛け持ちしているメンバーがいません。'
+                    : `掛け持ち${multiCount}人の出演の間に1組以上空けます（必須）。`}
+                </span>
+              </button>
+            </>
+          )}
           <h3 className="mb-1 text-xs font-semibold text-muted">
             個別に指定する
           </h3>
@@ -164,6 +179,16 @@ export function ConstraintForm({
                 onClick={() => {
                   setDraft({
                     ...createConstraintDraft(),
+                    ...(initialBand
+                      ? {
+                          bandIds: [initialBand.id],
+                          beforeId: initialBand.id,
+                          memberId:
+                            initialBand.memberIds.find((id) =>
+                              event.members.some((member) => member.id === id),
+                            ) ?? '',
+                        }
+                      : {}),
                     type: choice.type,
                     hardness: draft.hardness,
                     priority: draft.priority,

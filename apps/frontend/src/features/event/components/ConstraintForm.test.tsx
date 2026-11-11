@@ -123,3 +123,18 @@ it('preselects the related band and saves its completed constraint as one operat
     }),
   ])
 })
+
+it('keeps the existing target when editing with a different band context', () => {
+  render(
+    <ConstraintForm
+      event={eventFixture}
+      constraint={eventFixture.constraints[0]}
+      initialBandId="p2"
+      onSave={vi.fn()}
+      onClose={vi.fn()}
+    />,
+  )
+  const dialog = within(screen.getByRole('dialog'))
+  expect(dialog.getByText('気分上々↑↑', { exact: true })).toBeVisible()
+  expect(dialog.queryByText('Pretender', { exact: true })).toBeNull()
+})
