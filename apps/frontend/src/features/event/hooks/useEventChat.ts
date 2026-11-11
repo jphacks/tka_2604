@@ -1,13 +1,11 @@
 import { type Dispatch, useEffect, useRef, useState } from 'react'
 
 import type { ChatMessage, EventData } from '../../../shared/model/event'
+import { isDecisionMessage } from '../model/chatMessage'
 import type { ChatProposal } from '../model/chatProposal'
 import type { ChatReorder } from '../model/chatReorder'
 import type { EventAction } from '../model/eventReducer'
 import { eventRepository } from '../repositories/eventRepository'
-
-const decisionMessageId =
-  /^decision-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 export function useEventChat(
   eventId: string,
@@ -17,6 +15,8 @@ export function useEventChat(
 ) {
   const [chatDraft, setChatDraft] = useState('')
   const [sending, setSending] = useState(false)
+  const [chatError, setChatError] = useState('')
+  const [recordingDecision, setRecordingDecision] = useState(false)
   const [chatProposal, setChatProposal] = useState<ChatProposal | null>(null)
   const [chatReorder, setChatReorder] = useState<ChatReorder | null>(null)
   const [pendingDecision, setPendingDecision] = useState<{
@@ -44,6 +44,7 @@ export function useEventChat(
     pending.current = message
     busy.current = true
     setSending(true)
+    setChatError('')
     setChatDraft('')
     dispatch({ type: 'message', message })
     const signal = lifetime.current?.signal
@@ -69,12 +70,9 @@ export function useEventChat(
     } catch (error) {
       if (!signal?.aborted) {
         setChatDraft((current) => current || text)
-        dispatch({
-          type: 'notice',
-          message:
-            error instanceof Error ? error.message : '送信に失敗しました。',
-          error: true,
-        })
+        setChatError(
+          error instanceof Error ? error.message : '送信に失敗しました。',
+        )
       }
     } finally {
       busy.current = false
@@ -85,13 +83,15 @@ export function useEventChat(
     decision: 'applied' | 'discarded',
     retry: typeof pendingDecision = null,
   ) {
-    if (recording.current) return
+    if (recording.current) return false
     const entry =
       retry?.decision === decision
         ? retry
         : { decision, messageId: `decision-${crypto.randomUUID()}` }
     setPendingDecision(entry)
     recording.current = true
+    setRecordingDecision(true)
+    setChatError('')
     const signal = lifetime.current?.signal
     try {
       await eventRepository.recordDecision(
@@ -105,40 +105,38 @@ export function useEventChat(
       if (!signal?.aborted) {
         dispatch({ type: 'messages', messages })
         setPendingDecision(null)
+        return true
       }
     } catch (error) {
-      if (!signal?.aborted)
-        dispatch({
-          type: 'notice',
-          error: true,
-          message:
-            error instanceof Error
-              ? error.message
-              : '履歴の記録に失敗しました。',
-        })
+      if (!signal?.aborted) {
+        setChatError(
+          error instanceof Error ? error.message : '選択の記録に失敗しました。',
+        )
+      }
+      return false
     } finally {
       recording.current = false
+      if (!signal?.aborted) setRecordingDecision(false)
     }
   }
   const unanswered =
     event?.messages.filter(
       (message) =>
         message.role === 'user' &&
-        !decisionMessageId.test(message.id) &&
+        !isDecisionMessage(message) &&
         !event.messages.some((reply) => reply.replyToMessageId === message.id),
     ) ?? []
   return {
     chatDraft,
+    chatError,
+    dismissChatError: () => setChatError(''),
+    recordingDecision,
     setChatDraft,
     chatProposal,
     dismissProposal: () => setChatProposal(null),
     chatReorder,
     pendingDecision,
     recordDecision,
-    retryDecision: () => {
-      if (pendingDecision)
-        return recordDecision(pendingDecision.decision, pendingDecision)
-    },
     dismissReorder: () => setChatReorder(null),
     changeProposal: (
       index: number,
@@ -161,17 +159,25 @@ export function useEventChat(
     sending,
     chatBlocked: blocked,
     unanswered,
-    retryMessage: (message: ChatMessage) => sendMessage(message),
-    sendMessage: () => {
+    sendMessage: async () => {
+      if (blocked || busy.current || recording.current) return
+      if (pendingDecision) {
+        const recorded = await recordDecision(
+          pendingDecision.decision,
+          pendingDecision,
+        )
+        if (!recorded) return
+      }
       const retry = unanswered.find(
         (message) => message.text === chatDraft.trim(),
       )
       return sendMessage(retry)
     },
     canSend:
-      Boolean(chatDraft.trim()) &&
+      (Boolean(chatDraft.trim()) || Boolean(pendingDecision)) &&
       chatDraft.trim().length <= 1000 &&
       !sending &&
+      !recordingDecision &&
       !blocked,
   }
 }

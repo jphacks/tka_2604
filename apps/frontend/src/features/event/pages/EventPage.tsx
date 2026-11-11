@@ -10,6 +10,7 @@ import { PageState } from '../../../shared/ui/PageState'
 import { ChatPanel } from '../components/ChatPanel'
 import { ColumnResizer } from '../components/ColumnResizer'
 import { ConstraintsPanel } from '../components/ConstraintsPanel'
+import { EventToolbar } from '../components/EventToolbar'
 import { SchedulePanel } from '../components/SchedulePanel'
 import { type WorkspacePanel, WorkspaceTabs } from '../components/WorkspaceTabs'
 import { useColumnResize } from '../hooks/useColumnResize'
@@ -49,6 +50,7 @@ function EventWorkspace({ eventId }: { eventId: string }) {
         />
       ) : (
         <>
+          <EventToolbar controller={controller} />
           {importNotice && (
             <p
               role="alert"

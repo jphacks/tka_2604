@@ -55,7 +55,7 @@ export function AppFrame({
           <span className="hidden sm:inline">ログアウト</span>
         </Button>
       </AppHeader>
-      {eventId && (
+      {eventId && !workspace && (
         <div className="shrink-0 border-b border-line bg-white">
           <nav
             aria-label="イベント内の移動"

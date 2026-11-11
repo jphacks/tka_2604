@@ -65,6 +65,7 @@ export function useEventSettings(eventId: string) {
       setDraft(saved)
       resource.refresh()
       setNotice('イベントの設定を更新しました。')
+      return true
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : '設定を更新できませんでした。',

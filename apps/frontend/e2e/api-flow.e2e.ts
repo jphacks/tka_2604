@@ -142,8 +142,11 @@ test('real API: create, failed save, retry, reload, conflict and delete', async 
   const eventId = new URL(page.url()).pathname.split('/').at(-1)!
   const apiPath = `/api/events/${eventId}`
   try {
-    await page.getByRole('link', { name: '設定', exact: true }).click()
-    const name = page.getByRole('textbox', { name: 'イベント名' })
+    await page
+      .getByRole('button', { name: 'ライブ情報の編集', exact: true })
+      .click()
+    const settings = page.getByRole('dialog', { name: 'ライブ情報の編集' })
+    const name = settings.getByRole('textbox', { name: 'イベント名' })
     await name.fill('RPC保存確認')
     await page.route(`**${apiPath}`, async (route) => {
       if (route.request().method() === 'PATCH') {
@@ -154,18 +157,21 @@ test('real API: create, failed save, retry, reload, conflict and delete', async 
         })
       } else await route.continue()
     })
-    await page.getByRole('button', { name: '変更を保存' }).click()
+    await settings.getByRole('button', { name: '変更を保存' }).click()
     await expect(page.getByRole('alert')).toContainText('503')
     await expect(name).toHaveValue('RPC保存確認')
     await expect(page.getByText('イベントの設定を更新しました。')).toHaveCount(
       0,
     )
     await page.unroute(`**${apiPath}`)
-    await page.getByRole('button', { name: '変更を保存' }).click()
+    await settings.getByRole('button', { name: '変更を保存' }).click()
     await expect(page.getByText('イベントの設定を更新しました。')).toBeVisible()
     await page.reload()
     // Authentication is still the temporary workspace session (#59).
     await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await page
+      .getByRole('button', { name: 'ライブ情報の編集', exact: true })
+      .click()
     await expect(name).toHaveValue('RPC保存確認')
     const revision = (await (await request.get(apiPath)).json()) as {
       updatedAt: string
@@ -175,14 +181,17 @@ test('real API: create, failed save, retry, reload, conflict and delete', async 
     })
     expect(external.status()).toBe(200)
     await name.fill('保持する未保存の入力')
-    await page.getByRole('button', { name: '変更を保存' }).click()
+    await settings.getByRole('button', { name: '変更を保存' }).click()
     await expect(page.getByRole('alert')).toContainText('再取得')
     await expect(name).toHaveValue('保持する未保存の入力')
     await expect(page.getByText('イベントの設定を更新しました。')).toHaveCount(
       0,
     )
-    await page.getByRole('button', { name: '削除', exact: true }).click()
-    await page.getByRole('dialog').getByRole('button', { name: /削除/ }).click()
+    await settings.getByRole('button', { name: '削除', exact: true }).click()
+    await page
+      .getByRole('dialog', { name: 'イベントを削除', exact: true })
+      .getByRole('button', { name: /削除/ })
+      .click()
     await expect(
       page.getByRole('heading', { name: 'マイイベント' }),
     ).toBeVisible()
@@ -548,13 +557,30 @@ test('chat contract: retry uses the same ID after reopening, with no duplicate m
       .getByRole('textbox', { name: 'AIへのメッセージ' })
       .fill('再送確認の希望')
     await page.getByRole('button', { name: 'メッセージを送信' }).click()
-    await expect(page.getByRole('alert')).toContainText('送信に失敗')
+    const error = page.getByRole('alert')
+    await expect(error).toHaveText(
+      /^メッセージの送信に失敗しました\s*送信ボタンからもう一度送信してください。$/,
+    )
+    const errorBox = (await error.boundingBox())!
+    const formBox = (await error.locator('..').boundingBox())!
+    const input = page.getByRole('textbox', { name: 'AIへのメッセージ' })
+    const inputBox = (await input.boundingBox())!
+    expect(errorBox.y).toBeGreaterThanOrEqual(formBox.y)
+    expect(errorBox.y + errorBox.height).toBeLessThanOrEqual(inputBox.y)
+    await error.getByRole('button', { name: 'エラーを閉じる' }).click()
+    await expect(error).toHaveCount(0)
+    await expect(input).toHaveValue('再送確認の希望')
     await page.reload()
     await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
     await expect(page.getByText('再送確認の希望', { exact: true })).toHaveCount(
       1,
     )
-    await page.getByRole('button', { name: 'この発言を再試行' }).click()
+    await expect(page.getByRole('button', { name: /再試行/ })).toHaveCount(0)
+    await expect(page.getByRole('alert')).toHaveCount(0)
+    await page
+      .getByRole('textbox', { name: 'AIへのメッセージ' })
+      .fill('再送確認の希望')
+    await page.getByRole('button', { name: 'メッセージを送信' }).click()
     await expect(
       page.getByText('再試行した返信です。', { exact: true }),
     ).toBeVisible()
@@ -599,19 +625,20 @@ for (const width of [1280, 1600]) {
     await expect(schedule).toBeVisible()
     await expect(constraints).toHaveCSS('border-right-width', '1px')
     await expect(
-      schedule.getByRole('button', { name: 'ライブ情報の編集', exact: true }),
+      page.getByRole('button', { name: 'ライブ情報の編集', exact: true }),
     ).toBeVisible()
     await expect(
       page.getByRole('combobox', { name: 'バンドBの部', exact: true }),
     ).toHaveCount(0)
     const nav = await page
-      .getByRole('navigation', { name: 'イベント内の移動' })
+      .getByRole('group', { name: 'イベントの操作' })
+      .locator('..')
       .boundingBox()
     for (const panel of [schedule, constraints, chat]) {
       const box = await panel.boundingBox()
-      // The navigation wrapper has a 1px bottom border.
+      // The toolbar includes its bottom border.
       expect(nav?.y).toBe(64)
-      expect(box?.y).toBe(nav!.y + nav!.height + 1)
+      expect(box?.y).toBe(nav!.y + nav!.height)
       expect(box!.y + box!.height).toBe(1000)
     }
     await expect(

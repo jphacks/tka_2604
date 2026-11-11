@@ -85,17 +85,22 @@ for (const width of [320, 390, 768, 1279]) {
     const tabsBox = (await tabs.boundingBox())!
     expect(tabsBox.y + tabsBox.height).toBe(844)
     const actionTops = []
-    for (const name of [
-      '出演順を保存',
-      '自動生成',
-      'CSVを出力',
-      'ライブ情報の編集',
-    ]) {
+    for (const name of ['出演順を保存', '自動生成']) {
       const button = schedule.getByRole('button', { name, exact: true })
       await expect(button).toHaveCSS('white-space', 'nowrap')
       actionTops.push((await button.boundingBox())!.y)
     }
     expect(new Set(actionTops).size).toBe(1)
+    for (const name of [
+      'CSVから追加',
+      'CSVを出力',
+      'フォーム管理',
+      'ライブ情報の編集',
+    ]) {
+      await expect(
+        page.getByRole('button', { name, exact: true }),
+      ).toBeVisible()
+    }
     const table = schedule.getByRole('region', { name: '出演順の表' })
     await table.evaluate((element) => {
       element.scrollLeft = 200
