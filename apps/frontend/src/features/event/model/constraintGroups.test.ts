@@ -50,3 +50,37 @@ it('groups member gaps with the same settings at the first position and keeps ot
     ),
   ).toEqual([['a', 'b', 'f'], ['fix'], ['c'], ['d'], ['e']])
 })
+
+it('groups position constraints without merging different hardness, priority or enabled states', () => {
+  const position = (
+    id: string,
+    order: number,
+    patch: Partial<Constraint> = {},
+  ): Constraint =>
+    ({
+      ...gap(id, 'm1'),
+      type: 'at_position',
+      targets: { band_id: id },
+      params: { position: order },
+      ...patch,
+    }) as Constraint
+  const first = position('a', 0)
+  const second = position('b', 4)
+  const groups = groupConstraintViews([
+    view(first),
+    view(gap('gap', 'm1')),
+    view(second),
+    view(position('soft', 2, { hardness: 'soft', priority: 'mid' })),
+    view(position('disabled', 3, { enabled: false })),
+    view(position('priority', 1, { priority: 'high' })),
+  ])
+  expect(
+    groups.map((group) =>
+      group.views.map((item) => item.constraint.constraint_id),
+    ),
+  ).toEqual([['a', 'b'], ['gap'], ['soft'], ['disabled'], ['priority']])
+  expect(groups[0].views.map((item) => item.constraint)).toEqual([
+    first,
+    second,
+  ])
+})

@@ -5,14 +5,17 @@ import type {
   Hardness,
   Priority,
 } from '../../../generated/constraint'
-import type { ConstraintStatus } from '../../../shared/model/constraints'
+import {
+  type ConstraintStatus,
+  describeConstraint,
+} from '../../../shared/model/constraints'
 import type { EventData } from '../../../shared/model/event'
 import { Button } from '../../../shared/ui/Button'
 import { Icon } from '../../../shared/ui/Icon'
 import { constraintTone } from '../model/constraintGroups'
 import { ConstraintControls } from './ConstraintControls'
 
-/** 同じ設定の「メンバーの出演間隔」を1枚にまとめ、操作は含む全件へ反映する */
+/** 同じ種類・設定の制約を1枚にまとめ、操作は含む全件へ反映する */
 export function ConstraintGroupCard({
   event,
   views,
@@ -35,7 +38,10 @@ export function ConstraintGroupCard({
   const [open, setOpen] = useState(false)
   const detailsId = useId()
   const first = views[0].constraint
-  if (first.type !== 'min_gap_member') return null
+  if (first.type !== 'min_gap_member' && first.type !== 'at_position')
+    return null
+  const fixedPositions = first.type === 'at_position'
+  const unit = fixedPositions ? '組' : '人'
   const { enabled, hardness, priority } = first
   const failed = views.filter(
     (view) => view.status === 'unmet' || view.status === 'invalid',
@@ -48,13 +54,16 @@ export function ConstraintGroupCard({
       : unchecked
         ? 'unchecked'
         : 'met'
-  const title = `${views.length}人の出演の間に${first.params.min_diff - 1}組以上空ける${first.params.same_part_only ? '（同じ部のみ）' : '（部をまたいで適用）'}`
+  const title =
+    first.type === 'at_position'
+      ? `${views.length}組の出演順を${hardness === 'hard' ? '固定' : '指定'}する`
+      : `${views.length}人の出演の間に${first.params.min_diff - 1}組以上空ける${first.params.same_part_only ? '（同じ部のみ）' : '（部をまたいで適用）'}`
   const memberName = (constraint: Constraint) =>
     constraint.type === 'min_gap_member'
       ? (event.members.find(
           (member) => member.id === constraint.targets.member_id,
         )?.name ?? '不明なメンバー')
-      : ''
+      : describeConstraint(constraint, event)
   return (
     <article
       className={`relative rounded-lg border p-2 ${constraintTone(enabled, hardness, status)}`}
@@ -99,7 +108,8 @@ export function ConstraintGroupCard({
         <p
           className={`mt-1 text-xs leading-5 ${hardness === 'hard' ? 'text-red-700' : 'text-amber-800'}`}
         >
-          {failed}人が{hardness === 'hard' ? '必須条件に違反' : '未達成'}
+          {failed}
+          {unit}が{hardness === 'hard' ? '必須条件に違反' : '未達成'}
         </p>
       )}
       {open && (
@@ -109,12 +119,16 @@ export function ConstraintGroupCard({
         >
           {views.map(({ constraint, status: itemStatus }) => {
             const name = memberName(constraint)
+            const actionLabel =
+              constraint.type === 'at_position'
+                ? `${event.performances.find((band) => band.id === constraint.targets.band_id)?.name ?? '不明な出演枠'}の出演順`
+                : `${name}の間隔`
             return (
               <li
                 key={constraint.constraint_id}
                 className="flex items-center gap-2 px-2 py-1 text-xs"
               >
-                <span className="min-w-0 flex-1">{name}</span>
+                <span className="min-w-0 flex-1 wrap-anywhere">{name}</span>
                 {enabled &&
                   (itemStatus === 'unmet' || itemStatus === 'invalid') && (
                     <span
@@ -129,7 +143,7 @@ export function ConstraintGroupCard({
                   <Button
                     variant="ghost"
                     className="px-1.5"
-                    aria-label={`${name}の間隔を編集`}
+                    aria-label={`${actionLabel}を編集`}
                     onClick={() => onEdit(constraint)}
                   >
                     <Icon name="edit" />
@@ -137,7 +151,7 @@ export function ConstraintGroupCard({
                   <Button
                     variant="ghost"
                     className="px-1.5 hover:text-red-600"
-                    aria-label={`${name}の間隔を削除`}
+                    aria-label={`${actionLabel}を削除`}
                     onClick={() => onDelete([constraint])}
                   >
                     <Icon name="trash" />
@@ -157,7 +171,7 @@ export function ConstraintGroupCard({
           onClick={() => setOpen((current) => !current)}
         >
           <Icon name="list" />
-          {open ? '内訳を閉じる' : `内訳（${views.length}人）`}
+          {open ? '内訳を閉じる' : `内訳（${views.length}${unit}）`}
         </Button>
         <Button
           variant="ghost"

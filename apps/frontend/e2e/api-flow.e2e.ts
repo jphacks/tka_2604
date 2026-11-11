@@ -376,12 +376,22 @@ test('real API: schedule and constraints survive reload, failures and concurrent
       .click()
     await expect(capacity).toHaveValue('4')
     await page.getByRole('button', { name: 'キャンセル', exact: true }).click()
-    await expect(
-      page.getByRole('heading', {
-        name: '未配置バンドを3番にする',
+    const fixedGroup = page.getByRole('article').filter({
+      has: page.getByRole('heading', {
+        name: '2組の出演順を固定する',
         exact: true,
       }),
+    })
+    await expect(fixedGroup).toBeVisible()
+    await fixedGroup
+      .getByRole('button', { name: '内訳（2組）', exact: true })
+      .click()
+    await expect(
+      fixedGroup.getByText('未配置バンドを3番にする', { exact: true }),
     ).toBeVisible()
+    const fixedToggle = page.getByRole('checkbox', {
+      name: /^\d+組の出演順を固定するを有効にする$/,
+    })
     const external = {
       ...created.constraint,
       constraint_id: `external-${Date.now()}`,
@@ -402,29 +412,24 @@ test('real API: schedule and constraints survive reload, failures and concurrent
     await autoSave(
       page,
       `${path}/constraints`,
-      () =>
-        page
-          .getByRole('checkbox', {
-            name: 'バンドAを1番にするを有効にする',
-            exact: true,
-          })
-          .uncheck(),
+      () => fixedToggle.uncheck(),
       409,
     )
     await expect(page.getByRole('alert')).toBeVisible()
     await expect(
       page.getByRole('button', { name: '保存を再試行', exact: true }),
     ).toBeVisible()
-    await expect(
-      page.getByRole('checkbox', {
-        name: 'バンドAを1番にするを有効にする',
-        exact: true,
-      }),
-    ).not.toBeChecked()
+    await expect(fixedToggle).not.toBeChecked()
     const persisted = (await (
       await request.get(`${path}/constraints`)
     ).json()) as typeof saved
     expect(persisted.constraints).toHaveLength(3)
+    expect(persisted.constraints.map((item) => item.constraint)).toEqual(
+      expect.arrayContaining([
+        ...saved.constraints.map((item) => item.constraint),
+        external,
+      ]),
+    )
     page.once('dialog', (prompt) => prompt.dismiss())
     await page.getByRole('button', { name: '最新の状態を取得' }).click()
     await expect(
@@ -439,12 +444,10 @@ test('real API: schedule and constraints survive reload, failures and concurrent
     await expect(
       page.getByRole('button', { name: '保存を再試行', exact: true }),
     ).toHaveCount(0)
-    await expect(
-      page.getByRole('checkbox', {
-        name: 'バンドAを1番にするを有効にする',
-        exact: true,
-      }),
-    ).toBeChecked()
+    await expect(fixedToggle).toHaveAccessibleName(
+      '3組の出演順を固定するを有効にする',
+    )
+    await expect(fixedToggle).toBeChecked()
     await page.setViewportSize({ width: 390, height: 844 })
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),
