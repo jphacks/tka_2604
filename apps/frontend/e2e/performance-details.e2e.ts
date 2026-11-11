@@ -63,3 +63,73 @@ test('edits and deletes a band from its schedule details dialog', async ({
     page.getByRole('button', { name: `${editedName}の詳細`, exact: true }),
   ).toHaveCount(0)
 })
+
+for (const width of [1280, 375]) {
+  test(`keeps long member chips inside the edit dialog at ${width}px`, async ({
+    page,
+    databaseEvent,
+  }) => {
+    const memberName = '長いメンバー名'.repeat(5)
+    await page.setViewportSize({ width, height: 900 })
+    await page.route(
+      `**/api/events/${databaseEvent.eventId}/form`,
+      async (route) => {
+        const response = await route.fetch()
+        const roster = (await response.json()) as FormRoster
+        await route.fulfill({
+          response,
+          json: {
+            ...roster,
+            members: roster.members.map((member) => ({
+              ...member,
+              memberName,
+            })),
+          },
+        })
+      },
+    )
+    await page.goto(`/event/${databaseEvent.eventId}`)
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await page
+      .getByRole('button', { name: 'Pretenderの詳細', exact: true })
+      .click()
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: '編集', exact: true })
+      .click()
+    const dialog = page.getByRole('dialog', { name: '出演枠を編集' })
+    const label = dialog
+      .locator('span[title]')
+      .filter({ hasText: memberName })
+      .first()
+    await expect(label).toBeVisible()
+    await label.hover()
+    await expect(label).toHaveAttribute(
+      'title',
+      (await label.textContent()) ?? '',
+    )
+    expect(
+      await label.evaluate((element) => {
+        const style = getComputedStyle(element)
+        return (
+          style.textOverflow === 'ellipsis' &&
+          element.scrollWidth > element.clientWidth
+        )
+      }),
+    ).toBe(true)
+    expect(
+      await dialog.evaluate(
+        (element) => element.scrollWidth <= element.clientWidth,
+      ),
+    ).toBe(true)
+    expect(
+      await dialog.evaluate((element) => element.getBoundingClientRect().width),
+    ).toBe(width === 1280 ? 720 : width - 32)
+    await dialog
+      .getByRole('button', { name: 'メンバー1の名前の選択を解除' })
+      .click()
+    await expect(
+      dialog.getByRole('combobox', { name: 'メンバー1の名前' }),
+    ).toBeVisible()
+  })
+}
