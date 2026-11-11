@@ -237,7 +237,7 @@ test('real Solver: partial placements keep every band and mark missing targets u
   ).toBeVisible()
   await expect(
     page.getByText('対象に未配置の出演枠があります', { exact: true }).first(),
-  ).toBeVisible()
+  ).toHaveCount(0)
   for (const id of missing) {
     const name =
       id === 'demo-band-a'

@@ -35,24 +35,26 @@ export function ConstraintCard({
         >
           {text}
         </h3>
-        <Button
-          variant="ghost"
-          className="min-h-8 px-1.5"
-          aria-label={`${text}を編集`}
-          title="編集"
-          onClick={() => onEdit(constraint)}
-        >
-          <Icon name="edit" />
-        </Button>
-        <Button
-          variant="ghost"
-          className="min-h-8 px-1.5 hover:text-red-600"
-          aria-label={`${text}を削除`}
-          title="削除"
-          onClick={() => onDelete([constraint])}
-        >
-          <Icon name="trash" />
-        </Button>
+        <div className="flex shrink-0 items-center gap-0">
+          <Button
+            variant="ghost"
+            className="min-h-8 px-1.5"
+            aria-label={`${text}を編集`}
+            title="編集"
+            onClick={() => onEdit(constraint)}
+          >
+            <Icon name="edit" />
+          </Button>
+          <Button
+            variant="ghost"
+            className="min-h-8 px-1.5 hover:text-red-600"
+            aria-label={`${text}を削除`}
+            title="削除"
+            onClick={() => onDelete([constraint])}
+          >
+            <Icon name="trash" />
+          </Button>
+        </div>
       </div>
       <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
         <ConstraintControls
@@ -62,12 +64,13 @@ export function ConstraintCard({
           onHardness={(hardness) => onUpdate({ hardness })}
           onPriority={(priority) => onUpdate({ priority })}
         />
-        <p
-          className={`min-w-0 text-xs leading-5 ${status === 'met' ? 'text-emerald-700' : status === 'unmet' || status === 'invalid' ? (constraint.hardness === 'hard' ? 'text-red-700' : 'text-amber-800') : 'text-muted'}`}
-        >
-          {status === 'met' ? '✓ ' : ''}
-          {detail}
-        </p>
+        {(status === 'unmet' || status === 'invalid') && (
+          <p
+            className={`min-w-0 text-xs leading-5 ${constraint.hardness === 'hard' ? 'text-red-700' : 'text-amber-800'}`}
+          >
+            {detail}
+          </p>
+        )}
       </div>
     </article>
   )

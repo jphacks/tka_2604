@@ -105,7 +105,8 @@ test('all condition choices produce editable conditions with live evaluation', a
       exact: true,
     }),
   })
-  await expect(unassignedCondition).toContainText('未配置')
+  await expect(unassignedCondition).toBeVisible()
+  await expect(unassignedCondition).not.toContainText('未配置')
 
   dialog = await choose(page, /出演できる範囲・部を指定する/)
   await dialog
@@ -198,7 +199,10 @@ test('the recommended member gap is added in one step and listed as one card', a
     .getByRole('article')
     .filter({ hasText: /\d+人の出演の間に1組以上空ける/ })
   await expect(card).toHaveCount(1)
-  await card.getByRole('button', { name: /内訳/ }).click()
+  await card.click({ position: { x: 4, y: 4 } })
+  await expect(
+    card.getByRole('button', { name: '内訳を閉じる' }),
+  ).toHaveAttribute('aria-expanded', 'true')
   await page.screenshot({ path: testInfo.outputPath('recommend-group.png') })
   await card.getByRole('button', { name: '任意', exact: true }).click()
   await expect(
