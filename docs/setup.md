@@ -98,7 +98,7 @@ npx playwright install chromium # ブラウザテストを初めて実行する�
 npm run test:e2e
 ```
 
-ブラウザテストはポート5175でfrontend、8789でWorkersを起動し、専用ローカルD1で保存・再取得を確認する。実LLMは呼ばない。通常の開発画面とは別のfrontendポートを使う。型検査は `npm run check` に含むが、ブラウザテストの実行は別途必要。
+ブラウザテストはポート5175でfrontend、8789でWorkersを起動し、専用ローカルD1で保存・再取得を確認する。実LLMは呼ばない。通常の開発画面とは別のfrontendポートを使う。commit時もfrontendをビルドしてからブラウザテストを実行し、失敗するとcommitを中止する。`npm run check`にはブラウザテストを含めない。
 
 ## イベントAPIのローカル確認（#15）
 

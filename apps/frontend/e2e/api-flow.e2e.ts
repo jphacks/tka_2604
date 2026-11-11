@@ -620,7 +620,7 @@ for (const width of [1280, 1600]) {
     const row = await page
       .locator('[data-performance="demo-band-b"]')
       .boundingBox()
-    expect(row?.height).toBe(42)
+    expect(row?.height).toBe(40)
     await page.screenshot({
       path: test.info().outputPath(`api-original-layout-${width}.png`),
       fullPage: true,

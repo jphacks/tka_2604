@@ -6,9 +6,12 @@ import {
 } from '../../../shared/model/constraints'
 import { isFixed } from '../../../shared/model/event'
 import { Button } from '../../../shared/ui/Button'
+import { Icon } from '../../../shared/ui/Icon'
 import { Panel } from '../../../shared/ui/Panel'
+import { RosterImportDialog } from '../../participants/components/RosterImportDialog'
 import type { EventController } from '../hooks/useEvent'
 import { useScheduleFlip } from '../hooks/useScheduleFlip'
+import { HistoryConfirmation } from './HistoryConfirmation'
 import { LiveInfoDialog } from './LiveInfoDialog'
 import { PerformanceDetailsDialog } from './PerformanceDetailsDialog'
 import {
@@ -21,9 +24,11 @@ import { ScheduleDragSurface, UnassignedDropZone } from './ScheduleDragSurface'
 export function SchedulePanel({ controller }: { controller: EventController }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const focusAfterDelete = useRef(false)
+  const unassignedRef = useRef<HTMLElement>(null)
   const [selectedBandId, setSelectedBandId] = useState<string | null>(null)
   useScheduleFlip(scrollRef, controller.reorderRevision)
   const { event, schedule, setOrder, setFixed } = controller
+  const [importingCsv, setImportingCsv] = useState(false)
   const [editingLive, setEditingLive] = useState(false)
   if (!event || !schedule) return null
   const selectedBand = event.performances.find(
@@ -42,7 +47,8 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
     controller.solving ||
     controller.refreshing ||
     controller.sending ||
-    controller.deletingBand
+    controller.deletingBand ||
+    controller.importing
   const violationByBand = new Map<string, 'hard' | 'soft'>()
   for (const constraint of event.constraints) {
     if (evaluateConstraint(constraint, event).status !== 'unmet') continue
@@ -57,11 +63,13 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
   }
   return (
     <Panel
+      busyMessage={controller.processingMessage}
       inert={
         controller.saving ||
         controller.solving ||
         controller.refreshing ||
-        controller.sending
+        controller.sending ||
+        controller.importing
       }
       title="出演順"
       headerClassName="flex-wrap py-2 xl:flex-nowrap xl:py-0"
@@ -71,8 +79,38 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
           aria-label="出演順の操作"
           className="flex w-full max-w-full min-w-0 items-center gap-2 overflow-x-auto pb-1 xl:w-auto xl:pb-0"
         >
+          <Button
+            onClick={controller.undo}
+            disabled={!controller.canUndo}
+            aria-label="戻る"
+            title="戻る"
+            className="px-2.5"
+          >
+            <Icon name="undo" />
+          </Button>
+          <Button
+            onClick={controller.redo}
+            disabled={!controller.canRedo}
+            aria-label="進む"
+            title="進む"
+            className="px-2.5"
+          >
+            <Icon name="redo" />
+          </Button>
           <Button onClick={() => setEditingLive(true)} className="text-xs">
             ライブ情報の編集
+          </Button>
+          <Button
+            onClick={() => setImportingCsv(true)}
+            disabled={unavailable}
+            title={
+              unavailable
+                ? '未保存の変更を保存し、処理完了後に追加してください'
+                : undefined
+            }
+            className="text-xs"
+          >
+            CSVから追加
           </Button>
           <Button onClick={controller.exportCsv} className="text-xs">
             CSVを出力
@@ -86,7 +124,8 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
               controller.saving ||
               controller.solving ||
               controller.refreshing ||
-              controller.sending
+              controller.sending ||
+              controller.importing
             }
             onClick={() => void controller.saveSchedule()}
           >
@@ -99,7 +138,8 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
               controller.saving ||
               controller.solving ||
               controller.refreshing ||
-              controller.sending
+              controller.sending ||
+              controller.importing
             }
             title="出演順・制約を保存してから計算します"
             variant="primary"
@@ -116,6 +156,20 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
         </span>
       }
     >
+      {controller.historyConfirmation && (
+        <HistoryConfirmation controller={controller} />
+      )}
+      {importingCsv && (
+        <RosterImportDialog
+          event={event}
+          onBusy={controller.setImporting}
+          onClose={() => setImportingCsv(false)}
+          onImported={() => {
+            setImportingCsv(false)
+            controller.retryLoad()
+          }}
+        />
+      )}
       {editingLive && (
         <LiveInfoDialog
           controller={controller}
@@ -124,6 +178,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
       )}
       {selectedBand && (
         <PerformanceDetailsDialog
+          controller={controller}
           event={event}
           performance={{
             ...selectedBand,
@@ -158,6 +213,28 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
           onClose={() => setSelectedBandId(null)}
         />
       )}
+      {schedule.unassigned.length > 0 && (
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-amber-200 bg-amber-50 px-3 py-2 text-xs">
+          <p>
+            未配置のバンドが{schedule.unassigned.length}組あります。
+            {schedule.assignedCount === 0
+              ? '登録済みのバンドは未配置一覧にあります。'
+              : ''}
+          </p>
+          <Button
+            className="text-xs"
+            onClick={() => {
+              unassignedRef.current?.scrollIntoView({
+                block: 'start',
+                behavior: 'smooth',
+              })
+              unassignedRef.current?.focus({ preventScroll: true })
+            }}
+          >
+            未配置一覧へ
+          </Button>
+        </div>
+      )}
       <ScheduleDragSurface controller={controller}>
         <div
           ref={scrollRef}
@@ -165,7 +242,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
           aria-label="出演順の表"
           className="min-h-0 flex-1 scrollbar-thin overflow-auto"
         >
-          <div className="min-w-[680px]">
+          <div className="min-w-170">
             <div
               className={`${rowColumns} sticky top-0 z-10 min-h-9 border-b border-line bg-white text-xs text-muted`}
             >
@@ -174,7 +251,6 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
               <span>順</span>
               <span>出演名</span>
               <span>メンバー</span>
-              <span>紹介</span>
             </div>
             {schedule.sections.map((section) => (
               <section key={section.id} aria-label={section.name}>
@@ -204,7 +280,12 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
               </section>
             ))}
             <UnassignedDropZone>
-              <section aria-label="未配置">
+              <section
+                ref={unassignedRef}
+                tabIndex={-1}
+                aria-label="未配置"
+                className="scroll-mt-10 focus-visible:outline-2 focus-visible:outline-brand"
+              >
                 <div className="flex min-h-9 items-center gap-3 bg-slate-100 px-4 text-xs">
                   <h3 className="font-semibold">
                     未配置 · {schedule.unassigned.length}組

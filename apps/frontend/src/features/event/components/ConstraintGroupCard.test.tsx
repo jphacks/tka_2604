@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { expect, it, vi } from 'vitest'
 
 import type { Constraint } from '../../../generated/constraint'
+import type { ConstraintStatus } from '../../../shared/model/constraints'
 import { eventFixture } from '../../../test/fixtures/event'
 import { ConstraintGroupCard } from './ConstraintGroupCard'
 
@@ -17,6 +18,38 @@ const gap = (id: string, memberId: string): Constraint => ({
   targets: { member_id: memberId },
   params: { min_diff: 2, same_part_only: false },
 })
+
+it.each<ConstraintStatus>(['met', 'unchecked', 'disabled'])(
+  'omits non-violation status from the summary and expanded members: %s',
+  async (status) => {
+    const user = userEvent.setup()
+    render(
+      <ConstraintGroupCard
+        event={eventFixture}
+        views={['m1', 'm2'].map((memberId) => ({
+          constraint: {
+            ...gap(memberId, memberId),
+            enabled: status !== 'disabled',
+          },
+          status,
+        }))}
+        onUpdate={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    )
+    await user.click(
+      screen.getByRole('button', {
+        name: '2人の出演の間に1組以上空ける（部をまたいで適用）',
+      }),
+    )
+    expect(screen.getByRole('article')).not.toHaveTextContent(
+      /すべて達成|未配置|未判定|✓|無効/,
+    )
+    expect(screen.getByText('佐藤')).toBeVisible()
+    expect(screen.getByText('田中')).toBeVisible()
+  },
+)
 
 it('summarises members, applies bulk changes, and opens each member for editing', async () => {
   const user = userEvent.setup()
@@ -43,15 +76,35 @@ it('summarises members, applies bulk changes, and opens each member for editing'
     }),
   ).toBeVisible()
   expect(screen.getByText('1人が必須条件に違反')).toBeVisible()
+  const toggle = screen.getByRole('button', {
+    name: '3人の出演の間に1組以上空ける（部をまたいで適用）',
+  })
+  expect(toggle).toHaveAttribute('aria-expanded', 'false')
   await user.click(screen.getByRole('button', { name: '任意' }))
   expect(onUpdate).toHaveBeenCalledWith({ hardness: 'soft' })
   await user.click(screen.getByRole('checkbox'))
   expect(onUpdate).toHaveBeenCalledWith({ enabled: false })
+  expect(toggle).toHaveAttribute('aria-expanded', 'false')
   await user.click(screen.getByRole('button', { name: /まとめて削除/ }))
   expect(onDelete).toHaveBeenCalledWith(views.map((view) => view.constraint))
-  await user.click(screen.getByRole('button', { name: '内訳（3人）' }))
+  await user.click(toggle)
+  expect(toggle).toHaveAttribute('aria-expanded', 'true')
   await user.click(screen.getByRole('button', { name: '田中の間隔を編集' }))
   expect(onEdit).toHaveBeenCalledWith(views[1].constraint)
   await user.click(screen.getByRole('button', { name: '佐藤の間隔を削除' }))
   expect(onDelete).toHaveBeenLastCalledWith([views[0].constraint])
+  expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  await user.click(toggle)
+  expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  expect(screen.queryByText('田中')).toBeNull()
+  await user.keyboard('{Enter}')
+  expect(screen.getByText('田中')).toBeVisible()
+  await user.keyboard(' ')
+  expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  await user.click(screen.getByRole('button', { name: '内訳（3人）' }))
+  expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  expect(screen.getByText('田中')).toBeVisible()
+  await user.click(screen.getByRole('button', { name: '内訳を閉じる' }))
+  expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  expect(screen.queryByText('田中')).toBeNull()
 })

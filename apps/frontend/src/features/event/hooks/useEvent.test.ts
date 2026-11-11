@@ -471,3 +471,109 @@ it('records discarding a constraint proposal without saving constraints', async 
   expect(api.saveConstraints).not.toHaveBeenCalled()
   expect(result.current.chatProposal).toBeNull()
 })
+
+it('keeps local undo across saving and confirms constraint changes before auto-saving them', async () => {
+  localStorage.clear()
+  api.saveSchedule.mockResolvedValue({ updatedAt: '2026-10-17T00:00:01.000Z' })
+  api.saveConstraints.mockResolvedValue({
+    updatedAt: '2026-10-17T00:00:02.000Z',
+  })
+  const { result } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
+  act(() => result.current.setOrder('b', 1))
+  await act(() => result.current.saveSchedule())
+  act(() => result.current.undo())
+  expect(result.current.event?.sections[0].slots).toEqual(['a', 'b'])
+  expect(result.current.event?.updatedAt).toBe('2026-10-17T00:00:01.000Z')
+  expect(result.current.scheduleDirty).toBe(true)
+  act(() => result.current.setFixed('a', true))
+  await waitFor(() => expect(result.current.constraintsDirty).toBe(false))
+  act(() => result.current.undo())
+  expect(result.current.historyConfirmation).toBe('undo')
+  expect(result.current.event?.constraints).toHaveLength(1)
+  act(() => result.current.confirmHistory(true))
+  await waitFor(() => expect(result.current.event?.constraints).toHaveLength(0))
+  await waitFor(() => expect(result.current.constraintsDirty).toBe(false))
+  expect(api.saveConstraints).toHaveBeenCalledTimes(2)
+  act(() => result.current.redo())
+  expect(result.current.historyConfirmation).toBeNull()
+  await waitFor(() => expect(result.current.constraintsDirty).toBe(false))
+  expect(result.current.event?.constraints).toHaveLength(1)
+  localStorage.clear()
+})
+
+function constraintReply(
+  hardness: 'hard' | null = 'hard',
+): Awaited<ReturnType<EventRepository['sendMessage']>> {
+  return {
+    reply: 'Aを第1部にしますか？',
+    proposal: {
+      expectedUpdatedAt: event.updatedAt!,
+      actions: [
+        {
+          type: 'add_constraint' as const,
+          constraint: {
+            type: 'in_range' as const,
+            targets: { band_ids: ['a'] },
+            params: { kind: 'parts' as const, part_ids: [0] },
+            hardness,
+            priority: null,
+          },
+        },
+      ],
+    },
+  }
+}
+
+it('automatically applies a complete fresh proposal once and persists the setting across remounts', async () => {
+  localStorage.clear()
+  api.sendMessage.mockResolvedValue(constraintReply())
+  api.getMessages.mockResolvedValue([])
+  api.saveConstraints.mockResolvedValue({
+    updatedAt: '2026-10-17T00:00:01.000Z',
+  })
+  api.recordDecision.mockResolvedValue(undefined)
+  const { result, unmount } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
+  expect(result.current.autoApprove).toBe(false)
+  act(() => {
+    result.current.setAutoApprove(true)
+    result.current.setChatDraft('Aを第1部に')
+  })
+  await act(() => result.current.sendMessage())
+  await waitFor(() => expect(result.current.event?.constraints).toHaveLength(1))
+  await waitFor(() => expect(result.current.pendingDecision).toBeNull())
+  expect(api.saveConstraints).toHaveBeenCalledTimes(1)
+  expect(api.recordDecision).toHaveBeenCalledTimes(1)
+  expect(result.current.canUndo).toBe(true)
+  unmount()
+  const mounted = renderHook(() => useEvent('e'))
+  expect(mounted.result.current.autoApprove).toBe(true)
+  localStorage.clear()
+})
+
+it('leaves incomplete or failed auto approval for manual confirmation without retrying', async () => {
+  localStorage.clear()
+  api.sendMessage
+    .mockResolvedValueOnce(constraintReply(null))
+    .mockResolvedValueOnce(constraintReply())
+  api.getMessages.mockResolvedValue([])
+  api.saveConstraints.mockRejectedValue(new Error('保存失敗'))
+  const { result } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
+  act(() => {
+    result.current.setAutoApprove(true)
+    result.current.setChatDraft('設定不足')
+  })
+  await act(() => result.current.sendMessage())
+  expect(api.saveConstraints).not.toHaveBeenCalled()
+  expect(result.current.chatProposal).not.toBeNull()
+  act(() => result.current.setChatDraft('完成した案'))
+  await act(() => result.current.sendMessage())
+  await waitFor(() => expect(result.current.error).toBe('保存失敗'))
+  act(() => result.current.setChatDraft('描画の更新'))
+  expect(api.saveConstraints).toHaveBeenCalledTimes(1)
+  expect(api.recordDecision).not.toHaveBeenCalled()
+  expect(result.current.chatProposal).not.toBeNull()
+  localStorage.clear()
+})

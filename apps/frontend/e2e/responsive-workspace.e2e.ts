@@ -36,7 +36,7 @@ for (const width of [320, 390, 1280]) {
       expect(Math.abs(headerBox.width - rowBox.width)).toBeLessThanOrEqual(1)
     }
     const columnBox = (await table
-      .getByText('紹介', { exact: true })
+      .getByText('メンバー', { exact: true })
       .locator('..')
       .boundingBox())!
     expect(columnBox.width).toBe(rowBox.width)

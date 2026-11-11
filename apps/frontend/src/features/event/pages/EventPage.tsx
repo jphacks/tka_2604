@@ -51,15 +51,6 @@ function EventWorkspace({ eventId }: { eventId: string }) {
               {importNotice}
             </p>
           )}
-          {controller.hardViolationCount > 0 && (
-            <p
-              role="status"
-              className="shrink-0 border-b border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
-            >
-              必須条件に{controller.hardViolationCount}
-              件の違反があります。条件を確認し、並びを調整してください。
-            </p>
-          )}
           {controller.event.performances.length === 0 && (
             <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-brand/20 bg-wash p-3">
               <p className="text-sm">まず出演名とメンバーを登録しましょう。</p>
