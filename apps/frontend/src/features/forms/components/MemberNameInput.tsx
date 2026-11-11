@@ -51,7 +51,6 @@ export function MemberNameInput({
       disabled={disabled}
       maxLength={40}
       placeholder="名前を入力"
-      description="候補を選択するか、新しい名前をEnterで確定してください。保存すると登録されます。"
       emptyMessage="一致する登録済みメンバーはいません。この名前で新しく登録できます。"
       onValueChange={onValueChange}
       onSelect={onSelect}

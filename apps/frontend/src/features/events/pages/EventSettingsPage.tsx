@@ -21,9 +21,6 @@ export function EventSettingsPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <h1 className="mb-3 text-2xl font-semibold">イベント設定</h1>
-      <p className="mb-7 text-sm text-muted">
-        イベントの基本情報を管理します。
-      </p>
       {controller.loading || controller.error ? (
         <PageState error={controller.error} onRetry={controller.refresh} />
       ) : (
