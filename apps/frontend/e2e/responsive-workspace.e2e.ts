@@ -195,3 +195,32 @@ for (const width of [1280, 1600, 2234]) {
     })
   })
 }
+
+for (const width of [768, 1280, 1600, 2234]) {
+  test(`chat input uses the available line width at ${width}px`, async ({
+    page,
+    databaseEvent,
+  }) => {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(`/event/${databaseEvent.eventId}`)
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    if (width < 1280)
+      await page.getByRole('tab', { name: 'AIチャット', exact: true }).click()
+    const input = page.getByRole('textbox', { name: 'AIへのメッセージ' })
+    const text = await input.evaluate((element) => {
+      const canvas = document.createElement('canvas')
+      const context = canvas.getContext('2d')!
+      context.font = getComputedStyle(element).font
+      const perLine = Math.floor(
+        element.clientWidth / context.measureText('x').width,
+      )
+      return 'x'.repeat(Math.floor(perLine / 2)) + ' ' + 'x'.repeat(perLine - 4)
+    })
+    await input.fill(text)
+    // A word longer than the remaining half-line should use that space rather
+    // than jump to a new line and make the input grow to three rows.
+    await expect(input).toHaveCSS('height', '48px')
+    await input.fill('手動の改行\nも保持します')
+    await expect(input).toHaveValue('手動の改行\nも保持します')
+  })
+}

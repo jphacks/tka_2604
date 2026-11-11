@@ -48,6 +48,7 @@ export function ChatComposer({
       disabled={disabled}
       maxLength={1000}
       rows={2}
+      wrap="soft"
       onKeyDown={(event) => {
         if (
           event.key === 'Enter' &&
@@ -58,7 +59,7 @@ export function ChatComposer({
           onSubmit()
         }
       }}
-      className="block w-full resize-none overflow-y-auto bg-transparent p-0 text-[13px] leading-6 placeholder:text-muted focus-visible:ring-0 disabled:opacity-60"
+      className="block w-full min-w-0 resize-none overflow-y-auto bg-transparent p-0 text-[13px] leading-6 break-all placeholder:text-muted focus-visible:ring-0 disabled:opacity-60"
     />
   )
 }
