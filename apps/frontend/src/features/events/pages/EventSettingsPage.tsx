@@ -9,10 +9,23 @@ import { Input, Textarea } from '../../../shared/ui/Input'
 import { PageState } from '../../../shared/ui/PageState'
 import { useEventDeletion, useEventSettings } from '../hooks/useEventSettings'
 
-export function EventSettingsPage() {
+export function EventSettingsPage({
+  embedded = false,
+  onSaved,
+  disabled = false,
+  onBusyChange,
+}: {
+  embedded?: boolean
+  onSaved?: () => void
+  disabled?: boolean
+  onBusyChange?: (busy: boolean) => void
+}) {
   const { eventId = '' } = useParams()
   const controller = useEventSettings(eventId)
   const deletion = useEventDeletion(eventId)
+  useEffect(() => {
+    onBusyChange?.(controller.busy || deletion.busy)
+  }, [controller.busy, deletion.busy, onBusyChange])
   const settings = controller.settings
   const setEventName = useEventName()
   useEffect(() => {
@@ -20,10 +33,9 @@ export function EventSettingsPage() {
   }, [controller.data?.name, setEventName])
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-3 text-2xl font-semibold">イベント設定</h1>
-      <p className="mb-7 text-sm text-muted">
-        イベントの基本情報を管理します。
-      </p>
+      {!embedded && (
+        <h1 className="mb-3 text-2xl font-semibold">イベント設定</h1>
+      )}
       {controller.loading || controller.error ? (
         <PageState error={controller.error} onRetry={controller.refresh} />
       ) : (
@@ -32,12 +44,21 @@ export function EventSettingsPage() {
             <form
               onSubmit={(event) => {
                 event.preventDefault()
-                void controller.save()
+                void controller.save().then((saved) => {
+                  if (saved) onSaved?.()
+                })
               }}
-              className="space-y-6 rounded-xl border border-line bg-white p-6"
+              className={
+                embedded
+                  ? 'space-y-4'
+                  : 'space-y-6 rounded-xl border border-line bg-white p-6'
+              }
             >
               <h2 className="text-lg font-semibold">基本情報</h2>
-              <fieldset disabled={controller.busy} className="space-y-6">
+              <fieldset
+                disabled={controller.busy || disabled}
+                className="space-y-6"
+              >
                 <label className="block text-sm font-medium">
                   イベント名
                   <Input
@@ -95,7 +116,7 @@ export function EventSettingsPage() {
                 <Button
                   type="submit"
                   variant="primary"
-                  disabled={controller.busy}
+                  disabled={controller.busy || disabled}
                 >
                   {controller.busy ? '保存中…' : '変更を保存'}
                 </Button>
@@ -109,14 +130,20 @@ export function EventSettingsPage() {
                 {controller.notice}
               </p>
             )}
-            <section className="mt-7 flex flex-wrap items-center justify-between gap-6 rounded-xl border border-red-100 bg-white p-6">
+            <section
+              className={`mt-7 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-red-100 bg-white ${embedded ? 'p-4' : 'p-6'}`}
+            >
               <div>
                 <h2 className="text-lg font-semibold">イベントの削除</h2>
                 <p className="mt-2 text-sm leading-7 text-muted">
                   出演枠、制約、フォームの回答を含めて削除します。
                 </p>
               </div>
-              <Button variant="danger" onClick={deletion.requestDelete}>
+              <Button
+                variant="danger"
+                disabled={disabled}
+                onClick={deletion.requestDelete}
+              >
                 <Icon name="trash" />
                 削除
               </Button>

@@ -14,9 +14,6 @@ export function CreateEventDialog({
 }) {
   return (
     <Dialog title="新しいイベントを作成" onClose={controller.closeCreate}>
-      <p className="mb-5 text-xs leading-6 text-muted">
-        イベントを作って、出演者と条件を集めるところから。
-      </p>
       <form
         onSubmit={(event) => {
           event.preventDefault()
@@ -32,7 +29,7 @@ export function CreateEventDialog({
               controller.setDraft({ name: event.target.value })
             }
             maxLength={80}
-            placeholder="空欄なら作成日時の名前になります"
+            placeholder="空欄なら作成日時が名前になります"
             className="mt-2 w-full"
           />
         </label>

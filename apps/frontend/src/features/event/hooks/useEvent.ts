@@ -70,6 +70,13 @@ export function useEvent(eventId: string) {
     dirty || saving || solving || refreshing || deletingBand || importing,
   )
   const [loadError, setLoadError] = useState('')
+  useEffect(() => {
+    if (!state.notice || state.error || saveError || loadError) return
+    const timer = window.setTimeout(() => {
+      dispatch({ type: 'notice', message: '' })
+    }, 5000)
+    return () => window.clearTimeout(timer)
+  }, [state.notice, state.error, saveError, loadError])
   const [retry, setRetry] = useState(0)
   const [constraintFilters, setConstraintFilters] = useState({
     ...emptyConstraintFilters,

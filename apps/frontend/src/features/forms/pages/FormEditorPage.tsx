@@ -10,7 +10,7 @@ import { LinkButton } from '../../../shared/ui/LinkButton'
 import { PageState } from '../../../shared/ui/PageState'
 import { registrationRepository } from '../repositories/registrationRepository'
 
-export function FormEditorPage() {
+export function FormEditorPage({ embedded = false }: { embedded?: boolean }) {
   const { eventId = '' } = useParams()
   const load = useCallback(
     (signal: AbortSignal) => registrationRepository.get(eventId, signal),
@@ -33,7 +33,9 @@ export function FormEditorPage() {
   }
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-3 text-2xl font-semibold">出演者フォーム</h1>
+      {!embedded && (
+        <h1 className="mb-3 text-2xl font-semibold">出演者フォーム</h1>
+      )}
       <p className="mb-7 text-sm text-muted">
         回答フォームから出演枠とメンバーを登録・更新できます。
       </p>

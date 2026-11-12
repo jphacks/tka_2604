@@ -49,6 +49,7 @@ export function PerformanceDetailsDialog({
       }
       onClose={onClose}
       busy={deleting || savingEdit}
+      size={editing ? 'wide' : 'default'}
     >
       {confirming ? (
         <>
@@ -203,7 +204,7 @@ function PerformanceEditForm({
     >
       <fieldset
         disabled={unavailable || controller.busy || controller.refreshing}
-        className="space-y-5 disabled:opacity-60"
+        className="min-w-0 space-y-5 disabled:opacity-60"
       >
         {controller.data && (
           <RegistrationFields controller={controller} fixedBand />

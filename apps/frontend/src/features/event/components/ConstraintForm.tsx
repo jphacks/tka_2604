@@ -167,9 +167,6 @@ export function ConstraintForm({
           <h3 className="mb-1 text-xs font-semibold text-muted">
             個別に指定する
           </h3>
-          <p className="mb-3 text-xs leading-6 text-muted">
-            特定の組や人だけに条件をつけたいときに使います。
-          </p>
           <div className="grid gap-3 sm:grid-cols-2">
             {choices.map((choice) => (
               <button

@@ -8,11 +8,9 @@ import { isFixed } from '../../../shared/model/event'
 import { Button } from '../../../shared/ui/Button'
 import { Icon } from '../../../shared/ui/Icon'
 import { Panel } from '../../../shared/ui/Panel'
-import { RosterImportDialog } from '../../participants/components/RosterImportDialog'
 import type { EventController } from '../hooks/useEvent'
 import { useScheduleFlip } from '../hooks/useScheduleFlip'
 import { HistoryConfirmation } from './HistoryConfirmation'
-import { LiveInfoDialog } from './LiveInfoDialog'
 import { PerformanceDetailsDialog } from './PerformanceDetailsDialog'
 import {
   EmptyPerformanceRow,
@@ -28,8 +26,6 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
   const [selectedBandId, setSelectedBandId] = useState<string | null>(null)
   useScheduleFlip(scrollRef, controller.reorderRevision)
   const { event, schedule, setOrder, setFixed } = controller
-  const [importingCsv, setImportingCsv] = useState(false)
-  const [editingLive, setEditingLive] = useState(false)
   if (!event || !schedule) return null
   const selectedBand = event.performances.find(
     (performance) => performance.id === selectedBandId,
@@ -63,7 +59,7 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
   }
   return (
     <Panel
-      busyMessage={controller.processingMessage}
+      busy={Boolean(controller.processingMessage)}
       inert={
         controller.saving ||
         controller.solving ||
@@ -96,24 +92,6 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
             className="px-2.5"
           >
             <Icon name="redo" />
-          </Button>
-          <Button onClick={() => setEditingLive(true)} className="text-xs">
-            ライブ情報の編集
-          </Button>
-          <Button
-            onClick={() => setImportingCsv(true)}
-            disabled={unavailable}
-            title={
-              unavailable
-                ? '未保存の変更を保存し、処理完了後に追加してください'
-                : undefined
-            }
-            className="text-xs"
-          >
-            CSVから追加
-          </Button>
-          <Button onClick={controller.exportCsv} className="text-xs">
-            CSVを出力
           </Button>
           <Button
             aria-label="出演順を保存"
@@ -158,23 +136,6 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
     >
       {controller.historyConfirmation && (
         <HistoryConfirmation controller={controller} />
-      )}
-      {importingCsv && (
-        <RosterImportDialog
-          event={event}
-          onBusy={controller.setImporting}
-          onClose={() => setImportingCsv(false)}
-          onImported={() => {
-            setImportingCsv(false)
-            controller.retryLoad()
-          }}
-        />
-      )}
-      {editingLive && (
-        <LiveInfoDialog
-          controller={controller}
-          onClose={() => setEditingLive(false)}
-        />
       )}
       {selectedBand && (
         <PerformanceDetailsDialog
@@ -290,7 +251,6 @@ export function SchedulePanel({ controller }: { controller: EventController }) {
                   <h3 className="font-semibold">
                     未配置 · {schedule.unassigned.length}組
                   </h3>
-                  <span className="text-muted">ドラッグまたは順番号で配置</span>
                 </div>
                 {schedule.unassigned.map((row) => (
                   <PerformanceRow

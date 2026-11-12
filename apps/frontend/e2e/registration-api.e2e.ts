@@ -28,7 +28,9 @@ test('production flow: create an event, open its form, register and update DB me
   ).toBeVisible()
   const eventId = new URL(page.url()).pathname.split('/')[2]
   try {
-    await page.getByRole('link', { name: 'フォーム管理', exact: true }).click()
+    await page
+      .getByRole('button', { name: 'フォーム管理', exact: true })
+      .click()
     await expect(
       page.getByRole('textbox', { name: '回答フォームのリンク' }),
     ).toHaveValue(new RegExp(`/event/${eventId}/forms$`))

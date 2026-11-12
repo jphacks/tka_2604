@@ -95,7 +95,7 @@ export function ConstraintFilters({
           aria-expanded={open}
           onClick={() => setOpen(true)}
         >
-          <Icon name="search" className="size-3.5" />
+          <Icon name="filter" className="size-3.5" />
         </Button>
         <div
           role="region"
@@ -130,8 +130,10 @@ export function ConstraintFilters({
             type="button"
             aria-label="フィルターを追加"
             onClick={() => setOpen(true)}
-            className="h-full min-w-8 flex-1 shrink-0 rounded focus-visible:outline-2 focus-visible:outline-brand"
-          />
+            className="h-full min-w-8 flex-1 shrink-0 rounded px-2 text-left text-xs text-muted focus-visible:outline-2 focus-visible:outline-brand"
+          >
+            {activeChips.length === 0 ? '絞り込み' : null}
+          </button>
         </div>
       </div>
       {open && (

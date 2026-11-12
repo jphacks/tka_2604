@@ -85,17 +85,22 @@ for (const width of [320, 390, 768, 1279]) {
     const tabsBox = (await tabs.boundingBox())!
     expect(tabsBox.y + tabsBox.height).toBe(844)
     const actionTops = []
-    for (const name of [
-      '出演順を保存',
-      '自動生成',
-      'CSVを出力',
-      'ライブ情報の編集',
-    ]) {
+    for (const name of ['出演順を保存', '自動生成']) {
       const button = schedule.getByRole('button', { name, exact: true })
       await expect(button).toHaveCSS('white-space', 'nowrap')
       actionTops.push((await button.boundingBox())!.y)
     }
     expect(new Set(actionTops).size).toBe(1)
+    for (const name of [
+      'CSVから追加',
+      'CSVを出力',
+      'フォーム管理',
+      'ライブ情報の編集',
+    ]) {
+      await expect(
+        page.getByRole('button', { name, exact: true }),
+      ).toBeVisible()
+    }
     const table = schedule.getByRole('region', { name: '出演順の表' })
     await table.evaluate((element) => {
       element.scrollLeft = 200
@@ -193,5 +198,34 @@ for (const width of [1280, 1600, 2234]) {
     await page.screenshot({
       path: testInfo.outputPath(`workspace-headers-${width}.png`),
     })
+  })
+}
+
+for (const width of [768, 1280, 1600, 2234]) {
+  test(`chat input uses the available line width at ${width}px`, async ({
+    page,
+    databaseEvent,
+  }) => {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(`/event/${databaseEvent.eventId}`)
+    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    if (width < 1280)
+      await page.getByRole('tab', { name: 'AIチャット', exact: true }).click()
+    const input = page.getByRole('textbox', { name: 'AIへのメッセージ' })
+    const text = await input.evaluate((element) => {
+      const canvas = document.createElement('canvas')
+      const context = canvas.getContext('2d')!
+      context.font = getComputedStyle(element).font
+      const perLine = Math.floor(
+        element.clientWidth / context.measureText('x').width,
+      )
+      return 'x'.repeat(Math.floor(perLine / 2)) + ' ' + 'x'.repeat(perLine - 4)
+    })
+    await input.fill(text)
+    // A word longer than the remaining half-line should use that space rather
+    // than jump to a new line and make the input grow to three rows.
+    await expect(input).toHaveCSS('height', '48px')
+    await input.fill('手動の改行\nも保持します')
+    await expect(input).toHaveValue('手動の改行\nも保持します')
   })
 }

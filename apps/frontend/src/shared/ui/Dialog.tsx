@@ -20,11 +20,13 @@ export function Dialog({
   children,
   onClose,
   busy = false,
+  size = 'default',
 }: {
   title: string
   children: ReactNode
   onClose: () => void
   busy?: boolean
+  size?: 'default' | 'wide'
 }) {
   const titleId = useId()
   const ref = useRef<HTMLDialogElement>(null)
@@ -61,7 +63,7 @@ export function Dialog({
       }}
       aria-labelledby={titleId}
       aria-modal="true"
-      className="fixed inset-0 m-auto max-h-[90dvh] w-[560px] max-w-[calc(100vw-32px)] overflow-y-auto rounded-xl border border-line bg-white p-0 text-ink shadow-xl backdrop:bg-ink/25 backdrop:backdrop-blur-[2px]"
+      className={`fixed inset-0 m-auto max-h-[90dvh] ${size === 'wide' ? 'w-[720px]' : 'w-[560px]'} max-w-[calc(100vw-32px)] overflow-y-auto rounded-xl border border-line bg-white p-0 text-ink shadow-xl backdrop:bg-ink/25 backdrop:backdrop-blur-[2px]`}
     >
       <div className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-white px-5 py-4">
         <h2 id={titleId} className="font-semibold">

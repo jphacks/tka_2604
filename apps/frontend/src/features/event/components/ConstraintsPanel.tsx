@@ -21,7 +21,7 @@ export function ConstraintsPanel({
   return (
     <Panel
       title="制約"
-      busyMessage={controller.processingMessage}
+      busy={Boolean(controller.processingMessage)}
       inert={Boolean(controller.processingMessage)}
       detail={
         <span className="text-xs text-muted">

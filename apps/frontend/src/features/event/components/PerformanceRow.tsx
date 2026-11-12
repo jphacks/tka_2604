@@ -48,21 +48,33 @@ export function PerformanceRow({
       data-performance={performance.id}
       className={`${rowColumns} relative min-h-10 border-b border-line/55 transition-colors ${violation === 'hard' ? 'bg-red-100/70 shadow-[inset_4px_0_0_var(--color-red-500)] hover:bg-red-100' : violation === 'soft' ? 'bg-amber-100/70 shadow-[inset_4px_0_0_var(--color-amber-400)] hover:bg-amber-100' : 'bg-white hover:bg-canvas/65'} ${isDragging ? 'z-10 bg-wash opacity-35' : ''}`}
     >
-      <button
-        ref={setActivatorNodeRef}
-        {...attributes}
-        {...listeners}
-        disabled={performance.fixed}
-        aria-label={`${performance.name}を並べ替え`}
-        title={
-          performance.fixed
-            ? '固定を解除すると移動できます'
-            : 'ドラッグ／Spaceで開始・確定、↑↓で移動、Escで取消'
-        }
-        className="flex size-8 cursor-grab touch-none items-center justify-center rounded text-muted hover:bg-wash hover:text-brand focus-visible:bg-wash active:cursor-grabbing disabled:cursor-default disabled:opacity-35"
+      <span
+        className={`relative size-8 ${performance.fixed ? 'cursor-not-allowed' : ''}`}
+        title={performance.fixed ? '固定を解除すると移動できます' : undefined}
       >
-        <Icon name="grip" className="size-[18px]" />
-      </button>
+        <button
+          type="button"
+          ref={setActivatorNodeRef}
+          {...attributes}
+          {...listeners}
+          disabled={performance.fixed}
+          aria-label={`${performance.name}を並べ替え`}
+          title={
+            performance.fixed
+              ? '固定を解除すると移動できます'
+              : 'ドラッグ／Spaceで開始・確定、↑↓で移動、Escで取消'
+          }
+          className="flex size-8 cursor-grab touch-none items-center justify-center rounded text-muted hover:bg-wash hover:text-brand focus-visible:bg-wash active:cursor-grabbing disabled:pointer-events-none disabled:opacity-35"
+        >
+          <Icon name="grip" className="size-[18px]" />
+        </button>
+        {performance.fixed && (
+          <Icon
+            name="lock"
+            className="pointer-events-none absolute right-0 bottom-0 size-3 rounded-sm bg-white text-muted"
+          />
+        )}
+      </span>
       <label className="flex justify-center">
         <input
           type="checkbox"

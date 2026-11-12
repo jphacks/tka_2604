@@ -105,11 +105,25 @@ test('all condition choices produce editable conditions with live evaluation', a
     .click()
   await dialog.getByRole('spinbutton', { name: '出演位置（番）' }).fill('6')
   await dialog.getByRole('button', { name: 'この条件を追加' }).click()
-  const unassignedCondition = page.getByRole('article').filter({
+  const fixedGroup = page.getByRole('article').filter({
     has: page.getByRole('heading', {
-      name: '源泉掛け流しを6番にする',
+      name: '3組の出演順を固定する',
       exact: true,
     }),
+  })
+  await expect(fixedGroup).toBeVisible()
+  await fixedGroup
+    .getByRole('button', { name: '内訳（3組）', exact: true })
+    .click()
+  await expect(fixedGroup.getByRole('listitem')).toHaveCount(3)
+  await expect(
+    fixedGroup.getByText('気分上々↑↑を1番にする', { exact: true }),
+  ).toBeVisible()
+  await expect(
+    fixedGroup.getByText('月のワルツを5番にする', { exact: true }),
+  ).toBeVisible()
+  const unassignedCondition = fixedGroup.getByRole('listitem').filter({
+    hasText: '源泉掛け流しを6番にする',
   })
   await expect(unassignedCondition).toBeVisible()
   await expect(unassignedCondition).not.toContainText('未配置')
@@ -161,7 +175,9 @@ test('all condition choices produce editable conditions with live evaluation', a
     .getByRole('dialog', { name: '制約の絞り込み' })
     .getByRole('button', { name: '完了' })
     .click()
-  await expect(unassignedCondition).toHaveCount(0)
+  await expect(
+    page.getByText('源泉掛け流しを6番にする', { exact: true }),
+  ).toHaveCount(0)
 })
 
 test('filter chips stay in one horizontally scrollable row and clear independently', async ({

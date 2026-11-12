@@ -577,3 +577,47 @@ it('leaves incomplete or failed auto approval for manual confirmation without re
   expect(result.current.chatProposal).not.toBeNull()
   localStorage.clear()
 })
+
+it('dismisses ordinary notifications after five seconds', async () => {
+  api.deleteBand.mockResolvedValue({
+    eventId: 'e',
+    bandId: 'a',
+    updatedAt: 'v2',
+  })
+  const { result } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
+  vi.useFakeTimers()
+  try {
+    await act(() => result.current.deleteBand('a'))
+    expect(result.current.notice).toBe('出演枠を削除しました。')
+    await act(() => vi.advanceTimersByTime(4999))
+    expect(result.current.notice).toBe('出演枠を削除しました。')
+    await act(() => vi.advanceTimersByTime(1))
+    expect(result.current.notice).toBe('')
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+it('keeps error notifications visible until they are dismissed', async () => {
+  api.deleteBand.mockResolvedValueOnce({
+    eventId: 'e',
+    bandId: 'a',
+    updatedAt: 'v2',
+  })
+  api.deleteBand.mockRejectedValueOnce(new Error('削除に失敗しました。'))
+  const { result } = renderHook(() => useEvent('e'))
+  await waitFor(() => expect(result.current.event).not.toBeNull())
+  vi.useFakeTimers()
+  try {
+    await act(() => result.current.deleteBand('a'))
+    await act(() => vi.advanceTimersByTime(2000))
+    await act(() => result.current.deleteBand('b'))
+    await act(() => vi.advanceTimersByTime(10000))
+    expect(result.current.error).toBe('削除に失敗しました。')
+    act(() => result.current.dismissNotice())
+    expect(result.current.error).toBe('')
+  } finally {
+    vi.useRealTimers()
+  }
+})

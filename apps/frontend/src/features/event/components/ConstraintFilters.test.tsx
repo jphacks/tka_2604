@@ -35,6 +35,7 @@ it('opens detailed filters from the bar and removes a chip without changing the 
     screen.getByRole('region', { name: '選択中のフィルター' }),
   ).toBeVisible()
   expect(screen.queryByText('すべて表示')).toBeNull()
+  expect(screen.getByText('絞り込み', { exact: true })).toBeVisible()
   const opener = screen.getByRole('button', { name: 'フィルターを追加' })
   await user.click(opener)
   const dialog = screen.getByRole('dialog', { name: '制約の絞り込み' })
@@ -48,6 +49,7 @@ it('opens detailed filters from the bar and removes a chip without changing the 
   )
   await user.click(within(dialog).getByRole('button', { name: '完了' }))
   expect(screen.queryByRole('dialog')).toBeNull()
+  expect(screen.queryByText('絞り込み', { exact: true })).toBeNull()
   expect(opener).toHaveFocus()
   await user.click(screen.getByRole('button', { name: '状況: 未判定を解除' }))
   expect(
@@ -102,4 +104,5 @@ it('clears the unmet-only chip and resets all filter types from the dialog', asy
       screen.getByRole('group', { name: '制約フィルター' }),
     ).queryAllByRole('button', { name: /を解除$/ }),
   ).toHaveLength(0)
+  expect(screen.getByText('絞り込み', { exact: true })).toBeVisible()
 })

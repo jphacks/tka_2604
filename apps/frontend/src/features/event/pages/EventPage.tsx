@@ -3,12 +3,14 @@ import { useEffect, useState } from 'react'
 import { useLocation, useParams } from 'react-router'
 
 import { useEventName } from '../../../app/eventNameContext'
+import { useEventProcessing } from '../../../app/eventProcessingContext'
 import { Button } from '../../../shared/ui/Button'
 import { LinkButton } from '../../../shared/ui/LinkButton'
 import { PageState } from '../../../shared/ui/PageState'
 import { ChatPanel } from '../components/ChatPanel'
 import { ColumnResizer } from '../components/ColumnResizer'
 import { ConstraintsPanel } from '../components/ConstraintsPanel'
+import { EventToolbar } from '../components/EventToolbar'
 import { SchedulePanel } from '../components/SchedulePanel'
 import { type WorkspacePanel, WorkspaceTabs } from '../components/WorkspaceTabs'
 import { useColumnResize } from '../hooks/useColumnResize'
@@ -24,11 +26,16 @@ function EventWorkspace({ eventId }: { eventId: string }) {
   const importNotice = (useLocation().state as { notice?: string } | null)
     ?.notice
   const setEventName = useEventName()
+  const setProcessingMessage = useEventProcessing()
   const columns = useColumnResize()
   const [activePanel, setActivePanel] = useState<WorkspacePanel>('schedule')
   useEffect(() => {
     if (controller.event?.name) setEventName?.(controller.event.name)
   }, [controller.event?.name, setEventName])
+  useEffect(() => {
+    setProcessingMessage?.(controller.processingMessage)
+    return () => setProcessingMessage?.(undefined)
+  }, [controller.processingMessage, setProcessingMessage])
   return (
     <>
       {!controller.event ? (
@@ -43,6 +50,7 @@ function EventWorkspace({ eventId }: { eventId: string }) {
         />
       ) : (
         <>
+          <EventToolbar controller={controller} />
           {importNotice && (
             <p
               role="alert"
