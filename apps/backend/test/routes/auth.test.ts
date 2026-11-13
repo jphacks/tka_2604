@@ -438,6 +438,9 @@ describe('real credentials and server sessions', () => {
     },
   )
 
+  // This test performs 30 real scrypt verifications sequentially. Shared CI
+  // runners exceeded the default 5s; retain the production cost and assertions
+  // with a bounded timeout for this integration test only.
   it('retains the shared IP cap even when callers switch IDs and operations', async () => {
     for (let count = 0; count < 30; count++) {
       const body = { ...credentials, userId: `unknown-${count}` }
@@ -446,7 +449,7 @@ describe('real credentials and server sessions', () => {
     const limited = await request('/api/auth/register', 'POST', credentials)
     expect(limited.status).toBe(429)
     expect(await createDb(local.binding).select().from(users)).toEqual([])
-  })
+  }, 20_000)
 
   it('throttles repeated login attempts including unknown IDs without issuing a session', async () => {
     for (let count = 0; count < 10; count++)
