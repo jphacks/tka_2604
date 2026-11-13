@@ -232,7 +232,9 @@ describe('solve from persisted event data', () => {
     async (kind) => {
       const before = (await snapshot())!
       await local.binding
-        .prepare("INSERT INTO users VALUES ('other', 'test-only')")
+        .prepare(
+          "INSERT INTO users (user_id, password_hash) VALUES ('other', 'test-only')",
+        )
         .run()
       await local.binding
         .prepare(

@@ -12,6 +12,7 @@ import {
   invalidOrigin,
   isSafeMethod,
   readSessionCookie,
+  requireSession,
   sameOrigin,
   secureTransport,
   unauthorized,
@@ -34,7 +35,10 @@ const registrationInput = z.strictObject({
     .max(32)
     .refine((value) => /\S/u.test(value)),
 })
-function credentials<T extends z.ZodType>(schema: T) {
+function credentials<T extends z.ZodType>(
+  schema: T,
+  message = 'ログインIDとパスワードの入力を確認してください。',
+) {
   return validator('json', (value: unknown, c) => {
     const result = schema.safeParse(value)
     if (!result.success)
@@ -42,7 +46,7 @@ function credentials<T extends z.ZodType>(schema: T) {
         {
           error: {
             code: 'invalid_input',
-            message: 'ログインIDとパスワードの入力を確認してください。',
+            message,
             details: [],
           },
         },
@@ -165,3 +169,38 @@ export const authRoutes = new Hono<AuthEnv>()
     clearSessionCookie(c)
     return c.body(null, 204)
   })
+  .use('/profile', requireSession)
+  .get('/profile', async (c) => {
+    const profile = await createAuthService(c).profile(c.get('userId'))
+    return profile ? c.json(profile, 200) : unauthorized(c)
+  })
+  .patch(
+    '/profile',
+    credentials(
+      z.strictObject({
+        displayName: z.string().trim().min(1).max(40),
+        avatarText: z
+          .string()
+          .trim()
+          .min(1)
+          .max(4)
+          .refine((value) => Array.from(value).length <= 2),
+        avatarColor: z.enum([
+          'blue',
+          'violet',
+          'green',
+          'amber',
+          'rose',
+          'slate',
+        ]),
+      }),
+      '表示名とアイコンの入力を確認してください。',
+    ),
+    async (c) => {
+      const profile = await createAuthService(c).updateProfile(
+        c.get('userId'),
+        c.req.valid('json'),
+      )
+      return profile ? c.json(profile, 200) : unauthorized(c)
+    },
+  )

@@ -2,6 +2,7 @@ import { type ReactNode, useRef, useState } from 'react'
 import { Link, NavLink } from 'react-router'
 
 import { useSession } from '../../app/sessionContext'
+import { AccountProfile } from '../../features/auth/components/AccountProfile'
 import { AppHeader } from './AppHeader'
 import { Button } from './Button'
 import { Icon } from './Icon'
@@ -58,12 +59,9 @@ export function AppFrame({
           </Link>
         }
       >
-        <span className="hidden size-7 items-center justify-center rounded-full bg-wash text-xs font-semibold text-brand sm:flex">
-          運
-        </span>
-        <span className="hidden max-w-32 truncate text-xs sm:inline">
-          {session?.userId}
-        </span>
+        {session && (
+          <AccountProfile key={session.userId} userId={session.userId} />
+        )}
         <Button
           variant="ghost"
           className="text-xs"

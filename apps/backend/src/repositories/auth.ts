@@ -10,6 +10,39 @@ export type SessionCredentials = {
 }
 export function authRepository(db: Db) {
   return {
+    async findProfile(userId: string) {
+      return (
+        (
+          await db
+            .select({
+              displayName: users.displayName,
+              avatarText: users.avatarText,
+              avatarColor: users.avatarColor,
+            })
+            .from(users)
+            .where(eq(users.userId, userId))
+            .limit(1)
+        )[0] ?? null
+      )
+    },
+    async updateProfile(
+      userId: string,
+      profile: { displayName: string; avatarText: string; avatarColor: string },
+    ) {
+      return (
+        (
+          await db
+            .update(users)
+            .set(profile)
+            .where(eq(users.userId, userId))
+            .returning({
+              displayName: users.displayName,
+              avatarText: users.avatarText,
+              avatarColor: users.avatarColor,
+            })
+        )[0] ?? null
+      )
+    },
     async findUser(userId: string) {
       return (
         (

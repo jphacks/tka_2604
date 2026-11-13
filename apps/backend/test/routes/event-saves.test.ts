@@ -23,7 +23,9 @@ beforeEach(async () => {
   for (const statement of seed.split(';'))
     if (statement.trim()) await local.binding.prepare(statement).run()
   await local.binding
-    .prepare("INSERT INTO users VALUES ('demo-other-owner', 'test-only')")
+    .prepare(
+      "INSERT INTO users (user_id, password_hash) VALUES ('demo-other-owner', 'test-only')",
+    )
     .run()
   sessionHeaders = await createAuthenticatedHeaders(local.binding)
 })

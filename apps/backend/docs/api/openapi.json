@@ -5582,6 +5582,258 @@
         },
         "operationId": "logout"
       }
+    },
+    "/api/auth/profile": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "自分の表示名とアイコンを取得する",
+        "description": "セッションのユーザーのみ取得。未設定なら表示名はログインID、アイコンは先頭文字、色はblue。",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "localSessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "プロフィール",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["displayName", "avatarText", "avatarColor"],
+                  "properties": {
+                    "displayName": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40,
+                      "pattern": "\\S"
+                    },
+                    "avatarText": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 4,
+                      "description": "空白以外のUnicode文字1〜2個（UTF-16で4文字以内）"
+                    },
+                    "avatarColor": {
+                      "type": "string",
+                      "enum": [
+                        "blue",
+                        "violet",
+                        "green",
+                        "amber",
+                        "rose",
+                        "slate"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証、無効または期限切れのセッション。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "認証処理に失敗しました。内部情報は応答に含めません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationInternalError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "認証リクエストの本文が4KiBを超えています。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationInputError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "許可していないHTTP環境からのリクエスト。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidOriginError"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "getProfile"
+      },
+      "patch": {
+        "tags": ["Auth"],
+        "summary": "自分の表示名とアイコンを更新する",
+        "description": "同一Origin必須。ログインID・認証情報・他ユーザーは変更しない。表示名と文字の前後空白を除去する。",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "localSessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "プロフィール",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["displayName", "avatarText", "avatarColor"],
+                  "properties": {
+                    "displayName": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40,
+                      "pattern": "\\S"
+                    },
+                    "avatarText": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 4,
+                      "description": "空白以外のUnicode文字1〜2個（UTF-16で4文字以内）"
+                    },
+                    "avatarColor": {
+                      "type": "string",
+                      "enum": [
+                        "blue",
+                        "violet",
+                        "green",
+                        "amber",
+                        "rose",
+                        "slate"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証、無効または期限切れのセッション。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "認証処理に失敗しました。内部情報は応答に含めません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationInternalError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "認証リクエストの本文が4KiBを超えています。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationInputError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Originの欠落・不一致、異なる送信元、または許可していないHTTP環境。処理は実行しない。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidOriginError"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSONの形式が不正です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationInputError"
+                },
+                "example": {
+                  "error": {
+                    "code": "invalid_input",
+                    "message": "JSONの形式が不正です。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力データが不正です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationInputError"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "updateProfile",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["displayName", "avatarText", "avatarColor"],
+                "properties": {
+                  "displayName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40,
+                    "pattern": "\\S"
+                  },
+                  "avatarText": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4,
+                    "description": "空白以外のUnicode文字1〜2個（UTF-16で4文字以内）"
+                  },
+                  "avatarColor": {
+                    "type": "string",
+                    "enum": [
+                      "blue",
+                      "violet",
+                      "green",
+                      "amber",
+                      "rose",
+                      "slate"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

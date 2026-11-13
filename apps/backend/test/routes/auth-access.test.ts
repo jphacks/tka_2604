@@ -9,6 +9,8 @@ import { testDatabase } from '../helpers/database'
 import { seedEventInformation } from '../helpers/event-information'
 
 const protectedOperations = [
+  ['GET', '/api/auth/profile'],
+  ['PATCH', '/api/auth/profile'],
   ['GET', '/api/events'],
   ['POST', '/api/events'],
   ['GET', '/api/events/event-a'],

@@ -16,6 +16,9 @@ export const users = sqliteTable('users', {
   userId: text('user_id').primaryKey().notNull(),
   // パスワードのハッシュ
   passwordHash: text('password_hash').notNull(),
+  displayName: text('display_name'),
+  avatarText: text('avatar_text'),
+  avatarColor: text('avatar_color'),
 })
 
 // 生のCookie値は保存せず、ランダムなセッショントークンのSHA-256のみ保持する。
