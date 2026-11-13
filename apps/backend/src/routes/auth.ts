@@ -179,22 +179,8 @@ export const authRoutes = new Hono<AuthEnv>()
     credentials(
       z.strictObject({
         displayName: z.string().trim().min(1).max(40),
-        avatarText: z
-          .string()
-          .trim()
-          .min(1)
-          .max(4)
-          .refine((value) => Array.from(value).length <= 2),
-        avatarColor: z.enum([
-          'blue',
-          'violet',
-          'green',
-          'amber',
-          'rose',
-          'slate',
-        ]),
       }),
-      '表示名とアイコンの入力を確認してください。',
+      '表示名の入力を確認してください。',
     ),
     async (c) => {
       const profile = await createAuthService(c).updateProfile(

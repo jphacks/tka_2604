@@ -187,4 +187,4 @@ Band.descriptionはジャンル・雰囲気などのバンド紹介（NULL可、
 
 ### アカウント表示設定
 
-`0009_account_profile.sql`でUserに任意の`display_name`・`avatar_text`・`avatar_color`を追加する。既存レコードはNULLのまま保持し、APIでログインID・先頭文字・blueを補う。更新は認証済みユーザーの行の3列だけを対象とし、パスワード・セッション・イベント所有者には触れない。入力の検証は認証APIで行う。
+`0009_account_profile.sql`でUserに表示設定を追加し、`0010_remove_custom_avatar.sql`で不要なavatar_text・avatar_colorを削除する。display_nameは任意で、未設定ならAPIでログインIDを補う。更新は認証済みユーザーの表示名だけを対象とし、パスワード・セッション・イベント所有者には触れない。アイコンの文字は表示名から導出し、DBには保存しない。入力の検証は認証APIで行う。

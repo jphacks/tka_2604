@@ -41,15 +41,9 @@ export function authService(repository: AuthRepository) {
       const displayName = profile.displayName ?? userId
       return {
         displayName,
-        avatarText:
-          profile.avatarText ?? Array.from(displayName)[0].toUpperCase(),
-        avatarColor: profile.avatarColor ?? 'blue',
       }
     },
-    async updateProfile(
-      userId: string,
-      profile: { displayName: string; avatarText: string; avatarColor: string },
-    ) {
+    async updateProfile(userId: string, profile: { displayName: string }) {
       const saved = await repository.updateProfile(userId, profile)
       return saved ? profile : null
     },

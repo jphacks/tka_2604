@@ -16,8 +16,6 @@ export function authRepository(db: Db) {
           await db
             .select({
               displayName: users.displayName,
-              avatarText: users.avatarText,
-              avatarColor: users.avatarColor,
             })
             .from(users)
             .where(eq(users.userId, userId))
@@ -25,10 +23,7 @@ export function authRepository(db: Db) {
         )[0] ?? null
       )
     },
-    async updateProfile(
-      userId: string,
-      profile: { displayName: string; avatarText: string; avatarColor: string },
-    ) {
+    async updateProfile(userId: string, profile: { displayName: string }) {
       return (
         (
           await db
@@ -37,8 +32,6 @@ export function authRepository(db: Db) {
             .where(eq(users.userId, userId))
             .returning({
               displayName: users.displayName,
-              avatarText: users.avatarText,
-              avatarColor: users.avatarColor,
             })
         )[0] ?? null
       )

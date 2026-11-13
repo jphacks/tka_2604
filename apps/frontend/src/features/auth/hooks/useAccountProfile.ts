@@ -6,8 +6,6 @@ import { profileRepository } from '../repositories/profileRepository'
 export function useAccountProfile(userId: string) {
   const [profile, setProfile] = useState<Profile>({
     displayName: userId,
-    avatarText: Array.from(userId)[0].toUpperCase(),
-    avatarColor: 'blue',
   })
   const [loaded, setLoaded] = useState(false)
   const [loadError, setLoadError] = useState('')

@@ -31,13 +31,9 @@ it('persists only the authenticated profile, validates input and protects creden
     const initial = await request('GET')
     expect(await initial.json()).toEqual({
       displayName: 'alice',
-      avatarText: 'A',
-      avatarColor: 'blue',
     })
     const profile = {
       displayName: 'ライブ運営',
-      avatarText: '🎸',
-      avatarColor: 'violet',
     }
     expect(
       (
@@ -50,7 +46,7 @@ it('persists only the authenticated profile, validates input and protects creden
     for (const invalid of [
       { ...profile, displayName: ' ' },
       { ...profile, displayName: 'x'.repeat(41) },
-      { ...profile, avatarText: 'abc' },
+      { ...profile, avatarText: 'A' },
       { ...profile, avatarColor: 'red' },
       { ...profile, userId: 'bob' },
       { ...profile, passwordHash: 'overwritten' },
@@ -79,8 +75,6 @@ it('persists only the authenticated profile, validates input and protects creden
     const bob = await createAuthenticatedHeaders(local.binding, 'bob')
     expect(await (await request('GET', undefined, bob)).json()).toEqual({
       displayName: 'bob',
-      avatarText: 'B',
-      avatarColor: 'blue',
     })
     expect(
       (await db.select().from(users)).map((user) => user.passwordHash).sort(),
@@ -121,8 +115,6 @@ it('adds profile settings while preserving existing credentials, sessions and ev
         user_id: 'legacy-owner',
         password_hash: 'unchanged-hash',
         display_name: null,
-        avatar_text: null,
-        avatar_color: null,
       },
     ])
     expect(
@@ -142,8 +134,6 @@ it('adds profile settings while preserving existing credentials, sessions and ev
       ).json(),
     ).toEqual({
       displayName: 'legacy-owner',
-      avatarText: 'L',
-      avatarColor: 'blue',
     })
   } finally {
     await local.dispose()

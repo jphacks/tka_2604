@@ -4,7 +4,7 @@ import { Button } from '../../../shared/ui/Button'
 import { Dialog } from '../../../shared/ui/Dialog'
 import { Input } from '../../../shared/ui/Input'
 import { useAccountProfile } from '../hooks/useAccountProfile'
-import { colors, type Profile } from '../model/profile'
+import { avatarInitial, type Profile } from '../model/profile'
 
 function Avatar({
   profile,
@@ -13,15 +13,12 @@ function Avatar({
   profile: Profile
   large?: boolean
 }) {
-  const color =
-    colors.find((item) => item.value === profile.avatarColor) ?? colors[0]
   return (
     <span
       aria-hidden="true"
-      style={{ backgroundColor: color.background, color: color.foreground }}
-      className={`inline-flex shrink-0 items-center justify-center rounded-full font-semibold ${large ? 'size-16 text-2xl' : 'size-7 text-xs'}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full bg-wash font-semibold text-brand ${large ? 'size-16 text-2xl' : 'size-7 text-xs'}`}
     >
-      {profile.avatarText}
+      {avatarInitial(profile.displayName)}
     </span>
   )
 }
@@ -134,52 +131,9 @@ function ProfileEditor({
             }
           />
         </label>
-        <label className="mb-2 flex flex-col gap-2 text-sm font-medium">
-          アイコンの文字
-          <Input
-            required
-            maxLength={4}
-            value={draft.avatarText}
-            disabled={busy}
-            onChange={(event) =>
-              setDraft({ ...draft, avatarText: event.target.value })
-            }
-            aria-describedby="avatar-text-help"
-          />
-        </label>
-        <p id="avatar-text-help" className="mb-5 text-xs text-muted">
-          好きな文字や絵文字を1〜2文字で設定できます。
+        <p className="mb-4 text-xs text-muted">
+          アイコンには表示名の先頭文字を表示します。
         </p>
-        <fieldset disabled={busy} className="mb-6">
-          <legend className="mb-3 text-sm font-medium">アイコンの色</legend>
-          <div className="flex flex-wrap gap-3">
-            {colors.map((color) => (
-              <label key={color.value} className="relative">
-                <input
-                  type="radio"
-                  name="avatar-color"
-                  value={color.value}
-                  checked={draft.avatarColor === color.value}
-                  onChange={() =>
-                    setDraft({ ...draft, avatarColor: color.value })
-                  }
-                  aria-label={color.label}
-                  className="peer absolute inset-0 size-full cursor-pointer opacity-0"
-                />
-                <span
-                  aria-hidden="true"
-                  style={{
-                    backgroundColor: color.background,
-                    color: color.foreground,
-                  }}
-                  className="flex size-10 items-center justify-center rounded-full border-2 border-transparent peer-checked:border-current peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand"
-                >
-                  {draft.avatarColor === color.value ? '✓' : ''}
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
         <p className="mb-5 text-xs leading-5 text-muted">
           変更はアカウントに保存され、他の端末でも反映されます。ログインIDは変わりません。
         </p>

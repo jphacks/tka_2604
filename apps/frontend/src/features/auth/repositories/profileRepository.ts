@@ -1,5 +1,5 @@
 import { createApiClient, ensureOk } from '../../../shared/api/client'
-import { colors, type Profile } from '../model/profile'
+import type { Profile } from '../model/profile'
 const client = createApiClient('').api.auth.profile
 async function readProfile(
   response: Pick<Response, 'ok' | 'status' | 'json'>,
@@ -11,20 +11,10 @@ async function readProfile(
     typeof value !== 'object' ||
     !('displayName' in value) ||
     typeof value.displayName !== 'string' ||
-    !('avatarText' in value) ||
-    typeof value.avatarText !== 'string' ||
-    !('avatarColor' in value) ||
-    typeof value.avatarColor !== 'string'
+    !value.displayName.trim()
   )
     throw new Error('プロフィールを読み取れませんでした。')
-  const color = colors.find((item) => item.value === value.avatarColor)
-  if (!color || !value.displayName.trim() || !value.avatarText.trim())
-    throw new Error('プロフィールを読み取れませんでした。')
-  return {
-    displayName: value.displayName,
-    avatarText: value.avatarText,
-    avatarColor: color.value,
-  }
+  return { displayName: value.displayName }
 }
 
 export const profileRepository = {

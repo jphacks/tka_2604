@@ -5586,8 +5586,8 @@
     "/api/auth/profile": {
       "get": {
         "tags": ["Auth"],
-        "summary": "自分の表示名とアイコンを取得する",
-        "description": "セッションのユーザーのみ取得。未設定なら表示名はログインID、アイコンは先頭文字、色はblue。",
+        "summary": "自分の表示名を取得する",
+        "description": "有効なセッションが必要。表示名のみを扱い、アイコンは画面で先頭文字を大文字にして表示する。未設定ならログインIDを表示名に使う。更新は同一Origin必須。ログインID・認証情報・他ユーザーは変更しない。",
         "security": [
           {
             "sessionCookie": []
@@ -5604,30 +5604,13 @@
                 "schema": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["displayName", "avatarText", "avatarColor"],
+                  "required": ["displayName"],
                   "properties": {
                     "displayName": {
                       "type": "string",
                       "minLength": 1,
                       "maxLength": 40,
                       "pattern": "\\S"
-                    },
-                    "avatarText": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 4,
-                      "description": "空白以外のUnicode文字1〜2個（UTF-16で4文字以内）"
-                    },
-                    "avatarColor": {
-                      "type": "string",
-                      "enum": [
-                        "blue",
-                        "violet",
-                        "green",
-                        "amber",
-                        "rose",
-                        "slate"
-                      ]
                     }
                   }
                 }
@@ -5679,8 +5662,8 @@
       },
       "patch": {
         "tags": ["Auth"],
-        "summary": "自分の表示名とアイコンを更新する",
-        "description": "同一Origin必須。ログインID・認証情報・他ユーザーは変更しない。表示名と文字の前後空白を除去する。",
+        "summary": "自分の表示名を更新する",
+        "description": "有効なセッションが必要。表示名のみを扱い、アイコンは画面で先頭文字を大文字にして表示する。未設定ならログインIDを表示名に使う。更新は同一Origin必須。ログインID・認証情報・他ユーザーは変更しない。",
         "security": [
           {
             "sessionCookie": []
@@ -5697,30 +5680,13 @@
                 "schema": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["displayName", "avatarText", "avatarColor"],
+                  "required": ["displayName"],
                   "properties": {
                     "displayName": {
                       "type": "string",
                       "minLength": 1,
                       "maxLength": 40,
                       "pattern": "\\S"
-                    },
-                    "avatarText": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 4,
-                      "description": "空白以外のUnicode文字1〜2個（UTF-16で4文字以内）"
-                    },
-                    "avatarColor": {
-                      "type": "string",
-                      "enum": [
-                        "blue",
-                        "violet",
-                        "green",
-                        "amber",
-                        "rose",
-                        "slate"
-                      ]
                     }
                   }
                 }
@@ -5803,30 +5769,13 @@
               "schema": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["displayName", "avatarText", "avatarColor"],
+                "required": ["displayName"],
                 "properties": {
                   "displayName": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 40,
                     "pattern": "\\S"
-                  },
-                  "avatarText": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 4,
-                    "description": "空白以外のUnicode文字1〜2個（UTF-16で4文字以内）"
-                  },
-                  "avatarColor": {
-                    "type": "string",
-                    "enum": [
-                      "blue",
-                      "violet",
-                      "green",
-                      "amber",
-                      "rose",
-                      "slate"
-                    ]
                   }
                 }
               }

@@ -8,8 +8,6 @@ test('profile edits persist across reload and a second browser; cancellation and
 }) => {
   const original = (await (await request.get('/api/auth/profile')).json()) as {
     displayName: string
-    avatarText: string
-    avatarColor: string
   }
   try {
     await page.goto('/event')
@@ -21,11 +19,12 @@ test('profile edits persist across reload and a second browser; cancellation and
     const dialog = page.getByRole('dialog', { name: 'プロフィールを編集' })
     await dialog
       .getByRole('textbox', { name: '表示名', exact: true })
-      .fill('検証ライブ運営')
-    await dialog
-      .getByRole('textbox', { name: 'アイコンの文字', exact: true })
-      .fill('🎸')
-    await dialog.getByRole('radio', { name: 'パープル', exact: true }).check()
+      .fill('alice')
+    await expect(dialog.getByRole('textbox')).toHaveCount(1)
+    await expect(dialog.getByRole('radio')).toHaveCount(0)
+    await expect(
+      dialog.locator('[aria-hidden="true"]').filter({ hasText: 'A' }),
+    ).toBeVisible()
     await page.route('**/api/auth/profile', async (route) => {
       if (route.request().method() === 'PATCH')
         await route.fulfill({
@@ -42,16 +41,17 @@ test('profile edits persist across reload and a second browser; cancellation and
     )
     await expect(
       dialog.getByRole('textbox', { name: '表示名', exact: true }),
-    ).toHaveValue('検証ライブ運営')
+    ).toHaveValue('alice')
     await expect(edit).toContainText(original.displayName)
     await page.unroute('**/api/auth/profile')
     await dialog
       .getByRole('button', { name: '変更を保存', exact: true })
       .click()
     await expect(dialog).not.toBeVisible()
-    await expect(edit).toContainText('検証ライブ運営')
+    await expect(edit).toContainText('alice')
+    await expect(edit.locator('[aria-hidden="true"]')).toHaveText('A')
     await page.reload()
-    await expect(edit).toContainText('検証ライブ運営')
+    await expect(edit).toContainText('alice')
     const context = await browser.newContext({
       baseURL,
       storageState: await request.storageState(),
@@ -61,16 +61,13 @@ test('profile edits persist across reload and a second browser; cancellation and
       await other.goto('/event')
       await expect(
         other.getByRole('button', { name: 'プロフィールを編集' }),
-      ).toContainText('検証ライブ運営')
+      ).toContainText('alice')
     } finally {
       await context.close()
     }
     await page.setViewportSize({ width: 390, height: 844 })
     await edit.click()
     await expect(dialog).toBeVisible()
-    await expect(
-      dialog.getByRole('radio', { name: 'パープル', exact: true }),
-    ).toBeChecked()
     await dialog
       .getByRole('textbox', { name: '表示名', exact: true })
       .fill('保存しない変更')
@@ -80,7 +77,7 @@ test('profile edits persist across reload and a second browser; cancellation and
     await edit.click()
     await expect(
       dialog.getByRole('textbox', { name: '表示名', exact: true }),
-    ).toHaveValue('検証ライブ運営')
+    ).toHaveValue('alice')
     await expect(
       dialog.getByRole('button', { name: '変更を保存', exact: true }),
     ).toBeInViewport({ ratio: 1 })
