@@ -9,10 +9,12 @@ import app from '../../src/index'
 import * as integration from '../../src/integrations/solver'
 import { openApiDocument } from '../../src/openapi'
 import { SolverError } from '../../src/services/solver/errors'
+import { createAuthenticatedHeaders } from '../helpers/auth'
 import { testDatabase } from '../helpers/database'
 import { expectJsonResponse } from '../helpers/openapi'
 
 let local: Awaited<ReturnType<typeof testDatabase>>
+let sessionHeaders: Record<string, string>
 beforeEach(async () => {
   local = await testDatabase()
   const seed = await readFile(
@@ -21,6 +23,7 @@ beforeEach(async () => {
   )
   for (const statement of seed.split(';'))
     if (statement.trim()) await local.binding.prepare(statement).run()
+  sessionHeaders = await createAuthenticatedHeaders(local.binding)
 })
 afterEach(async () => {
   vi.unstubAllGlobals()
@@ -34,7 +37,7 @@ function request(body: unknown, eventId = 'demo-event') {
     `/api/events/${eventId}/solve`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...sessionHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         parts: [
           { partId: 'demo-part-2', bandCount: 0 },
@@ -300,7 +303,7 @@ describe('solve from persisted event data', () => {
         `/api/events/demo-event/${resource}`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...sessionHeaders, 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         },
         { DB: local.binding },
@@ -459,7 +462,7 @@ describe('solve from persisted event data', () => {
           '/api/events/demo-event/constraints',
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { ...sessionHeaders, 'Content-Type': 'application/json' },
             body: JSON.stringify({
               expectedUpdatedAt: before.event.updatedAt,
               constraints: [],

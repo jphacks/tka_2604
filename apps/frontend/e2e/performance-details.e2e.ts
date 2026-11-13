@@ -8,7 +8,7 @@ test('edits and deletes a band from its schedule details dialog', async ({
   databaseEvent,
 }) => {
   await page.goto(`/event/${databaseEvent.eventId}`)
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   const details = page.getByRole('button', {
     name: 'Pretenderの詳細',
     exact: true,
@@ -58,7 +58,7 @@ test('edits and deletes a band from its schedule details dialog', async ({
     schedule?.placements.some((row) => row.bandId === databaseEvent.bandIds.p2),
   ).toBe(false)
   await page.reload()
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await expect(
     page.getByRole('button', { name: `${editedName}の詳細`, exact: true }),
   ).toHaveCount(0)
@@ -89,7 +89,7 @@ for (const width of [1280, 375]) {
       },
     )
     await page.goto(`/event/${databaseEvent.eventId}`)
-    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
     await page
       .getByRole('button', { name: 'Pretenderの詳細', exact: true })
       .click()

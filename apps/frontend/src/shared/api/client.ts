@@ -1,12 +1,13 @@
 import { hc } from 'hono/client'
 
 import type { AppType } from '../../../../backend/src/index'
+import { createSessionFetch } from './sessionEvents'
 
 export function createApiClient(
   baseUrl: string,
-  fetcher: typeof fetch = fetch,
+  fetcher: typeof fetch = (...args) => fetch(...args),
 ) {
-  return hc<AppType>(baseUrl, { fetch: fetcher })
+  return hc<AppType>(baseUrl, { fetch: createSessionFetch(fetcher) })
 }
 export type ApiClient = ReturnType<typeof createApiClient>
 

@@ -19,7 +19,7 @@ test('events have no status controls and remain searchable and editable', async 
       ids.push(body.eventId)
     }
     await page.goto('/event')
-    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
     await expect(
       page.getByRole('heading', { name: 'マイイベント' }),
     ).toBeVisible()
@@ -65,7 +65,7 @@ test('events have no status controls and remain searchable and editable', async 
     await page.getByRole('button', { name: '変更を保存' }).click()
     await expect(page.getByText('イベントの設定を更新しました。')).toBeVisible()
     await page.reload()
-    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
     await expect(
       page.getByRole('textbox', { name: '会場', exact: true }),
     ).toHaveValue('更新した会場')

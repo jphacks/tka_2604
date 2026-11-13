@@ -61,7 +61,7 @@ npm run dev
 
 seedは`demo-`で始まるUser・Event・2部・3バンド・同名別人・掛け持ち・未配置バンド・制約を追加する。第2部は空。再実行は既存データを上書きしないため、編集したデモデータのリセットにはならない。
 
-Userのhashはログインできないダミー値。認証が未実装の間はAPIの所有者が`demo-owner`に固定されているため、投入後は画面のイベント一覧に「デモライブ」が表示される。HTTPのhealthはDBの疎通確認ではない。
+Userのhashはログインできないダミー値。`npm run auth:provision -- --local --user-id demo-owner`でパスワードを設定すると、既存イベントを同じユーザーで開ける。HTTPのhealthはDBの疎通確認ではない。
 
 ### 空のローカルDBで作り直す
 
@@ -144,3 +144,7 @@ Wranglerの環境名は引き続き `main`、本番D1も `jphack-2026-main-db` �
 Drizzle生成のテーブル再作成SQLは、D1では`foreign_keys=OFF`が使えないため、先頭・末尾のPRAGMAを`defer_foreign_keys=ON/OFF`に調整する例外とする（[D1の外部キー仕様](https://developers.cloudflare.com/d1/sql-api/foreign-keys/)）。SQL・snapshotのテーブル定義は生成結果を使う。Wranglerと同じくmigration単位のbatchで移行テストを実行し、3種類の旧状態・論理削除済みイベント・関連データの保持と外部キーの有効性を確認する。
 
 リモートへ適用する場合は、アプリの公開前にmigrationを適用する。
+
+### 認証セッションの追加（#59）
+
+0008_auth_sessionsは`auth_sessions`と`auth_rate_limits`を追加する。既存のUserとEventは保持する。アカウント準備は[起動手順](../../../docs/setup.md#アカウントと既存データの準備59)を参照。

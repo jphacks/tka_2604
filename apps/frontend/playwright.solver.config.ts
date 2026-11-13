@@ -8,6 +8,7 @@ if (!envFile || !state || !token)
 
 export default defineConfig({
   testDir: './e2e',
+  globalSetup: './e2e/auth-setup.ts',
   testMatch: '**/solver-flow.e2e.ts',
   outputDir: './test-results/solver',
   forbidOnly: Boolean(process.env.CI),

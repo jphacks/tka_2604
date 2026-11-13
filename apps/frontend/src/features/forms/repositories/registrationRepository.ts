@@ -28,7 +28,7 @@ async function read<T>(response: Pick<Response, 'ok' | 'json'>): Promise<T> {
   return response.json<T>()
 }
 
-// Public form transport, shared with future form integrations (#59).
+// Public form transport; these endpoints do not require administrator login.
 export const registrationRepository: RegistrationRepository = {
   async get(eventId, signal) {
     return read(

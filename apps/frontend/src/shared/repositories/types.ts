@@ -7,9 +7,10 @@ import type {
 } from '../model/workspace'
 
 export interface WorkspaceRepository {
-  getSession(): Promise<Session | null>
-  signIn(email: string): Promise<Session>
-  signOut(): Promise<void>
+  getSession: () => Promise<Session | null>
+  signIn: (userId: string, password: string) => Promise<Session>
+  signUp: (userId: string, password: string) => Promise<Session>
+  signOut: () => Promise<void>
   getRoster(id: string, signal?: AbortSignal): Promise<EventData>
   getDetails(id: string, signal?: AbortSignal): Promise<EventDetails>
   listEvents(signal?: AbortSignal): Promise<EventSummary[]>

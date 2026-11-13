@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { onUnauthorized } from '../../../shared/api/sessionEvents'
 import { sendChatMessage } from './chatRepository'
 
 afterEach(() => vi.unstubAllGlobals())
@@ -18,10 +19,28 @@ describe('chat HTTP adapter', () => {
       '/api/events/event-a/chat',
       expect.objectContaining({
         method: 'POST',
+        credentials: 'same-origin',
         body: JSON.stringify({ message: '本文', messageId: 'stable-id' }),
         signal: controller.signal,
       }),
     )
+  })
+
+  it('notifies the session provider when chat authentication has expired', async () => {
+    const unauthorized = vi.fn()
+    const unsubscribe = onUnauthorized(unauthorized)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(null, { status: 401 })),
+    )
+    try {
+      await expect(sendChatMessage('event-a', '本文')).rejects.toThrow(
+        'もう一度ログイン',
+      )
+      expect(unauthorized).toHaveBeenCalledOnce()
+    } finally {
+      unsubscribe()
+    }
   })
 
   it.each([{}, { reply: '' }, { reply: 1 }])(

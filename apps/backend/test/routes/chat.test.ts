@@ -25,10 +25,12 @@ import { openApiDocument } from '../../src/openapi'
 import { eventsRepository } from '../../src/repositories/events'
 import { AIChatError } from '../../src/services/chat/errors'
 import type { ChatModel } from '../../src/services/chat/types'
+import { createAuthenticatedHeaders } from '../helpers/auth'
 import { testDatabase } from '../helpers/database'
 import { expectJsonResponse } from '../helpers/openapi'
 
 let local: Awaited<ReturnType<typeof testDatabase>>
+let sessionHeaders: Record<string, string>
 let db: ReturnType<typeof createDb>
 let eventId: string
 let model: ReturnType<typeof vi.fn<ChatModel>>
@@ -49,6 +51,7 @@ beforeEach(async () => {
     .eventId
   model = vi.fn<ChatModel>().mockResolvedValue(answer)
   vi.spyOn(gemini, 'createGeminiChatModel').mockReturnValue(model)
+  sessionHeaders = await createAuthenticatedHeaders(local.binding)
 })
 afterEach(async () => {
   vi.restoreAllMocks()
@@ -59,7 +62,7 @@ function post(body: unknown, id = eventId) {
     `/api/events/${id}/chat`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...sessionHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     },
     { DB: local.binding, GOOGLE_AI_API_TOKEN: 'test-only-key' },
@@ -76,7 +79,7 @@ describe('decision log API', () => {
       `/api/events/${id}/chat/decision`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...sessionHeaders, 'Content-Type': 'application/json' },
         body: JSON.stringify({ decision, messageId }),
       },
       { DB: local.binding },
@@ -122,13 +125,27 @@ describe('decision log API', () => {
       `/api/events/${eventId}/chat/decision`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...sessionHeaders, 'Content-Type': 'application/json' },
         body: '{',
       },
       { DB: local.binding },
     )
     expect(response.status).toBe(400)
     await expectJsonResponse(response, decisionResponses)
+    expect(await rows()).toEqual([])
+  })
+  it('records decisions for the authenticated owner and rejects another owner', async () => {
+    const otherEvent = await eventsRepository(db).create('other', {
+      title: 'Other live',
+    })
+    expect((await decide('applied', otherEvent.eventId)).status).toBe(404)
+    expect(await db.select().from(chatMessages)).toEqual([])
+    sessionHeaders = await createAuthenticatedHeaders(local.binding, 'other')
+    expect((await decide('applied', otherEvent.eventId)).status).toBe(200)
+    expect(
+      (await eventsRepository(db).getChat('other', otherEvent.eventId))!
+        .messages,
+    ).toHaveLength(1)
     expect(await rows()).toEqual([])
   })
   it('rejects an inaccessible event before writing', async () => {
@@ -156,7 +173,7 @@ describe('persisted chat POST API', () => {
   it('rejects non-JSON input without saving', async () => {
     const response = await app.request(
       `/api/events/${eventId}/chat`,
-      { method: 'POST', body: 'message=hello' },
+      { method: 'POST', headers: sessionHeaders, body: 'message=hello' },
       { DB: local.binding },
     )
     expect(response.status).toBe(422)
@@ -244,7 +261,7 @@ describe('persisted chat POST API', () => {
     )
     const history = await app.request(
       `/api/events/${eventId}/chat`,
-      {},
+      { headers: sessionHeaders },
       { DB: local.binding },
     )
     expect(history.status).toBe(200)
@@ -428,7 +445,7 @@ describe('persisted chat POST API', () => {
         `/api/events/${eventId}/chat`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...sessionHeaders, 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: 'hello', messageId: 'u1' }),
         },
         { DB: local.binding },
@@ -474,7 +491,7 @@ describe('persisted chat POST API', () => {
       `/api/events/${eventId}/chat`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...sessionHeaders, 'Content-Type': 'application/json' },
         body: '{',
       },
       { DB: local.binding },
@@ -486,6 +503,7 @@ describe('persisted chat POST API', () => {
 
   it('shares the request and reply shape through Hono RPC', async () => {
     const client = hc<AppType>('http://localhost', {
+      headers: sessionHeaders,
       fetch: async (input: RequestInfo | URL, init?: RequestInit) =>
         app.request(input instanceof URL ? input.toString() : input, init, {
           DB: local.binding,

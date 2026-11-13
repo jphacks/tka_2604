@@ -9,8 +9,7 @@ test('production flow: create an event, open its form, register and update DB me
   request,
 }) => {
   await page.goto('/login')
-  await expect(page.locator('body')).not.toContainText('デモ')
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await page
     .getByRole('button', { name: 'イベントを作成', exact: true })
     .first()
@@ -64,7 +63,7 @@ test('production flow: create an event, open its form, register and update DB me
     await editDialog.getByRole('button', { name: '変更を保存' }).click()
     await expect(editDialog).toHaveCount(0)
     await page.reload()
-    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
     await expect(
       page.getByRole('button', {
         name: '更新を保存する出演枠の詳細',

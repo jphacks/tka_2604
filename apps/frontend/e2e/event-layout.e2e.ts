@@ -12,7 +12,7 @@ for (const width of [1600, 390]) {
     ).json()) as { title: string }
     const path = `/event/${databaseEvent.eventId}`
     await page.goto(path)
-    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
     const title = page.getByRole('heading', { name: event.title, exact: true })
     await expect(title).toBeVisible()
     const actions = page.getByRole('group', { name: 'イベントの操作' })
