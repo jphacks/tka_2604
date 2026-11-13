@@ -120,4 +120,19 @@ describe('API routing', () => {
     expect(response.status).toBe(404)
     expect(await response.json()).toEqual({ error: 'Not Found' })
   })
+
+  it.each(['%0A', '%0D', '%E2%80%A8', '%E2%80%A9'])(
+    'preserves authenticated 404 handling and security headers for %s',
+    async (encoded) => {
+      const response = await app.request(
+        `/api/security-probe/${encoded}`,
+        { headers: sessionHeaders },
+        { DB: local.binding },
+      )
+      expect(response.status).toBe(404)
+      expect(response.headers.get('cache-control')).toBe('no-store')
+      expect(response.headers.get('x-content-type-options')).toBe('nosniff')
+      expect(await response.json()).toEqual({ error: 'Not Found' })
+    },
+  )
 })

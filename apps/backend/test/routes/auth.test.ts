@@ -52,6 +52,63 @@ async function register() {
 }
 
 describe('real credentials and server sessions', () => {
+  it.each([
+    'application/json ; charset=utf-8',
+    'application/json;',
+    'application/json; unusual_parameter=value',
+  ])('validates JSON credentials with Content-Type %s', async (contentType) => {
+    const send = (body: unknown) =>
+      app.request(
+        '/api/auth/register',
+        {
+          method: 'POST',
+          headers: { Origin: 'http://localhost', 'Content-Type': contentType },
+          body: JSON.stringify(body),
+        },
+        { DB: local.binding },
+      )
+    expect((await send(credentials)).status).toBe(201)
+    expect(
+      (
+        await send({
+          ...credentials,
+          userId: 'invalid-owner',
+          extra: 'must-not-save',
+        })
+      ).status,
+    ).toBe(422)
+    expect(
+      (await createDb(local.binding).select().from(users)).map(
+        (user) => user.userId,
+      ),
+    ).toEqual([credentials.userId])
+  })
+
+  it('rejects an oversized chunked authentication body before creating an account', async () => {
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (let index = 0; index < 4200; index++)
+          controller.enqueue(new Uint8Array([32]))
+        controller.close()
+      },
+    })
+    const init = {
+      method: 'POST',
+      headers: {
+        Origin: 'http://localhost',
+        'Content-Type': 'application/json',
+      },
+      body,
+      duplex: 'half' as const,
+    }
+    const response = await app.request('/api/auth/register', init, {
+      DB: local.binding,
+    })
+    expect(response.status).toBe(413)
+    expect(response.headers.get('set-cookie')).toBeNull()
+    expect(await createDb(local.binding).select().from(users)).toEqual([])
+  })
+
   it('registers a hashed password, restores a session, and revokes it on logout', async () => {
     const registered = await register()
     await expectJsonResponse(
