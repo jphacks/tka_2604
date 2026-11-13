@@ -15,11 +15,13 @@ import { createDb } from '../../src/db/index'
 import { chatMessages, constraints, events, users } from '../../src/db/schema'
 import app, { type AppType } from '../../src/index'
 import { openApiDocument } from '../../src/openapi'
+import { createAuthenticatedHeaders } from '../helpers/auth'
 import { testDatabase } from '../helpers/database'
 import { seedEventInformation } from '../helpers/event-information'
 import { expectJsonResponse } from '../helpers/openapi'
 
 let local: Awaited<ReturnType<typeof testDatabase>>
+let sessionHeaders: Record<string, string>
 let db: ReturnType<typeof createDb>
 beforeEach(async () => {
   local = await testDatabase()
@@ -28,6 +30,7 @@ beforeEach(async () => {
     { userId: 'demo-owner', passwordHash: 'test-only' },
     { userId: 'other', passwordHash: 'test-only' },
   ])
+  sessionHeaders = await createAuthenticatedHeaders(local.binding)
 })
 afterEach(async () => {
   vi.restoreAllMocks()
@@ -37,7 +40,7 @@ const suffixes = ['schedule', 'constraints', 'chat'] as const
 function request(eventId: string, suffix: string) {
   return app.request(
     `/api/events/${eventId}/${suffix}`,
-    {},
+    { headers: sessionHeaders },
     { DB: local.binding },
   )
 }
@@ -68,7 +71,7 @@ describe('event information GET APIs', () => {
     ).toMatchObject({ results: before.results })
     const basic = await app.request(
       `/api/events/${expected.event.eventId}`,
-      {},
+      { headers: sessionHeaders },
       { DB: local.binding },
     )
     expect(await basic.json()).toEqual(expected.event)
@@ -181,6 +184,7 @@ describe('event information GET APIs', () => {
   it('exposes the three read endpoints through the Hono RPC client', async () => {
     const expected = await seedEventInformation(db)
     const client = hc<AppType>('http://localhost', {
+      headers: sessionHeaders,
       fetch: async (input: RequestInfo | URL, init?: RequestInit) =>
         app.request(input instanceof URL ? input.toString() : input, init, {
           DB: local.binding,

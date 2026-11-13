@@ -14,11 +14,13 @@ import {
 } from '../../src/db/schema'
 import app from '../../src/index'
 import { openApiDocument } from '../../src/openapi'
+import { createAuthenticatedHeaders } from '../helpers/auth'
 import { testDatabase } from '../helpers/database'
 import { seedEventInformation } from '../helpers/event-information'
 import { expectJsonResponse } from '../helpers/openapi'
 
 let local: Awaited<ReturnType<typeof testDatabase>>
+let sessionHeaders: Record<string, string>
 let db: ReturnType<typeof createDb>
 let seed: Awaited<ReturnType<typeof seedEventInformation>>
 beforeEach(async () => {
@@ -29,6 +31,7 @@ beforeEach(async () => {
     { userId: 'other-owner', passwordHash: 'test-only' },
   ])
   seed = await seedEventInformation(db)
+  sessionHeaders = await createAuthenticatedHeaders(local.binding)
 })
 afterEach(async () => {
   await local?.dispose()
@@ -43,7 +46,7 @@ async function remove(
     `/api/events/${eventId}/bands/${bandId}`,
     {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...sessionHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     },
     { DB: local.binding },
@@ -191,7 +194,7 @@ it('returns 400 for malformed JSON', async () => {
     `/api/events/${seed.event.eventId}/bands/a-b2`,
     {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...sessionHeaders, 'Content-Type': 'application/json' },
       body: '{',
     },
     { DB: local.binding },

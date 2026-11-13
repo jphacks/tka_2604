@@ -4,7 +4,7 @@ import { expect, test } from './database-fixture'
 
 async function openEvent(page: Page, eventId: string) {
   await page.goto(`/event/${eventId}`)
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await expect(
     page.getByRole('heading', { name: '春ライブ 2026', exact: true, level: 1 }),
   ).toBeVisible()
