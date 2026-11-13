@@ -7,13 +7,16 @@ type JsonResponses = Record<
   string,
   { description?: string; content?: Record<string, { schema?: AnySchema }> }
 >
+type JsonResponse = Pick<Response, 'status' | 'headers'> & {
+  clone(): { json(): Promise<unknown> }
+}
 
 const ajv = new Ajv2020({ allErrors: true })
 ajv.addKeyword({ keyword: 'components', schemaType: 'object', valid: true })
 
 // The caller selects the operation from the handwritten OpenAPI document.
 export async function expectJsonResponse(
-  response: Response,
+  response: JsonResponse,
   responses: JsonResponses,
 ) {
   const definition = responses[String(response.status)]

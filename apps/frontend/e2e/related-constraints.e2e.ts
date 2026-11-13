@@ -5,7 +5,7 @@ test('band details open manual add before choosing a condition and its targets',
   databaseEvent,
 }) => {
   await page.goto(`/event/${databaseEvent.eventId}`)
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await page
     .getByRole('button', { name: /の詳細$/ })
     .first()

@@ -26,7 +26,7 @@ test('all unassigned bands are discoverable from the initial schedule view', asy
   })
   expect(saved.ok()).toBe(true)
   await page.goto(`/event/${databaseEvent.eventId}`)
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   const link = page.getByRole('button', { name: '未配置一覧へ', exact: true })
   await expect(link).toBeInViewport()
   await link.click()

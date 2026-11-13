@@ -5,7 +5,7 @@ test('member names stay on one line with the full names in a tooltip', async ({
   databaseEvent,
 }) => {
   await page.goto(`/event/${databaseEvent.eventId}`)
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await expect(
     page
       .getByRole('region', { name: '出演順の表' })

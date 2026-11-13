@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useRef, useState } from 'react'
 import { Link, NavLink } from 'react-router'
 
 import { useSession } from '../../app/sessionContext'
+import { AccountProfile } from '../../features/auth/components/AccountProfile'
 import { AppHeader } from './AppHeader'
 import { Button } from './Button'
 import { Icon } from './Icon'
@@ -23,6 +24,25 @@ export function AppFrame({
 }) {
   const width = workspace ? '' : wide ? 'max-w-[1600px]' : 'max-w-[1200px]'
   const { session, signOut } = useSession()
+  const [signingOut, setSigningOut] = useState(false)
+  const [logoutError, setLogoutError] = useState('')
+  const logoutInFlight = useRef(false)
+  async function logout() {
+    if (logoutInFlight.current) return
+    logoutInFlight.current = true
+    setSigningOut(true)
+    setLogoutError('')
+    try {
+      await signOut()
+    } catch {
+      setLogoutError(
+        'ログアウトできませんでした。接続を確認してもう一度お試しください。',
+      )
+    } finally {
+      logoutInFlight.current = false
+      setSigningOut(false)
+    }
+  }
   return (
     <div
       className={
@@ -39,22 +59,25 @@ export function AppFrame({
           </Link>
         }
       >
-        <span className="hidden size-7 items-center justify-center rounded-full bg-wash text-xs font-semibold text-brand sm:flex">
-          運
-        </span>
-        <span className="hidden max-w-32 truncate text-xs sm:inline">
-          {session?.name}
-        </span>
+        {session && (
+          <AccountProfile key={session.userId} userId={session.userId} />
+        )}
         <Button
           variant="ghost"
           className="text-xs"
           aria-label="ログアウト"
-          onClick={() => void signOut()}
+          disabled={signingOut}
+          onClick={() => void logout()}
         >
           <Icon name="logout" />
           <span className="hidden sm:inline">ログアウト</span>
         </Button>
       </AppHeader>
+      {logoutError && (
+        <p role="alert" className="bg-red-50 px-4 py-3 text-sm text-red-600">
+          {logoutError}
+        </p>
+      )}
       {eventId && !workspace && (
         <div className="shrink-0 border-b border-line bg-white">
           <nav

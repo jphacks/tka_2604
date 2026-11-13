@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { AIChatError, ChatMessageError } from '../services/chat/errors'
 import type { ChatResponse } from '../services/chat/types'
 import { EventError } from '../services/events/errors'
+import type { AuthVariables } from './auth-security'
 
 const chatRequest = z.strictObject({
   message: z.string().max(1000).trim().min(1),
@@ -31,14 +32,16 @@ export function createChatRoutes<Bindings extends object>(
     eventId: string,
     input: { messageId: string; message: string },
     bindings: Bindings,
+    userId: string,
   ) => Promise<ChatResponse>,
   recordDecision: (
     eventId: string,
     input: z.output<typeof decisionRequest>,
     bindings: Bindings,
+    userId: string,
   ) => Promise<{ messageId: string; text: string }>,
 ) {
-  return new Hono<{ Bindings: Bindings }>()
+  return new Hono<{ Bindings: Bindings; Variables: AuthVariables }>()
     .onError((error, c) => {
       if (error instanceof ChatMessageError)
         return c.json(
@@ -129,7 +132,7 @@ export function createChatRoutes<Bindings extends object>(
       }),
       async (
         c: Context<
-          { Bindings: Bindings },
+          { Bindings: Bindings; Variables: AuthVariables },
           '/:eventId/chat/decision',
           {
             in: { json: z.input<typeof decisionRequest> }
@@ -141,6 +144,7 @@ export function createChatRoutes<Bindings extends object>(
           c.req.param('eventId'),
           c.req.valid('json'),
           c.env,
+          c.get('userId'),
         )
         return c.json({ messageId: saved.messageId, text: saved.text })
       },
@@ -168,7 +172,7 @@ export function createChatRoutes<Bindings extends object>(
       }),
       async (
         c: Context<
-          { Bindings: Bindings },
+          { Bindings: Bindings; Variables: AuthVariables },
           '/:eventId/chat',
           {
             in: { json: z.input<typeof chatRequest> }
@@ -186,6 +190,7 @@ export function createChatRoutes<Bindings extends object>(
             message: input.message,
           },
           c.env,
+          c.get('userId'),
         )
         return c.json(result)
       },

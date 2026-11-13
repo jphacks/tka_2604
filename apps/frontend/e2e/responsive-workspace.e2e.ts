@@ -7,7 +7,7 @@ for (const width of [320, 390, 1280]) {
   }, testInfo) => {
     await page.setViewportSize({ width, height: 844 })
     await page.goto(`/event/${databaseEvent.eventId}`)
-    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
     const table = page.getByRole('region', { name: '出演順の表' })
     const row = table.locator('[data-performance]').first()
     await expect(row).toBeVisible()
@@ -67,7 +67,7 @@ for (const width of [320, 390, 768, 1279]) {
     ).toBe(200)
     await page.setViewportSize({ width, height: 844 })
     await page.goto(`/event/${databaseEvent.eventId}`)
-    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
     const tabs = page.getByRole('tablist', { name: 'ワークスペースの表示' })
     const schedule = page.getByRole('region', { name: '出演順', exact: true })
     const constraints = page.getByRole('region', { name: '制約', exact: true })
@@ -183,7 +183,7 @@ for (const width of [1280, 1600, 2234]) {
   }, testInfo) => {
     await page.setViewportSize({ width, height: 900 })
     await page.goto(`/event/${databaseEvent.eventId}`)
-    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
     const headerBottoms = []
     for (const name of ['出演順', '制約', 'AIチャット']) {
       const panel = page.getByRole('region', { name, exact: true })
@@ -208,7 +208,7 @@ for (const width of [768, 1280, 1600, 2234]) {
   }) => {
     await page.setViewportSize({ width, height: 900 })
     await page.goto(`/event/${databaseEvent.eventId}`)
-    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
     if (width < 1280)
       await page.getByRole('tab', { name: 'AIチャット', exact: true }).click()
     const input = page.getByRole('textbox', { name: 'AIへのメッセージ' })

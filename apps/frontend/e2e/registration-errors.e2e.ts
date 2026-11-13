@@ -143,7 +143,7 @@ for (const width of [390, 1280]) {
   }) => {
     await page.setViewportSize({ width, height: 844 })
     await page.goto('/login')
-    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
     await expect(page).toHaveURL(/\/event$/)
     await page.evaluate(() => document.fonts.ready)
     const expectedHeader = await page.getByRole('banner').boundingBox()
@@ -158,9 +158,7 @@ for (const width of [390, 1280]) {
     expect(
       await page.getByRole('link', { name: 'Setly ホーム' }).boundingBox(),
     ).toEqual(expectedBrand)
-    await expect(
-      page.getByText('出演者向けフォーム', { exact: true }),
-    ).toBeVisible()
+    await expect(page.getByRole('heading', { name: /出演登録$/ })).toBeVisible()
     for (let row = 0; row < 4; row++)
       await page.getByRole('button', { name: 'メンバーの行を追加' }).click()
     const submit = page.getByRole('button', { name: '出演登録を送信' })
