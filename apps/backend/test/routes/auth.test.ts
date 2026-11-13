@@ -197,9 +197,9 @@ describe('real credentials and server sessions', () => {
 
   it.each([
     { ...credentials, password: 'short' },
-    { ...credentials, password: 'x'.repeat(14) },
+    { ...credentials, password: 'x'.repeat(6) },
     { ...credentials, password: 'x'.repeat(33) },
-    { ...credentials, password: ' '.repeat(15) },
+    { ...credentials, password: ' '.repeat(7) },
     { ...credentials, password: '\t\n '.repeat(5) },
     { ...credentials, userId: 'u'.repeat(21) },
     { ...credentials, userId: 'invalid id' },
@@ -211,6 +211,26 @@ describe('real credentials and server sessions', () => {
     expect(response.headers.get('set-cookie')).toBeNull()
     expect(await createDb(local.binding).select().from(users)).toEqual([])
   })
+
+  it.each([' xxxxx ', 'x'.repeat(32)])(
+    'registers and logs in with a boundary-length password without trimming (%#)',
+    async (password) => {
+      const body = { ...credentials, password }
+      const registered = await request('/api/auth/register', 'POST', body)
+      expect(registered.status).toBe(201)
+      expect((await request('/api/auth/login', 'POST', body)).status).toBe(200)
+      expect(
+        (
+          await request('/api/auth/login', 'POST', {
+            ...body,
+            password: password.startsWith(' ')
+              ? password.trim()
+              : password + '!',
+          })
+        ).status,
+      ).toBe(401)
+    },
+  )
 
   it('rejects cross-origin login, registration and authenticated mutation', async () => {
     const cookie = cookieOf(await register())

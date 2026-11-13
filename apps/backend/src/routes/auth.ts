@@ -31,7 +31,7 @@ const registrationInput = z.strictObject({
     .regex(/^[A-Za-z0-9_-]+$/),
   password: z
     .string()
-    .min(15)
+    .min(7)
     .max(32)
     .refine((value) => /\S/u.test(value)),
 })

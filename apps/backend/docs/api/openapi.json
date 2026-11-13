@@ -5202,10 +5202,10 @@
                   },
                   "password": {
                     "type": "string",
-                    "minLength": 15,
+                    "minLength": 7,
                     "maxLength": 32,
                     "writeOnly": true,
-                    "description": "15〜32文字。空白のみは不可。前後の空白は削らず保持する。",
+                    "description": "7〜32文字。空白のみは不可。前後の空白は削らず保持する。",
                     "pattern": "\\S"
                   }
                 }

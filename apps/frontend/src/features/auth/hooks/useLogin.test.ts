@@ -17,9 +17,9 @@ it.each([
   ['ab', 'valid-long-passphrase', 'ログインID'],
   ['u'.repeat(21), 'valid-long-passphrase', 'ログインID'],
   ['bad id', 'valid-long-passphrase', 'ログインID'],
-  ['operator', 'x'.repeat(14), '15〜32文字'],
-  ['operator', 'x'.repeat(33), '15〜32文字'],
-  ['operator', ' '.repeat(15), '空白のみ'],
+  ['operator', 'x'.repeat(6), '7〜32文字'],
+  ['operator', 'x'.repeat(33), '7〜32文字'],
+  ['operator', ' '.repeat(7), '空白のみ'],
 ])(
   'rejects invalid registration before calling the API (%#)',
   async (userId, password, message) => {
@@ -39,7 +39,7 @@ it.each([
 
 it('accepts the registration boundaries without trimming the password', async () => {
   const { result } = renderHook(() => useLogin())
-  const password = ' 1234567890123 '
+  const password = ' 12345 '
   act(() => {
     result.current.selectMode(true)
     result.current.setUserId('u'.repeat(20))

@@ -114,7 +114,7 @@ test('registration isolates ownership, protects API docs, and keeps participant 
   if (!baseURL) throw new Error('E2E baseURL is missing.')
   const origin = new URL(baseURL).origin
   const userId = `e2e_${randomUUID().replaceAll('-', '').slice(0, 16)}`
-  const password = randomBytes(24).toString('base64url')
+  const password = randomBytes(6).toString('base64url').slice(0, 7)
   const anonymous = await playwright.request.newContext({ baseURL })
   const participant = await playwright.chromium.launch()
   let eventId: string | undefined
@@ -143,13 +143,13 @@ test('registration isolates ownership, protects API docs, and keeps participant 
       page.getByRole('textbox', { name: 'ログインID', exact: true }),
     ).toHaveAttribute('maxlength', '20')
     const passwordInput = page.getByLabel('パスワード', { exact: true })
-    await expect(passwordInput).toHaveAttribute('minlength', '15')
+    await expect(passwordInput).toHaveAttribute('minlength', '7')
     await expect(passwordInput).toHaveAttribute('maxlength', '32')
-    await expect(page.locator('#password-help')).toContainText('15〜32文字')
-    await passwordInput.fill(' '.repeat(15))
+    await expect(page.locator('#password-help')).toContainText('7〜32文字')
+    await passwordInput.fill(' '.repeat(7))
     await page
       .getByLabel('パスワード（確認）', { exact: true })
-      .fill(' '.repeat(15))
+      .fill(' '.repeat(7))
     await page.getByRole('button', { name: '新規登録', exact: true }).click()
     await expect(page.getByRole('alert')).toContainText('空白のみ')
     await passwordInput.fill(password)

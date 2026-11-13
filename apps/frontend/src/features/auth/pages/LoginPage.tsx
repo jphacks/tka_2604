@@ -132,7 +132,7 @@ export function LoginPage() {
                 autoComplete={
                   login.registering ? 'new-password' : 'current-password'
                 }
-                minLength={login.registering ? 15 : undefined}
+                minLength={login.registering ? 7 : undefined}
                 maxLength={login.registering ? 32 : 128}
                 aria-describedby={
                   login.registering ? 'password-help' : undefined
@@ -149,7 +149,7 @@ export function LoginPage() {
                   id="password-help"
                   className="-mt-2 mb-4 text-xs leading-5 text-muted"
                 >
-                  15〜32文字。空白のみは使用できません。他のサービスで使っていないものを設定してください。
+                  7〜32文字。空白のみは使用できません。他のサービスで使っていないものを設定してください。
                 </p>
                 <label className="mb-5 flex flex-col gap-2 text-sm font-medium">
                   パスワード（確認）

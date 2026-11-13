@@ -20,8 +20,8 @@ export function useLogin() {
         )
         return
       }
-      if (password.length < 15 || password.length > 32) {
-        setError('パスワードは15〜32文字にしてください。')
+      if (password.length < 7 || password.length > 32) {
+        setError('パスワードは7〜32文字にしてください。')
         return
       }
       if (!/\S/u.test(password)) {

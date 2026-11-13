@@ -16,8 +16,7 @@ const usage = `Usage: npm run auth:provision -- --local --user-id USER [--env de
 Creates a user or changes the password without changing their events.
 All existing sessions for that user are revoked. Apply DB migrations first.
 Passwords are read with hidden terminal input and confirmation, or from stdin.
-Passwords must be 15–32 characters. Never pass a password as an argument.
-Only --local --user-id demo-owner may add --local-demo-password to allow 8–32 characters.
+Passwords must be 7–32 characters. Never pass a password as an argument.
 `
 
 function options() {
@@ -30,7 +29,6 @@ function options() {
         env: { type: 'string' },
         'user-id': { type: 'string' },
         'persist-to': { type: 'string' },
-        'local-demo-password': { type: 'boolean' },
         help: { type: 'boolean' },
       },
       allowPositionals: false,
@@ -58,17 +56,11 @@ function options() {
     )
   if (values.remote && values['persist-to'])
     throw new Error('--persist-to can only be used with --local.')
-  const localDemoPassword = Boolean(values['local-demo-password'])
-  if (localDemoPassword && (!values.local || userId !== 'demo-owner'))
-    throw new Error(
-      '--local-demo-password is only allowed with --local --user-id demo-owner.',
-    )
   return {
     local: Boolean(values.local),
     env,
     userId,
     persistTo: values['persist-to'],
-    localDemoPassword,
   }
 }
 
@@ -115,9 +107,8 @@ async function readPassword() {
 }
 
 async function provision(target, password) {
-  const minimumLength = target.localDemoPassword ? 8 : 15
-  if (password.length < minimumLength || password.length > 32)
-    throw new Error(`Password must contain ${minimumLength}–32 characters.`)
+  if (password.length < 7 || password.length > 32)
+    throw new Error('Password must contain 7–32 characters.')
   if (!/\S/u.test(password))
     throw new Error('Password must not contain only whitespace.')
   const hash = await hashPassword(password)
