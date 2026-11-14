@@ -36,6 +36,10 @@ it('reuses the user ID after a lost response and restores authoritative history'
   act(() => result.current.setChatDraft('希望'))
   await act(() => result.current.sendMessage())
   expect(result.current.chatDraft).toBe('希望')
+  expect(result.current.chatError).toBe('通信失敗')
+  expect(dispatch).not.toHaveBeenCalledWith(
+    expect.objectContaining({ type: 'notice' }),
+  )
   const id = api.sendMessage.mock.calls[0][3] as string
   const messages = [
     { id, role: 'user', text: '希望', replyToMessageId: null },
@@ -44,6 +48,7 @@ it('reuses the user ID after a lost response and restores authoritative history'
   api.getMessages.mockResolvedValue(messages)
   await act(() => result.current.sendMessage())
   expect(api.sendMessage.mock.calls[1][3]).toBe(id)
+  expect(result.current.chatError).toBe('')
   expect(dispatch).toHaveBeenLastCalledWith({ type: 'messages', messages })
 })
 
@@ -60,7 +65,9 @@ it('retries an unanswered persisted message using its original ID after reopenin
     useEventChat('a', vi.fn(), { ...event, messages: [user] }, false),
   )
   expect(result.current.unanswered).toEqual([user])
-  await act(() => result.current.retryMessage(user))
+  expect(result.current.chatError).toBe('')
+  act(() => result.current.setChatDraft(user.text))
+  await act(() => result.current.sendMessage())
   expect(api.sendMessage.mock.calls[0][3]).toBe('existing')
 })
 
@@ -90,7 +97,9 @@ it('retries a failed decision log with the same ID without asking the model', as
   const { result } = renderHook(() => useEventChat('a', vi.fn(), event, false))
   await act(() => result.current.recordDecision('discarded'))
   expect(result.current.pendingDecision?.decision).toBe('discarded')
-  await act(() => result.current.retryDecision())
+  expect(result.current.chatError).toBe('通信失敗')
+  expect(result.current.canSend).toBe(true)
+  await act(() => result.current.sendMessage())
   expect(api.recordDecision.mock.calls[1][2]).toBe(
     api.recordDecision.mock.calls[0][2],
   )
@@ -149,4 +158,26 @@ it('keeps a reorder proposal with the reply text until it is dismissed', async (
   })
   act(() => result.current.dismissReorder())
   expect(result.current.chatReorder).toBeNull()
+})
+
+it('only shows errors after a failed request and keeps dismissed errors hidden', async () => {
+  const message = { id: 'unanswered', role: 'user' as const, text: '希望' }
+  const data = { ...event, messages: [message] }
+  const { result, rerender } = renderHook(() =>
+    useEventChat('a', vi.fn(), data, false),
+  )
+  expect(result.current.chatError).toBe('')
+  api.sendMessage.mockRejectedValue(new Error('通信失敗'))
+  act(() => result.current.setChatDraft('希望'))
+  await act(() => result.current.sendMessage())
+  expect(result.current.chatError).toBe('通信失敗')
+  act(() => result.current.dismissChatError())
+  rerender()
+  expect(result.current.chatError).toBe('')
+  expect(result.current.unanswered).toEqual([message])
+  api.sendMessage.mockRejectedValueOnce(new Error('通信失敗'))
+  act(() => result.current.setChatDraft('希望'))
+  await act(() => result.current.sendMessage())
+  expect(result.current.chatError).toBe('通信失敗')
+  expect(api.sendMessage.mock.calls[0][3]).toBe('unanswered')
 })

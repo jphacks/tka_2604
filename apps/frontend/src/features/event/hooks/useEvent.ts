@@ -6,8 +6,18 @@ import {
   evaluateConstraint,
 } from '../../../shared/model/constraints'
 import { type EventData, scheduleContent } from '../../../shared/model/event'
+import {
+  canAutoApprove,
+  readAutoApproval,
+  storeAutoApproval,
+} from '../model/autoApproval'
 import { applyChatProposal } from '../model/chatProposal'
 import { applyChatReorder } from '../model/chatReorder'
+import {
+  emptyConstraintFilters,
+  filterConstraintViews,
+} from '../model/constraintFilters'
+import { skipHistoryWarning, skipsHistoryWarning } from '../model/editHistory'
 import {
   type ConstraintPatch,
   eventReducer,
@@ -21,12 +31,18 @@ import { eventRepository } from '../repositories/eventRepository'
 import { useEventChat } from './useEventChat'
 
 export function useEvent(eventId: string) {
+  const [autoApprove, setAutoApprove] = useState(readAutoApproval)
+  const autoAttempted = useRef(new Set<string>())
   const [state, dispatch] = useReducer(eventReducer, initialState)
+  const [historyConfirmation, setHistoryConfirmation] = useState<
+    'undo' | 'redo' | null
+  >(null)
   const [baseline, setBaseline] = useState<EventData | null>(null)
   const [savingKind, setSavingKind] = useState<
     'schedule' | 'constraints' | null
   >(null)
   const saving = savingKind !== null
+  const [importing, setImporting] = useState(false)
   const [deletingBand, setDeletingBand] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [failedKind, setFailedKind] = useState<'schedule' | 'constraints'>(
@@ -51,10 +67,20 @@ export function useEvent(eventId: string) {
     eventId,
     dispatch,
     event,
-    dirty || saving || solving || refreshing || deletingBand,
+    dirty || saving || solving || refreshing || deletingBand || importing,
   )
   const [loadError, setLoadError] = useState('')
+  useEffect(() => {
+    if (!state.notice || state.error || saveError || loadError) return
+    const timer = window.setTimeout(() => {
+      dispatch({ type: 'notice', message: '' })
+    }, 5000)
+    return () => window.clearTimeout(timer)
+  }, [state.notice, state.error, saveError, loadError])
   const [retry, setRetry] = useState(0)
+  const [constraintFilters, setConstraintFilters] = useState({
+    ...emptyConstraintFilters,
+  })
   const [showUnmet, setShowUnmet] = useState(false)
   // Bumped on each approved AI reorder so the schedule animates the move.
   const [reorderRevision, setReorderRevision] = useState(0)
@@ -137,7 +163,8 @@ export function useEvent(eventId: string) {
         busy.current ||
         refreshing ||
         chat.sending ||
-        deletingBand
+        deletingBand ||
+        importing
       )
         return null
       busy.current = true
@@ -160,7 +187,7 @@ export function useEvent(eventId: string) {
       }
       return null
     },
-    [event, refreshing, chat.sending, deletingBand, persist],
+    [event, refreshing, chat.sending, deletingBand, importing, persist],
   )
 
   useEffect(() => {
@@ -171,6 +198,7 @@ export function useEvent(eventId: string) {
       refreshing ||
       chat.sending ||
       deletingBand ||
+      importing ||
       saveError
     )
       return
@@ -188,12 +216,20 @@ export function useEvent(eventId: string) {
     refreshing,
     chat.sending,
     deletingBand,
+    importing,
     saveError,
     save,
   ])
 
   async function generate() {
-    if (!event || busy.current || refreshing || chat.sending || deletingBand)
+    if (
+      !event ||
+      busy.current ||
+      refreshing ||
+      chat.sending ||
+      deletingBand ||
+      importing
+    )
       return
     busy.current = true
     setSolving(true)
@@ -212,7 +248,7 @@ export function useEvent(eventId: string) {
       if (signal?.aborted) return
       const next = applySolverSchedule(current, result)
       setReorderRevision((value) => value + 1)
-      dispatch({ type: 'loaded', event: next })
+      dispatch({ type: 'loaded', event: next, keepHistory: true })
       setBaseline(next)
       dispatch({ type: 'notice', message: solveMessages[result.result.status] })
     } catch (error) {
@@ -239,8 +275,25 @@ export function useEvent(eventId: string) {
       }))
     : []
   const edit: typeof dispatch = (action) => {
-    if (busy.current || refreshing || chat.sending || deletingBand) return
+    if (busy.current || refreshing || chat.sending || deletingBand || importing)
+      return
     dispatch(action)
+  }
+  const historyBlocked =
+    saving || solving || refreshing || chat.sending || deletingBand || importing
+  function requestHistory(direction: 'undo' | 'redo') {
+    if (!event || historyBlocked) return
+    const target = (direction === 'undo' ? state.past : state.future).at(-1)
+    if (!target) return
+    if (
+      JSON.stringify(target.constraints) !==
+        JSON.stringify(event.constraints) &&
+      !skipsHistoryWarning()
+    ) {
+      setHistoryConfirmation(direction)
+      return
+    }
+    dispatch({ type: 'history', direction })
   }
   async function deleteBand(bandId: string) {
     const snapshot = event
@@ -279,9 +332,114 @@ export function useEvent(eventId: string) {
       setDeletingBand(false)
     }
   }
+  const applyProposal = useCallback(async () => {
+    if (
+      !event ||
+      !chat.chatProposal ||
+      chat.pendingDecision ||
+      chat.chatBlocked ||
+      busy.current ||
+      refreshing ||
+      chat.sending
+    )
+      return
+    try {
+      const constraints = applyChatProposal(event, chat.chatProposal)
+      if (await save('constraints', { ...event, constraints })) {
+        dispatch({ type: 'constraints-replaced', constraints })
+        chat.dismissProposal()
+        await chat.recordDecision('applied')
+      }
+    } catch (error) {
+      dispatch({
+        type: 'notice',
+        error: true,
+        message:
+          error instanceof Error
+            ? error.message
+            : '提案を反映できませんでした。',
+      })
+    }
+  }, [event, chat, refreshing, save])
+
+  useEffect(() => {
+    const proposal = chat.chatProposal
+    if (
+      !autoApprove ||
+      !proposal ||
+      !canAutoApprove(proposal) ||
+      chat.sending ||
+      chat.chatBlocked ||
+      chat.pendingDecision ||
+      saving ||
+      solving ||
+      refreshing ||
+      importing ||
+      deletingBand
+    )
+      return
+    let cancelled = false
+    queueMicrotask(() => {
+      if (cancelled || autoAttempted.current.has(proposal.messageId)) return
+      autoAttempted.current.add(proposal.messageId)
+      void applyProposal()
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [
+    autoApprove,
+    chat.chatProposal,
+    chat.sending,
+    chat.chatBlocked,
+    chat.pendingDecision,
+    saving,
+    solving,
+    refreshing,
+    importing,
+    deletingBand,
+    applyProposal,
+  ])
   return {
     ...state,
     ...chat,
+    autoApprove,
+    setAutoApprove: (value: boolean) => {
+      storeAutoApproval(value)
+      setAutoApprove(value)
+    },
+    importing,
+    setImporting,
+    canUndo: state.past.length > 0 && !historyBlocked,
+    canRedo: state.future.length > 0 && !historyBlocked,
+    undo: () => requestHistory('undo'),
+    redo: () => requestHistory('redo'),
+    historyConfirmation,
+    cancelHistory: () => setHistoryConfirmation(null),
+    confirmHistory: (skip: boolean) => {
+      if (historyBlocked || !historyConfirmation) return
+      if (skip) skipHistoryWarning()
+      dispatch({ type: 'history', direction: historyConfirmation })
+      setHistoryConfirmation(null)
+    },
+    saveConstraintBatch: (constraints: Constraint[]) =>
+      edit({
+        type: 'batch',
+        actions: constraints.map((constraint) => ({
+          type: 'constraint-save',
+          constraint,
+        })),
+      }),
+    updateConstraints: (ids: string[], patch: ConstraintPatch) =>
+      edit({
+        type: 'batch',
+        actions: ids.map((id) => ({ type: 'constraint-update', id, patch })),
+      }),
+    deleteConstraints: (ids: string[]) =>
+      edit({
+        type: 'batch',
+        actions: ids.map((id) => ({ type: 'constraint-delete', id })),
+      }),
     error: state.error || saveError,
     saveFailed: Boolean(saveError),
     retrySave: () => save(failedKind),
@@ -290,35 +448,7 @@ export function useEvent(eventId: string) {
     solving,
     deletingBand,
     deleteBand,
-    applyProposal: async () => {
-      if (
-        !event ||
-        !chat.chatProposal ||
-        chat.pendingDecision ||
-        chat.chatBlocked ||
-        busy.current ||
-        refreshing ||
-        chat.sending
-      )
-        return
-      try {
-        const constraints = applyChatProposal(event, chat.chatProposal)
-        if (await save('constraints', { ...event, constraints })) {
-          dispatch({ type: 'constraints-replaced', constraints })
-          chat.dismissProposal()
-          await chat.recordDecision('applied')
-        }
-      } catch (error) {
-        dispatch({
-          type: 'notice',
-          error: true,
-          message:
-            error instanceof Error
-              ? error.message
-              : '提案を反映できませんでした。',
-        })
-      }
-    },
+    applyProposal,
     dismissProposal: () => {
       if (
         !chat.chatProposal ||
@@ -359,7 +489,7 @@ export function useEvent(eventId: string) {
       if (!saved) return
       chat.dismissReorder()
       setReorderRevision((value) => value + 1)
-      dispatch({ type: 'loaded', event: saved })
+      dispatch({ type: 'loaded', event: saved, keepHistory: true })
       dispatch({
         type: 'notice',
         message: '並べ替え案を出演順に保存しました。',
@@ -379,16 +509,31 @@ export function useEvent(eventId: string) {
     },
     reorderRevision,
     loadError,
+    processingMessage: importing
+      ? '名簿CSVを登録しています。'
+      : chat.sending
+        ? 'AIが考えています。返信が届くまで編集できません。'
+        : saving
+          ? '変更を保存しています。'
+          : solving
+            ? '出演順を計算しています。'
+            : refreshing
+              ? '最新の状態を取得しています。'
+              : deletingBand
+                ? '出演枠を削除しています。'
+                : undefined,
     saving,
     savingSchedule: savingKind === 'schedule',
     refreshing,
     scheduleDirty,
     constraintsDirty,
     schedule: event ? buildSchedule(event) : null,
-    constraintViews: views.filter(
-      (view) =>
-        !showUnmet || view.status === 'unmet' || view.status === 'invalid',
-    ),
+    constraintFilters,
+    setConstraintFilters,
+    allConstraintViews: views,
+    constraintViews: event
+      ? filterConstraintViews(views, event, constraintFilters, showUnmet)
+      : [],
     unmetCount: views.filter(
       (view) => view.status === 'unmet' || view.status === 'invalid',
     ).length,

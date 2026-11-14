@@ -9,8 +9,7 @@ test('production flow: create an event, open its form, register and update DB me
   request,
 }) => {
   await page.goto('/login')
-  await expect(page.locator('body')).not.toContainText('デモ')
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await page
     .getByRole('button', { name: 'イベントを作成', exact: true })
     .first()
@@ -28,7 +27,9 @@ test('production flow: create an event, open its form, register and update DB me
   ).toBeVisible()
   const eventId = new URL(page.url()).pathname.split('/')[2]
   try {
-    await page.getByRole('link', { name: 'フォーム管理', exact: true }).click()
+    await page
+      .getByRole('button', { name: 'フォーム管理', exact: true })
+      .click()
     await expect(
       page.getByRole('textbox', { name: '回答フォームのリンク' }),
     ).toHaveValue(new RegExp(`/event/${eventId}/forms$`))
@@ -62,7 +63,7 @@ test('production flow: create an event, open its form, register and update DB me
     await editDialog.getByRole('button', { name: '変更を保存' }).click()
     await expect(editDialog).toHaveCount(0)
     await page.reload()
-    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
     await expect(
       page.getByRole('button', {
         name: '更新を保存する出演枠の詳細',

@@ -6,9 +6,12 @@ import { Button } from '../../../shared/ui/Button'
 import { Dialog } from '../../../shared/ui/Dialog'
 import { RegistrationFields } from '../../forms/components/RegistrationFields'
 import { usePublicRegistration } from '../../forms/hooks/usePublicRegistration'
+import type { EventController } from '../hooks/useEvent'
+import { RelatedConstraints } from './RelatedConstraints'
 
 export function PerformanceDetailsDialog({
   event,
+  controller,
   performance,
   position,
   unavailable,
@@ -19,6 +22,7 @@ export function PerformanceDetailsDialog({
   onRefresh,
   onClose,
 }: {
+  controller?: EventController
   event: EventData
   performance: Performance & { fixed: boolean }
   position: number | null
@@ -45,6 +49,7 @@ export function PerformanceDetailsDialog({
       }
       onClose={onClose}
       busy={deleting || savingEdit}
+      size={editing ? 'wide' : 'default'}
     >
       {confirming ? (
         <>
@@ -117,6 +122,12 @@ export function PerformanceDetailsDialog({
               </p>
             )}
           </dl>
+          {controller && (
+            <RelatedConstraints
+              controller={controller}
+              bandId={performance.id}
+            />
+          )}
           {unavailable && (
             <p className="mt-4 text-xs text-muted">
               未保存の変更を保存してから編集・削除できます。
@@ -193,7 +204,7 @@ function PerformanceEditForm({
     >
       <fieldset
         disabled={unavailable || controller.busy || controller.refreshing}
-        className="space-y-5 disabled:opacity-60"
+        className="min-w-0 space-y-5 disabled:opacity-60"
       >
         {controller.data && (
           <RegistrationFields controller={controller} fixedBand />

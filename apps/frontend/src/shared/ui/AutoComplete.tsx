@@ -144,14 +144,16 @@ export function AutoComplete({
   const descriptionId = `${listId}-description`
   const listVisible = open && !disabled && !chipLabel
   return (
-    <div onBlur={handleBlur}>
+    <div className="min-w-0" onBlur={handleBlur}>
       <div className="relative">
         {chipLabel ? (
           <div
             className={`flex items-center rounded-md border border-[#cbd9ed] bg-white px-2.5 ${className}`}
           >
-            <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-900">
-              <span className="truncate">{chipLabel}</span>
+            <span className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-900">
+              <span className="truncate" title={chipLabel}>
+                {chipLabel}
+              </span>
               <button
                 type="button"
                 aria-label={`${label}の選択を解除`}
@@ -183,7 +185,9 @@ export function AutoComplete({
                 key={option.value}
                 className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-900"
               >
-                <span className="truncate">{option.label}</span>
+                <span className="truncate" title={option.label}>
+                  {option.label}
+                </span>
                 <button
                   type="button"
                   aria-label={`${option.label}の選択を解除`}

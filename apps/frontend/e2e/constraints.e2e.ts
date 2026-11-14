@@ -4,7 +4,7 @@ import { expect, test } from './database-fixture'
 
 async function openEvent(page: Page, eventId: string) {
   await page.goto(`/event/${eventId}`)
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await expect(
     page.getByRole('heading', { name: '春ライブ 2026', exact: true, level: 1 }),
   ).toBeVisible()
@@ -24,6 +24,12 @@ test('all condition choices produce editable conditions with live evaluation', a
   databaseEvent,
 }, testInfo) => {
   await openEvent(page, databaseEvent.eventId)
+  await expect(
+    page
+      .getByRole('heading', { name: '制約', exact: true, level: 2 })
+      .locator('../..')
+      .getByRole('button', { name: '手動追加', exact: true }),
+  ).toBeVisible()
   let dialog = await choose(page, /メンバーの出演間隔を空ける/)
   await dialog.getByRole('button', { name: 'この条件を追加' }).click()
   await expect(dialog.getByRole('alert')).toContainText('メンバーを選んで')
@@ -99,13 +105,28 @@ test('all condition choices produce editable conditions with live evaluation', a
     .click()
   await dialog.getByRole('spinbutton', { name: '出演位置（番）' }).fill('6')
   await dialog.getByRole('button', { name: 'この条件を追加' }).click()
-  const unassignedCondition = page.getByRole('article').filter({
+  const fixedGroup = page.getByRole('article').filter({
     has: page.getByRole('heading', {
-      name: '源泉掛け流しを6番にする',
+      name: '3組の出演順を固定する',
       exact: true,
     }),
   })
-  await expect(unassignedCondition).toContainText('未配置')
+  await expect(fixedGroup).toBeVisible()
+  await fixedGroup
+    .getByRole('button', { name: '内訳（3組）', exact: true })
+    .click()
+  await expect(fixedGroup.getByRole('listitem')).toHaveCount(3)
+  await expect(
+    fixedGroup.getByText('気分上々↑↑を1番にする', { exact: true }),
+  ).toBeVisible()
+  await expect(
+    fixedGroup.getByText('月のワルツを5番にする', { exact: true }),
+  ).toBeVisible()
+  const unassignedCondition = fixedGroup.getByRole('listitem').filter({
+    hasText: '源泉掛け流しを6番にする',
+  })
+  await expect(unassignedCondition).toBeVisible()
+  await expect(unassignedCondition).not.toContainText('未配置')
 
   dialog = await choose(page, /出演できる範囲・部を指定する/)
   await dialog
@@ -145,8 +166,64 @@ test('all condition choices produce editable conditions with live evaluation', a
     .getByRole('button', { name: '削除する' })
     .click()
   await expect(rangeCondition).toHaveCount(0)
-  await page.getByRole('button', { name: /未達成のみ/ }).click()
-  await expect(unassignedCondition).toHaveCount(0)
+  await page.getByRole('button', { name: 'フィルターを設定' }).click()
+  await page
+    .getByRole('dialog', { name: '制約の絞り込み' })
+    .getByRole('button', { name: /未達成のみ/ })
+    .click()
+  await page
+    .getByRole('dialog', { name: '制約の絞り込み' })
+    .getByRole('button', { name: '完了' })
+    .click()
+  await expect(
+    page.getByText('源泉掛け流しを6番にする', { exact: true }),
+  ).toHaveCount(0)
+})
+
+test('filter chips stay in one horizontally scrollable row and clear independently', async ({
+  page,
+  databaseEvent,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await openEvent(page, databaseEvent.eventId)
+  await page.getByRole('tab', { name: '制約', exact: true }).click()
+  const bar = page.getByRole('group', { name: '制約フィルター' })
+  const before = await bar.boundingBox()
+  await page.getByRole('button', { name: 'フィルターを設定' }).click()
+  const dialog = page.getByRole('dialog', { name: '制約の絞り込み' })
+  await dialog.getByRole('textbox', { name: '制約を検索' }).fill('佐藤')
+  await dialog
+    .getByRole('combobox', { name: '制約の種類で絞り込み' })
+    .selectOption('min_gap_member')
+  await dialog
+    .getByRole('combobox', { name: '制約の達成状況で絞り込み' })
+    .selectOption('unchecked')
+  await dialog
+    .getByRole('combobox', { name: 'バンドで絞り込み' })
+    .selectOption({ index: 1 })
+  await dialog
+    .getByRole('combobox', { name: 'メンバーで絞り込み' })
+    .selectOption({ index: 1 })
+  await dialog.getByRole('button', { name: '完了' }).click()
+  expect((await bar.boundingBox())?.height).toBe(before?.height)
+  const scroll = page.getByRole('region', { name: '選択中のフィルター' })
+  expect(
+    await scroll.evaluate(
+      (element) => element.scrollWidth > element.clientWidth,
+    ),
+  ).toBe(true)
+  await bar.getByRole('button', { name: '検索: 佐藤を解除' }).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(
+    bar.getByRole('button', { name: '状況: 未判定を解除' }),
+  ).toHaveCount(1)
+  await page.getByRole('button', { name: 'フィルターを設定' }).click()
+  await expect(dialog.getByRole('textbox', { name: '制約を検索' })).toHaveValue(
+    '',
+  )
+  await expect(
+    dialog.getByRole('combobox', { name: '制約の達成状況で絞り込み' }),
+  ).toHaveValue('unchecked')
 })
 
 test('mobile layout and modal remain usable without page overflow', async ({
@@ -198,7 +275,10 @@ test('the recommended member gap is added in one step and listed as one card', a
     .getByRole('article')
     .filter({ hasText: /\d+人の出演の間に1組以上空ける/ })
   await expect(card).toHaveCount(1)
-  await card.getByRole('button', { name: /内訳/ }).click()
+  await card.click({ position: { x: 4, y: 4 } })
+  await expect(
+    card.getByRole('button', { name: '内訳を閉じる' }),
+  ).toHaveAttribute('aria-expanded', 'true')
   await page.screenshot({ path: testInfo.outputPath('recommend-group.png') })
   await card.getByRole('button', { name: '任意', exact: true }).click()
   await expect(

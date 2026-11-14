@@ -31,7 +31,7 @@ async function constraints(request: APIRequestContext, values: Constraint[]) {
 }
 async function open(page: Page) {
   await page.goto('/event/demo-event')
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await expect(
     page.getByRole('button', { name: '自動生成', exact: true }),
   ).toBeEnabled()
@@ -100,7 +100,7 @@ for (const counts of [
         saved.placements.filter((item) => item.partId === part.partId).length,
       ).toBeLessThanOrEqual(part.bandCount)
     await page.reload()
-    await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+    await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
     await page
       .getByRole('button', { name: 'ライブ情報の編集', exact: true })
       .click()
@@ -159,9 +159,16 @@ test('real Solver: generate, enforce fixed/soft constraints, persist and regener
     exact: true,
   })
   await expect(page.locator('section[aria-label="出演順"]')).toHaveAttribute(
-    'inert',
-    '',
+    'aria-busy',
+    'true',
   )
+  await expect
+    .poll(() =>
+      order.evaluate((element) => element.closest('[inert]') !== null),
+    )
+    .toBe(true)
+  await order.evaluate((element) => element.focus())
+  await expect(order).not.toBeFocused()
   release()
   const solved = await response
   expect(solved.status()).toBe(200)
@@ -184,7 +191,7 @@ test('real Solver: generate, enforce fixed/soft constraints, persist and regener
   ).toHaveValue('1')
   await expect(page.getByText('未達成', { exact: true })).toBeVisible()
   await page.reload()
-  await page.getByRole('button', { name: 'ワークスペースを開く' }).click()
+  await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
   await expect(
     page.getByRole('textbox', { name: '未配置バンドの出演順', exact: true }),
   ).not.toHaveValue('')
@@ -237,7 +244,7 @@ test('real Solver: partial placements keep every band and mark missing targets u
   ).toBeVisible()
   await expect(
     page.getByText('対象に未配置の出演枠があります', { exact: true }).first(),
-  ).toBeVisible()
+  ).toHaveCount(0)
   for (const id of missing) {
     const name =
       id === 'demo-band-a'

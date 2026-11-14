@@ -6,6 +6,7 @@ import {
   fixedConstraints,
   positions,
 } from '../../../shared/model/event'
+import { type EditSnapshot, editSnapshot, sameEdits } from './editHistory'
 import {
   movePersistedPerformance,
   setPersistedOrder,
@@ -14,6 +15,8 @@ import { resizeSchedule } from './schedule'
 import type { MoveTarget } from './types'
 
 export interface EventState {
+  past: EditSnapshot[]
+  future: EditSnapshot[]
   event: EventData | null
   notice: string
   error: string
@@ -26,7 +29,9 @@ export type EventAction =
       type: 'schedule-configured'
       event: Pick<EventData, 'sections' | 'unassigned'>
     }
-  | { type: 'loaded'; event: EventData }
+  | { type: 'loaded'; event: EventData; keepHistory?: boolean }
+  | { type: 'batch'; actions: EventAction[] }
+  | { type: 'history'; direction: 'undo' | 'redo' }
   | {
       type: 'saved'
       updatedAt: string
@@ -45,7 +50,13 @@ export type EventAction =
   | { type: 'band-deleted'; id: string; updatedAt: string }
   | { type: 'message'; message: ChatMessage }
 
-export const initialState: EventState = { event: null, notice: '', error: '' }
+export const initialState: EventState = {
+  event: null,
+  notice: '',
+  error: '',
+  past: [],
+  future: [],
+}
 
 export function removeBandFromEvent(
   event: EventData,
@@ -77,10 +88,7 @@ export function removeBandFromEvent(
   }
 }
 
-export function eventReducer(
-  state: EventState,
-  action: EventAction,
-): EventState {
+function reduceEvent(state: EventState, action: EventAction): EventState {
   if (action.type === 'loaded') return { ...initialState, event: action.event }
   if (action.type === 'notice')
     return {
@@ -91,16 +99,22 @@ export function eventReducer(
   if (!state.event) return state
   const event = state.event
   const success = (next: EventData, notice = '') => ({
+    ...state,
     event: next,
     notice: event.scheduleMode === 'dense' ? '' : notice,
     error: '',
   })
   const fail = (error: string) => ({ ...state, error, notice: '' })
   switch (action.type) {
+    case 'history':
+      return state
+    case 'batch':
+      return action.actions.reduce(reduceEvent, state)
     case 'schedule-configured':
       return success({ ...event, ...action.event })
     case 'saved':
       return {
+        ...state,
         event: {
           ...event,
           updatedAt: action.updatedAt,
@@ -249,5 +263,45 @@ export function eventReducer(
             )
           : [...event.messages, action.message],
       })
+  }
+}
+
+export function eventReducer(
+  state: EventState,
+  action: EventAction,
+): EventState {
+  const current = state.event
+  if (action.type === 'history') {
+    if (!current) return state
+    const undo = action.direction === 'undo'
+    const from = undo ? state.past : state.future
+    const snapshot = from.at(-1)
+    if (!snapshot) return state
+    return {
+      ...state,
+      event: { ...current, ...snapshot },
+      error: '',
+      notice: '',
+      past: undo
+        ? state.past.slice(0, -1)
+        : [...state.past, editSnapshot(current)],
+      future: undo
+        ? [...state.future, editSnapshot(current)]
+        : state.future.slice(0, -1),
+    }
+  }
+  const next = reduceEvent(state, action)
+  if (
+    action.type === 'band-deleted' ||
+    (action.type === 'loaded' && !action.keepHistory)
+  )
+    return { ...next, past: [], future: [] }
+  if (!current || !next.event) return next
+  if (sameEdits(editSnapshot(current), editSnapshot(next.event)))
+    return { ...next, past: state.past, future: state.future }
+  return {
+    ...next,
+    past: [...state.past, editSnapshot(current)],
+    future: [],
   }
 }

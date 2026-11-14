@@ -3,6 +3,7 @@ import { Dialog } from '../../../shared/ui/Dialog'
 import { Icon } from '../../../shared/ui/Icon'
 import { Input, Select, Textarea } from '../../../shared/ui/Input'
 import { PartCountFields } from '../../../shared/ui/PartCountFields'
+import { downloadRosterTemplate } from '../../participants/model/rosterTemplate'
 import type { EventsController } from '../hooks/useEvents'
 import { rosterSamples } from '../model/samples'
 
@@ -13,9 +14,6 @@ export function CreateEventDialog({
 }) {
   return (
     <Dialog title="新しいイベントを作成" onClose={controller.closeCreate}>
-      <p className="mb-5 text-xs leading-6 text-muted">
-        イベントを作って、出演者と条件を集めるところから。
-      </p>
       <form
         onSubmit={(event) => {
           event.preventDefault()
@@ -31,7 +29,7 @@ export function CreateEventDialog({
               controller.setDraft({ name: event.target.value })
             }
             maxLength={80}
-            placeholder="空欄なら作成日時の名前になります"
+            placeholder="空欄なら作成日時が名前になります"
             className="mt-2 w-full"
           />
         </label>
@@ -110,6 +108,9 @@ function RosterFields({ controller }: { controller: EventsController }) {
       <p className="text-xs leading-5 text-muted">
         取り込むと出演枠とメンバーをまとめて登録し、部の組数も組数に合わせます。
       </p>
+      <Button onClick={downloadRosterTemplate} disabled={controller.busy}>
+        テンプレートをダウンロード
+      </Button>
       <div className="flex flex-wrap items-center gap-2">
         <Select
           aria-label="サンプル名簿"

@@ -3,6 +3,8 @@ import { Icon } from '../../../shared/ui/Icon'
 import { Panel } from '../../../shared/ui/Panel'
 import { useChatScroll } from '../hooks/useChatScroll'
 import type { EventController } from '../hooks/useEvent'
+import { ChatComposer } from './ChatComposer'
+import { ChatMessageItem } from './ChatMessageItem'
 import { ChatProposal } from './ChatProposal'
 import { ReorderDialog } from './ReorderDialog'
 
@@ -26,7 +28,28 @@ export function ChatPanel({
   )
   if (!controller.event || !controller.schedule) return null
   return (
-    <Panel title="AIチャット" className="xl:border-r-0">
+    <Panel
+      title="AIチャット"
+      busy={Boolean(controller.processingMessage)}
+      headerClassName="flex-wrap gap-y-1 py-2"
+      action={
+        <label
+          className="flex items-center gap-1 text-xs"
+          title="制約の追加・変更を自動承認します。削除や設定不足の提案は手動で確認します。設定はこのブラウザに保存します。"
+        >
+          <input
+            type="checkbox"
+            checked={controller.autoApprove}
+            disabled={Boolean(controller.processingMessage)}
+            onChange={(event) =>
+              controller.setAutoApprove(event.target.checked)
+            }
+          />
+          制約の追加・変更を自動承認
+        </label>
+      }
+      className="xl:border-r-0"
+    >
       <div
         ref={endRef}
         className="flex min-h-0 flex-1 scrollbar-thin flex-col overflow-y-auto p-3 wrap-anywhere"
@@ -40,32 +63,7 @@ export function ChatPanel({
             className="space-y-4"
           >
             {controller.event.messages.map((message) => (
-              <div
-                key={message.id}
-                className={message.role === 'user' ? 'ml-7' : ''}
-              >
-                <p
-                  className={`mb-1.5 text-xs text-muted ${message.role === 'user' ? 'italic' : ''}`}
-                >
-                  {message.role === 'user' ? 'あなた' : 'AIアシスタント'}
-                </p>
-                <div
-                  className={`rounded-lg px-3 py-3 text-[13px] leading-[1.85] whitespace-pre-wrap ${message.role === 'user' ? 'bg-[#eaf2ff] text-[#28588f]' : 'bg-[#f2f5f9]'}`}
-                >
-                  {message.text}
-                </div>
-                {controller.unanswered.some(
-                  (item) => item.id === message.id,
-                ) && (
-                  <Button
-                    className="mt-2 text-xs"
-                    disabled={controller.sending || controller.chatBlocked}
-                    onClick={() => void controller.retryMessage(message)}
-                  >
-                    この発言を再試行
-                  </Button>
-                )}
-              </div>
+              <ChatMessageItem key={message.id} message={message} />
             ))}
             {controller.sending && (
               <div role="status">
@@ -82,14 +80,6 @@ export function ChatPanel({
             )}
           </div>
           <ChatProposal controller={controller} />
-          {controller.pendingDecision && (
-            <Button
-              className="mt-2 text-xs"
-              onClick={() => void controller.retryDecision()}
-            >
-              選択の記録を再試行
-            </Button>
-          )}
           <ReorderDialog controller={controller} />
         </div>
         {controller.event.messages.length === 0 && (
@@ -102,6 +92,7 @@ export function ChatPanel({
                 key={prompt}
                 variant="subtle"
                 className="mt-3 text-xs"
+                disabled={controller.sending || controller.recordingDecision}
                 onClick={() => controller.setChatDraft(prompt)}
               >
                 {prompt}
@@ -115,32 +106,43 @@ export function ChatPanel({
           event.preventDefault()
           void controller.sendMessage()
         }}
-        className="shrink-0 border-t border-line p-3"
+        className="shrink-0 border-t border-line bg-white p-3"
       >
         {controller.scheduleDirty && (
           <p className="mb-2 text-xs text-muted">
             出演順の変更を保存してから送信してください。
           </p>
         )}
-        <div className="rounded-lg border border-[#cbd9ed] p-3 transition-colors focus-within:border-brand">
-          <textarea
-            aria-label="AIへのメッセージ"
-            placeholder="要望や調整したいことを入力…"
+        {controller.chatError && (
+          <div
+            role="alert"
+            className="mx-2 -mb-3 flex items-start gap-2 rounded-t-xl border border-red-200 bg-red-50 px-3 pt-2.5 pb-5 text-xs leading-5 text-red-700"
+          >
+            <div className="min-w-0 flex-1 wrap-anywhere">
+              <p className="font-semibold">
+                {controller.pendingDecision
+                  ? '選択の記録に失敗しました'
+                  : 'メッセージの送信に失敗しました'}
+              </p>
+              <p>送信ボタンからもう一度送信してください。</p>
+            </div>
+            <Button
+              variant="ghost"
+              className="min-h-0 px-1 py-0.5 text-red-700 hover:bg-red-100 hover:text-red-800"
+              aria-label="エラーを閉じる"
+              onClick={controller.dismissChatError}
+            >
+              <Icon name="close" />
+            </Button>
+          </div>
+        )}
+        <div className="relative z-10 rounded-xl border border-[#cbd9ed] bg-white p-3 transition-colors focus-within:border-brand">
+          <ChatComposer
             value={controller.chatDraft}
-            onChange={(event) => controller.setChatDraft(event.target.value)}
-            maxLength={1000}
-            rows={2}
-            onKeyDown={(event) => {
-              if (
-                event.key === 'Enter' &&
-                (event.ctrlKey || event.metaKey) &&
-                !event.nativeEvent.isComposing
-              ) {
-                event.preventDefault()
-                void controller.sendMessage()
-              }
-            }}
-            className="w-full resize-none bg-transparent text-[13px] leading-6 placeholder:text-muted focus-visible:ring-0"
+            onChange={controller.setChatDraft}
+            onSubmit={() => void controller.sendMessage()}
+            disabled={controller.sending || controller.recordingDecision}
+            active={active}
           />
           <div className="mt-1 flex items-center justify-between">
             <span className="text-xs text-muted">Ctrl / ⌘ + Enterで送信</span>
@@ -149,7 +151,7 @@ export function ChatPanel({
               type="submit"
               disabled={!controller.canSend}
               aria-label="メッセージを送信"
-              className="size-[34px] min-h-0 p-0"
+              className="size-8.5 min-h-0 p-0"
             >
               <Icon name="arrow" />
             </Button>

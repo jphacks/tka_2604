@@ -119,7 +119,10 @@ it('removes every legacy event status while retaining all business data and FK e
       )
     }
     const before = await snapshot()
-    await applyMigrations(local.binding, { after: '0006_band_description.sql' })
+    await applyMigrations(local.binding, {
+      after: '0006_band_description.sql',
+      through: '0007_remove_event_status.sql',
+    })
     expect(await snapshot()).toEqual(before)
     const { results: columns } = await local.binding
       .prepare('PRAGMA table_info(events)')
