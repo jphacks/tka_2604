@@ -15,9 +15,7 @@ export function AccountRegistration({ onClose }: { onClose: () => void }) {
       }}
     >
       <p className="mb-5 text-sm leading-6 text-muted">
-        別の端末からも続きが使えます。
-        <br />
-        作成したデータはそのまま残ります。
+        別の端末からも続きが使えます。作成したデータはそのまま残ります。
       </p>
       <form
         onSubmit={(event) => {
