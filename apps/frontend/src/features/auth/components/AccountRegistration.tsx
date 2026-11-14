@@ -14,15 +14,11 @@ export function AccountRegistration({ onClose }: { onClose: () => void }) {
         if (!registration.busy) onClose()
       }}
     >
-      <div className="mb-5 rounded-xl bg-wash p-4">
-        <span className="mb-2 flex items-center gap-2 text-sm font-semibold text-brand">
-          <Icon name="check" />
-          つくったイベントを、そのまま引き継ぐ
-        </span>
-        <p className="text-xs leading-6 text-muted">
-          ログインIDとパスワードを設定すると、別の端末からも続きが使えます。イベントや出演順、チャットの内容もすべて残ります。
-        </p>
-      </div>
+      <p className="mb-5 text-sm leading-6 text-muted">
+        別の端末からも続きが使えます。
+        <br />
+        作成したデータはそのまま残ります。
+      </p>
       <form
         onSubmit={(event) => {
           event.preventDefault()
@@ -94,9 +90,6 @@ export function AccountRegistration({ onClose }: { onClose: () => void }) {
           <Icon name="lock" />
           {registration.busy ? '登録中…' : 'アカウント登録'}
         </Button>
-        <p className="mt-3 text-center text-xs text-muted">
-          登録後も、この画面で作業を続けられます。
-        </p>
       </form>
     </Dialog>
   )
