@@ -108,7 +108,7 @@ export function AppFrame({
           <p className="mb-5 text-sm leading-7 text-muted">
             ログアウトすると、データは戻りません。
             <br />
-            残す場合は、アカウント登録を。
+            残す場合は、アカウント登録してください。
           </p>
           {logoutError && (
             <p role="alert" className="mb-4 text-sm text-red-600">
