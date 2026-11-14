@@ -598,7 +598,11 @@ test('chat contract: retry uses the same ID after reopening, with no duplicate m
       .click()
     await expect(page).toHaveURL(`/event/${created.eventId}`)
     await expect(
-      page.getByRole('heading', { name: '別イベントの履歴確認', exact: true }),
+      page.getByRole('heading', {
+        name: '別イベントの履歴確認',
+        exact: true,
+        level: 1,
+      }),
     ).toBeVisible()
     await expect(page.getByText('再送確認の希望', { exact: true })).toHaveCount(
       0,
