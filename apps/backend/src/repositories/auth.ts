@@ -5,7 +5,7 @@ import { authRateLimits, authSessions, users } from '../db/schema'
 
 type Db = ReturnType<typeof createDb>
 export type SessionCredentials = {
-  kind: 'login' | 'register'
+  kind: 'login' | 'register' | 'guest'
   passwordHash: string
 }
 export function authRepository(db: Db) {
@@ -16,6 +16,8 @@ export function authRepository(db: Db) {
           await db
             .select({
               displayName: users.displayName,
+              loginId: users.loginId,
+              isRegistered: users.isRegistered,
             })
             .from(users)
             .where(eq(users.userId, userId))
@@ -39,7 +41,11 @@ export function authRepository(db: Db) {
     async findUser(userId: string) {
       return (
         (
-          await db.select().from(users).where(eq(users.userId, userId)).limit(1)
+          await db
+            .select()
+            .from(users)
+            .where(and(eq(users.loginId, userId), eq(users.isRegistered, true)))
+            .limit(1)
         )[0] ?? null
       )
     },
@@ -54,9 +60,10 @@ export function authRepository(db: Db) {
       const matchesCredentials = and(
         eq(users.userId, userId),
         eq(users.passwordHash, credentials.passwordHash),
+        eq(users.isRegistered, credentials.kind !== 'guest'),
       )
       const insertSession =
-        credentials.kind === 'register'
+        credentials.kind !== 'login'
           ? db
               .insert(authSessions)
               .values({ tokenHash, userId, expiresAt })
@@ -92,11 +99,14 @@ export function authRepository(db: Db) {
         insertSession,
       ] as const
       try {
-        if (credentials.kind === 'register') {
+        if (credentials.kind !== 'login') {
           await db.batch([
-            db
-              .insert(users)
-              .values({ userId, passwordHash: credentials.passwordHash }),
+            db.insert(users).values({
+              userId,
+              passwordHash: credentials.passwordHash,
+              isRegistered: credentials.kind !== 'guest',
+              loginId: credentials.kind === 'guest' ? null : userId,
+            }),
             ...sessionStatements,
           ])
           return true
@@ -112,8 +122,95 @@ export function authRepository(db: Db) {
         let cause: unknown = error
         for (let depth = 0; depth < 4 && cause instanceof Error; depth++) {
           if (
-            credentials.kind === 'register' &&
-            cause.message.includes('UNIQUE constraint failed: users.user_id')
+            credentials.kind !== 'login' &&
+            (cause.message.includes(
+              'UNIQUE constraint failed: users.user_id',
+            ) ||
+              cause.message.includes(
+                'UNIQUE constraint failed: users.login_id',
+              ))
+          )
+            return false
+          cause = cause.cause
+        }
+        throw error
+      }
+    },
+    async completeRegistration(
+      userId: string,
+      loginId: string,
+      passwordHash: string,
+      oldTokenHash: string,
+      tokenHash: string,
+      now: number,
+      expiresAt: number,
+    ) {
+      // The live guest session is checked again in the write transaction. A
+      // fresh password hash identifies this attempt so a racing loser cannot
+      // issue a session or revoke the winner's credentials.
+      const updatedCredentials = and(
+        eq(users.userId, userId),
+        eq(users.loginId, loginId),
+        eq(users.passwordHash, passwordHash),
+        eq(users.isRegistered, true),
+      )
+      try {
+        const [, inserted] = await db.batch([
+          db
+            .update(users)
+            .set({ loginId, passwordHash, isRegistered: true })
+            .where(
+              and(
+                eq(users.userId, userId),
+                eq(users.isRegistered, false),
+                exists(
+                  db
+                    .select({ tokenHash: authSessions.tokenHash })
+                    .from(authSessions)
+                    .where(
+                      and(
+                        eq(authSessions.tokenHash, oldTokenHash),
+                        eq(authSessions.userId, userId),
+                        gt(authSessions.expiresAt, now),
+                      ),
+                    ),
+                ),
+              ),
+            ),
+          db
+            .insert(authSessions)
+            .select(
+              db
+                .select({
+                  tokenHash: sql<string>`${tokenHash}`.as('token_hash'),
+                  userId: users.userId,
+                  expiresAt: sql<number>`${expiresAt}`.as('expires_at'),
+                })
+                .from(users)
+                .where(updatedCredentials),
+            )
+            .returning({ tokenHash: authSessions.tokenHash }),
+          db
+            .delete(authSessions)
+            .where(
+              and(
+                eq(authSessions.userId, userId),
+                sql`${authSessions.tokenHash} != ${tokenHash}`,
+                exists(
+                  db
+                    .select({ userId: users.userId })
+                    .from(users)
+                    .where(updatedCredentials),
+                ),
+              ),
+            ),
+        ])
+        return inserted.length > 0
+      } catch (error) {
+        let cause: unknown = error
+        for (let depth = 0; depth < 4 && cause instanceof Error; depth++) {
+          if (
+            cause.message.includes('UNIQUE constraint failed: users.login_id')
           )
             return false
           cause = cause.cause
@@ -125,7 +222,11 @@ export function authRepository(db: Db) {
       return (
         (
           await db
-            .select({ userId: users.userId })
+            .select({
+              userId: users.userId,
+              isRegistered: users.isRegistered,
+              loginId: users.loginId,
+            })
             .from(authSessions)
             .innerJoin(users, eq(authSessions.userId, users.userId))
             .where(

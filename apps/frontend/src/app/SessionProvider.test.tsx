@@ -91,3 +91,40 @@ describe('server session state', () => {
     expect(result.current.session).toEqual({ userId: 'operator' })
   })
 })
+
+it('starts a guest and registers the same session without creating a second account', async () => {
+  vi.mocked(workspaceRepository.getSession).mockResolvedValueOnce(null)
+  vi.spyOn(workspaceRepository, 'startGuest').mockResolvedValue({
+    userId: 'guest-internal',
+    isRegistered: false,
+  })
+  const register = vi
+    .spyOn(workspaceRepository, 'completeRegistration')
+    .mockResolvedValue({
+      userId: 'guest-internal',
+      loginId: 'my-login',
+      isRegistered: true,
+    })
+  const signup = vi.spyOn(workspaceRepository, 'signUp')
+  const { result } = renderHook(useSession, { wrapper: SessionProvider })
+  await waitFor(() => expect(result.current.loading).toBe(false))
+  await act(() => result.current.startGuest())
+  expect(result.current.session?.isRegistered).toBe(false)
+  register.mockRejectedValueOnce(new Error('ID unavailable'))
+  await act(async () => {
+    await expect(result.current.signUp('my-login', 'password')).rejects.toThrow(
+      'ID unavailable',
+    )
+  })
+  expect(result.current.session).toEqual({
+    userId: 'guest-internal',
+    isRegistered: false,
+  })
+  await act(() => result.current.signUp('my-login', 'password'))
+  expect(signup).not.toHaveBeenCalled()
+  expect(result.current.session).toEqual({
+    userId: 'guest-internal',
+    loginId: 'my-login',
+    isRegistered: true,
+  })
+})

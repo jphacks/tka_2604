@@ -3,8 +3,10 @@ import { Link, NavLink } from 'react-router'
 
 import { useSession } from '../../app/sessionContext'
 import { AccountProfile } from '../../features/auth/components/AccountProfile'
+import { AccountRegistration } from '../../features/auth/components/AccountRegistration'
 import { AppHeader } from './AppHeader'
 import { Button } from './Button'
+import { Dialog } from './Dialog'
 import { Icon } from './Icon'
 
 export function AppFrame({
@@ -24,6 +26,9 @@ export function AppFrame({
 }) {
   const width = workspace ? '' : wide ? 'max-w-[1600px]' : 'max-w-[1200px]'
   const { session, signOut } = useSession()
+  const [registering, setRegistering] = useState(false)
+  const [confirmingLogout, setConfirmingLogout] = useState(false)
+  const guest = session?.isRegistered === false
   const [signingOut, setSigningOut] = useState(false)
   const [logoutError, setLogoutError] = useState('')
   const logoutInFlight = useRef(false)
@@ -59,21 +64,92 @@ export function AppFrame({
           </Link>
         }
       >
-        {session && (
-          <AccountProfile key={session.userId} userId={session.userId} />
+        {guest ? (
+          <Button
+            variant="subtle"
+            className="text-xs"
+            onClick={() => setRegistering(true)}
+          >
+            <Icon name="users" />
+            アカウント登録
+          </Button>
+        ) : (
+          session && (
+            <AccountProfile
+              key={session.userId}
+              userId={session.loginId ?? session.userId}
+            />
+          )
         )}
         <Button
           variant="ghost"
           className="text-xs"
           aria-label="ログアウト"
           disabled={signingOut}
-          onClick={() => void logout()}
+          onClick={() => {
+            if (guest) setConfirmingLogout(true)
+            else void logout()
+          }}
         >
           <Icon name="logout" />
           <span className="hidden sm:inline">ログアウト</span>
         </Button>
       </AppHeader>
-      {logoutError && (
+      {guest && (
+        <div className="flex shrink-0 flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-brand/10 bg-wash/70 px-4 py-2 text-xs leading-5">
+          <span className="font-semibold text-brand">ゲストで利用中</span>
+          <span className="text-muted">
+            登録すると、別の端末からも続きを。ログアウトやCookie削除後はゲストに戻れません。
+          </span>
+        </div>
+      )}
+      {guest && registering && (
+        <AccountRegistration onClose={() => setRegistering(false)} />
+      )}
+      {confirmingLogout && guest && (
+        <Dialog
+          title="ゲスト利用を終了しますか？"
+          busy={signingOut}
+          onClose={() => {
+            if (!signingOut) setConfirmingLogout(false)
+          }}
+        >
+          <p className="mb-5 text-sm leading-7 text-muted">
+            ログアウトすると、このゲストのデータには戻れません。続けて使う場合は、先にアカウント登録してください。
+          </p>
+          {logoutError && (
+            <p role="alert" className="mb-4 text-sm text-red-600">
+              {logoutError}
+            </p>
+          )}
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              disabled={signingOut}
+              onClick={() => setConfirmingLogout(false)}
+            >
+              キャンセル
+            </Button>
+            <Button
+              variant="danger"
+              disabled={signingOut}
+              onClick={() => void logout()}
+            >
+              ログアウト
+            </Button>
+            <Button
+              variant="primary"
+              disabled={signingOut}
+              onClick={() => {
+                setConfirmingLogout(false)
+                setRegistering(true)
+              }}
+            >
+              アカウント登録
+            </Button>
+          </div>
+        </Dialog>
+      )}
+      {logoutError && !confirmingLogout && (
         <p role="alert" className="bg-red-50 px-4 py-3 text-sm text-red-600">
           {logoutError}
         </p>

@@ -189,6 +189,32 @@ export function LoginPage() {
                   : 'ログイン'}
             </Button>
           </form>
+          <div className="mt-6 rounded-xl border border-brand/15 bg-wash/60 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="flex size-8 items-center justify-center rounded-lg bg-white text-brand">
+                <Icon name="sparkle" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-ink">
+                  まずは、出演順をつくってみよう
+                </p>
+                <p className="mt-0.5 text-xs text-muted">
+                  あとからアカウント登録できます
+                </p>
+              </div>
+            </div>
+            <Button
+              className="h-11 w-full"
+              variant="subtle"
+              disabled={login.busy}
+              onClick={() => void login.guest()}
+            >
+              登録せずにはじめる <Icon name="chevron" />
+            </Button>
+            <p className="mt-2.5 text-center text-[11px] leading-5 text-muted">
+              つくったイベントは、アカウント登録後もそのまま。
+            </p>
+          </div>
         </div>
       </main>
     </div>

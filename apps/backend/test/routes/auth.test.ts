@@ -124,7 +124,11 @@ describe('real credentials and server sessions', () => {
     expect(saved[0].passwordHash).not.toContain(credentials.password)
     const cookie = cookieOf(registered)
     const session = await request('/api/auth/session', 'GET', undefined, cookie)
-    expect(await session.json()).toEqual({ userId: credentials.userId })
+    expect(await session.json()).toEqual({
+      userId: credentials.userId,
+      loginId: credentials.userId,
+      isRegistered: true,
+    })
     expect(
       (await request('/api/events', 'GET', undefined, cookie)).status,
     ).toBe(200)

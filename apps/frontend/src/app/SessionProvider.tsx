@@ -39,7 +39,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setLoading(false)
       setRestoreError('')
       setNotice(
-        'セッションの有効期限が切れました。もう一度ログインしてください。',
+        'ログイン状態が失われました。アカウント登録済みの場合は、もう一度ログインしてください。',
       )
     })
     void loadSession(++operation.current)
@@ -69,7 +69,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     await authenticate(() => workspaceRepository.signIn(userId, password))
   }
   async function signUp(userId: string, password: string) {
-    await authenticate(() => workspaceRepository.signUp(userId, password))
+    await authenticate(() =>
+      session?.isRegistered === false
+        ? workspaceRepository.completeRegistration(userId, password)
+        : workspaceRepository.signUp(userId, password),
+    )
+  }
+  async function startGuest() {
+    await authenticate(() => workspaceRepository.startGuest())
   }
   async function signOut() {
     const id = ++operation.current
@@ -93,6 +100,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         retrySession,
         signIn,
         signUp,
+        startGuest,
         signOut,
       }}
     >

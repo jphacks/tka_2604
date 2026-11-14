@@ -10,6 +10,7 @@ export interface SessionContextValue {
   retrySession: () => Promise<void>
   signIn: (userId: string, password: string) => Promise<void>
   signUp: (userId: string, password: string) => Promise<void>
+  startGuest: () => Promise<void>
   signOut: () => Promise<void>
 }
 export const SessionContext = createContext<SessionContextValue | null>(null)
