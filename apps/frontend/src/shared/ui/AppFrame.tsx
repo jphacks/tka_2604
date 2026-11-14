@@ -115,7 +115,9 @@ export function AppFrame({
           }}
         >
           <p className="mb-5 text-sm leading-7 text-muted">
-            ログアウトすると、このゲストのデータには戻れません。続けて使う場合は、先にアカウント登録してください。
+            ログアウトすると、このゲストのデータには戻れません。
+            <br />
+            続けて使う場合は、先にアカウント登録してください。
           </p>
           {logoutError && (
             <p role="alert" className="mb-4 text-sm text-red-600">
