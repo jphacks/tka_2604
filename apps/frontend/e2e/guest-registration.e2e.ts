@@ -32,7 +32,9 @@ test('guest entry, data retention, account registration and login from another b
   await page.setViewportSize({ width: 1440, height: 960 })
   await page.getByRole('button', { name: '登録せずにはじめる' }).click()
   await expect(page).toHaveURL(/\/event$/)
-  await expect(page.getByText('ゲストで利用中', { exact: true })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'アカウント登録', exact: true }),
+  ).toBeVisible()
   const guest = (await (
     await page.request.get('/api/auth/session')
   ).json()) as { userId: string; isRegistered: boolean }
@@ -53,8 +55,34 @@ test('guest entry, data retention, account registration and login from another b
   ).toBeVisible()
   await page.getByRole('button', { name: 'ログアウト', exact: true }).click()
   await expect(
-    page.getByRole('dialog', { name: 'ゲスト利用を終了しますか？' }),
+    page.getByRole('dialog', { name: 'ログアウトしますか？' }),
   ).toBeVisible()
+  const logoutDialog = page.getByRole('dialog', {
+    name: 'ログアウトしますか？',
+  })
+  await expect(logoutDialog).toContainText(
+    'ログアウトすると、データは戻りません。',
+  )
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 })
+    const register = await logoutDialog
+      .getByRole('button', { name: 'アカウント登録', exact: true })
+      .boundingBox()
+    const cancel = await logoutDialog
+      .getByRole('button', { name: 'キャンセル', exact: true })
+      .boundingBox()
+    const logout = await logoutDialog
+      .getByRole('button', { name: 'ログアウト', exact: true })
+      .boundingBox()
+    expect(register!.width).toBeGreaterThan(cancel!.width)
+    expect(register!.y + register!.height).toBeLessThanOrEqual(cancel!.y)
+    expect(cancel!.y).toBe(logout!.y)
+    await expect(logoutDialog).not.toContainText('ゲスト')
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(width)
+  }
+  await page.setViewportSize({ width: 1440, height: 960 })
   await page.getByRole('button', { name: 'キャンセル', exact: true }).click()
   await page
     .getByRole('button', { name: 'アカウント登録', exact: true })
@@ -84,7 +112,9 @@ test('guest entry, data retention, account registration and login from another b
     .click()
   await expect(dialog).not.toBeVisible()
   await expect(page).toHaveURL(new RegExp(`/event/${eventId}$`))
-  await expect(page.getByText('ゲストで利用中', { exact: true })).toHaveCount(0)
+  await expect(
+    page.getByRole('button', { name: 'アカウント登録', exact: true }),
+  ).toHaveCount(0)
   expect(await (await page.request.get('/api/auth/session')).json()).toEqual({
     userId: guest.userId,
     loginId: userId,

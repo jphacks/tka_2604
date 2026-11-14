@@ -26,6 +26,7 @@ export function AccountRegistration({ onClose }: { onClose: () => void }) {
         <label className="mb-2 flex flex-col gap-2 text-sm font-medium">
           ログインID
           <Input
+            className="h-11 sm:h-9"
             name="userId"
             required
             minLength={3}
@@ -46,6 +47,7 @@ export function AccountRegistration({ onClose }: { onClose: () => void }) {
         <label className="mb-2 flex flex-col gap-2 text-sm font-medium">
           パスワード
           <Input
+            className="h-11 sm:h-9"
             type="password"
             required
             minLength={7}
@@ -63,6 +65,7 @@ export function AccountRegistration({ onClose }: { onClose: () => void }) {
         <label className="mb-5 flex flex-col gap-2 text-sm font-medium">
           パスワード（確認）
           <Input
+            className="h-11 sm:h-9"
             type="password"
             required
             maxLength={32}

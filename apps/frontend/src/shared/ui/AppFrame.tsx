@@ -67,10 +67,9 @@ export function AppFrame({
         {guest ? (
           <Button
             variant="subtle"
-            className="text-xs"
+            className="min-h-11 text-xs sm:min-h-9"
             onClick={() => setRegistering(true)}
           >
-            <Icon name="users" />
             アカウント登録
           </Button>
         ) : (
@@ -95,51 +94,31 @@ export function AppFrame({
           <span className="hidden sm:inline">ログアウト</span>
         </Button>
       </AppHeader>
-      {guest && (
-        <div className="flex shrink-0 flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-brand/10 bg-wash/70 px-4 py-2 text-xs leading-5">
-          <span className="font-semibold text-brand">ゲストで利用中</span>
-          <span className="text-muted">
-            登録すると、別の端末からも続きを。ログアウトやCookie削除後はゲストに戻れません。
-          </span>
-        </div>
-      )}
       {guest && registering && (
         <AccountRegistration onClose={() => setRegistering(false)} />
       )}
       {confirmingLogout && guest && (
         <Dialog
-          title="ゲスト利用を終了しますか？"
+          title="ログアウトしますか？"
           busy={signingOut}
           onClose={() => {
             if (!signingOut) setConfirmingLogout(false)
           }}
         >
           <p className="mb-5 text-sm leading-7 text-muted">
-            ログアウトすると、このゲストのデータには戻れません。
+            ログアウトすると、データは戻りません。
             <br />
-            続けて使う場合は、先にアカウント登録してください。
+            残す場合は、アカウント登録を。
           </p>
           {logoutError && (
             <p role="alert" className="mb-4 text-sm text-red-600">
               {logoutError}
             </p>
           )}
-          <div className="flex flex-wrap justify-end gap-2">
-            <Button
-              disabled={signingOut}
-              onClick={() => setConfirmingLogout(false)}
-            >
-              キャンセル
-            </Button>
-            <Button
-              variant="danger"
-              disabled={signingOut}
-              onClick={() => void logout()}
-            >
-              ログアウト
-            </Button>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
             <Button
               variant="primary"
+              className="col-span-2 min-h-11 sm:order-3 sm:min-h-9"
               disabled={signingOut}
               onClick={() => {
                 setConfirmingLogout(false)
@@ -147,6 +126,21 @@ export function AppFrame({
               }}
             >
               アカウント登録
+            </Button>
+            <Button
+              className="min-h-11 sm:order-1 sm:min-h-9"
+              disabled={signingOut}
+              onClick={() => setConfirmingLogout(false)}
+            >
+              キャンセル
+            </Button>
+            <Button
+              variant="danger"
+              className="min-h-11 sm:order-2 sm:min-h-9"
+              disabled={signingOut}
+              onClick={() => void logout()}
+            >
+              ログアウト
             </Button>
           </div>
         </Dialog>
