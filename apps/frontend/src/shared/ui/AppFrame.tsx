@@ -58,7 +58,7 @@ export function AppFrame({
         navigation={
           <Link
             to="/event"
-            className="shrink-0 text-xs whitespace-nowrap text-muted hover:text-brand"
+            className={`${guest ? 'hidden sm:inline' : ''} shrink-0 text-xs whitespace-nowrap text-muted hover:text-brand`}
           >
             マイイベント
           </Link>
