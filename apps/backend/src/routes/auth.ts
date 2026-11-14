@@ -1,10 +1,10 @@
 import { Hono, type MiddlewareHandler } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { HTTPException } from 'hono/http-exception'
-import { validator } from 'hono/validator'
 import { z } from 'zod'
 
 import { AuthError } from '../services/auth/errors'
+import { credentials } from './auth-input'
 import {
   type AuthEnv,
   clearSessionCookie,
@@ -35,26 +35,6 @@ const registrationInput = z.strictObject({
     .max(32)
     .refine((value) => /\S/u.test(value)),
 })
-function credentials<T extends z.ZodType>(
-  schema: T,
-  message = 'ログインIDとパスワードの入力を確認してください。',
-) {
-  return validator('json', (value: unknown, c) => {
-    const result = schema.safeParse(value)
-    if (!result.success)
-      return c.json(
-        {
-          error: {
-            code: 'invalid_input',
-            message,
-            details: [],
-          },
-        },
-        422,
-      )
-    return result.data
-  })
-}
 const requireAuthOrigin: MiddlewareHandler<AuthEnv> = async (c, next) => {
   c.header('Cache-Control', 'no-store')
   // Plain HTTP credentials are permitted only for local development.

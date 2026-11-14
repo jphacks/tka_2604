@@ -82,7 +82,114 @@ const buttonHistory: AIChatInput['recentMessages'] = [
   },
 ]
 
+function partCountInput() {
+  const state = evalInput('部が固定されていない出演枠は何組ある？ 数えて教えて')
+  const base = {
+    schema_version: '1.0.0' as const,
+    event_id: 'eval-event',
+    enabled: true,
+    type: 'in_range' as const,
+    hardness: 'hard' as const,
+    priority: null,
+    params: { kind: 'parts' as const, part_ids: [0] as [number] },
+  }
+  state.context.constraints.push(
+    { ...base, constraint_id: 'fixed', targets: { band_ids: ['b01', 'b02'] } },
+    { ...base, constraint_id: 'duplicate', targets: { band_ids: ['b01'] } },
+    {
+      ...base,
+      constraint_id: 'disabled',
+      enabled: false,
+      targets: { band_ids: ['b03'] },
+    },
+    {
+      ...base,
+      constraint_id: 'soft',
+      hardness: 'soft',
+      priority: 'high',
+      targets: { band_ids: ['b04'] },
+    },
+    {
+      ...base,
+      constraint_id: 'multiple',
+      targets: { band_ids: ['b05'] },
+      params: { kind: 'parts', part_ids: [0, 1] },
+    },
+  )
+  state.recentMessages = [
+    { role: 'user', text: '部が固定されていない出演枠は？' },
+    { role: 'assistant', text: '集計できません。画面で確認してください。' },
+  ]
+  return state
+}
+
+// A reply type alone is insufficient: the old prompt often returned answer
+// while only explaining unsupported settings or redirecting to a button.
+function consultationAnswer(topic: RegExp) {
+  return (output: AIChatOutput) => {
+    if (
+      /自動生成.{0,15}(ボタン|押)|対応(していません|できません)|サポート(していません|対象外)/u.test(
+        output.message,
+      )
+    )
+      return '相談への回答が機能制限・ボタン案内に置き換わっている'
+    return topic.test(output.message) ? null : '質問の内容に答えていない'
+  }
+}
+
 export const evalCases: EvalCase[] = [
+  {
+    name: '部固定と未配置を区別して集計',
+    category: '集計と既存制約の変更',
+    input: partCountInput(),
+    expect: ['answer'],
+    check: (output) =>
+      /10組|１０組|10件/u.test(output.message) &&
+      !/集計できません|数えることはできません/u.test(output.message)
+        ? null
+        : 'hardで部を指定した2組を除く10組を答えていない',
+  },
+  {
+    name: '明示的なhardからsoftへの変更',
+    category: '集計と既存制約の変更',
+    input: evalInput('佐藤の出演間隔の条件をソフト制約にして'),
+    expect: ['approval_required'],
+    check: (output) =>
+      output.actions.some(
+        (a) =>
+          a.type === 'update_constraint' &&
+          a.constraintId === SATO_GAP_ID &&
+          a.constraint.type === 'min_gap_member' &&
+          a.constraint.hardness === 'soft' &&
+          a.constraint.priority === null &&
+          a.constraint.params.min_diff === 2,
+      )
+        ? null
+        : '既存の佐藤の条件を、優先度未指定のsoftへ更新していない',
+  },
+  {
+    name: 'ソフト変更の追記で過去の誤回答に従わない',
+    category: '集計と既存制約の変更',
+    input: evalInput('任意条件にしてということ', {
+      recentMessages: [
+        { role: 'user', text: '佐藤の出演間隔の条件をソフトにして' },
+        {
+          role: 'assistant',
+          text: '硬さの変更は対応していません。削除して作り直してください。',
+        },
+      ],
+    }),
+    expect: ['approval_required'],
+    check: (output) =>
+      output.actions.some(
+        (a) =>
+          a.type === 'update_constraint' &&
+          a.constraintId === SATO_GAP_ID &&
+          a.constraint.hardness === 'soft',
+      )
+        ? null
+        : '対象と変更内容を履歴から補って更新案を返していない',
+  },
   // 1. Calculation requests: guide to the button.
   {
     name: '自動生成して',
@@ -109,6 +216,122 @@ export const evalCases: EvalCase[] = [
     category: '質問',
     input: evalInput('佐藤さんの条件ってどうなってる？'),
     expect: ['answer'],
+  },
+
+  // Consultation must remain distinct from requests to change settings.
+  ...(
+    [
+      [
+        '転換の相談',
+        '転換は何分くらい見ておくといい？',
+        /機材|セッティング|音出し|リハ|分/u,
+      ],
+      ['曲数の相談', '1バンドの持ち時間が20分なら何曲くらいがいい？', /曲|MC/u],
+      [
+        '休憩の相談',
+        'OBOGと現役の合同ライブで、休憩はどう入れるといい？',
+        /休憩|部|観客|転換/u,
+      ],
+      [
+        'トリ選びの相談',
+        'トリはどういう基準で選ぶのがおすすめ？',
+        /盛り上|雰囲気|締め|経験|一体感/u,
+      ],
+      [
+        '出演枠の相談',
+        'ネオンサインはトリに向いてると思う？理由も教えて',
+        /ダンス|ロック|疾走|テンポ|紹介/u,
+      ],
+      [
+        '未登録の特徴に関する一般相談',
+        'メガネのメンバーがいるバンドの照明で気をつけることは？',
+        /照明|反射|光/u,
+      ],
+      [
+        '相談への切替',
+        '並べ替えは一旦置いておいて、転換をスムーズにするコツを教えて',
+        /機材|配置|準備|共有|リハ/u,
+      ],
+    ] as const
+  ).map(([name, message, topic]) => ({
+    name,
+    category: 'ライブ相談',
+    input: evalInput(message, { recentMessages: buttonHistory }),
+    expect: ['answer'] as OutputType[],
+    check: consultationAnswer(topic),
+  })),
+  {
+    name: '間隔の現状確認',
+    category: 'ライブ相談',
+    input: evalInput('佐藤の出番は今、間に何組空いてる？'),
+    expect: ['answer'],
+    check: (output) =>
+      /2組|２組/u.test(output.message)
+        ? null
+        : '現在の配置の間隔（間に2組）を答えていない',
+  },
+  {
+    name: '疑問形の変更依頼',
+    category: '相談と変更の境界',
+    input: evalInput('ネオンサインを第2部にしてもらえる？'),
+    expect: ['approval_required'],
+    check: hasConstraint('in_range'),
+  },
+  {
+    name: '相談と条件変更の混在',
+    category: '相談と変更の境界',
+    input: evalInput(
+      '転換をスムーズにするコツを教えて。それと佐藤の出番は間に2組空けて',
+    ),
+    expect: ['approval_required'],
+    check: (output) => {
+      const gap = constraintsOf(output).some(
+        (c) =>
+          c.type === 'min_gap_member' &&
+          c.targets.member_id === 'm-sato' &&
+          c.params.min_diff === 3,
+      )
+      return !gap
+        ? '佐藤の間隔変更案がない'
+        : /機材|準備|共有|リハ/u.test(output.message)
+          ? null
+          : '転換の相談に答えていない'
+    },
+  },
+  {
+    name: 'おすすめの並びを相談',
+    category: '相談と変更の境界',
+    input: evalInput('紹介をもとに、おすすめの出演順を提案してもらえる？'),
+    expect: ['reorder_proposal'],
+  },
+  {
+    name: '不明な曲目を作らない',
+    category: 'ライブ相談',
+    input: evalInput('ネオンサインは当日どの曲を演奏する予定？'),
+    expect: ['answer'],
+    check: (output) =>
+      /登録|情報|不明|わかりません|分かりません|確認/u.test(output.message)
+        ? null
+        : '未登録の曲目を不明と説明していない',
+  },
+  {
+    name: '配置だけの入れ替え相談',
+    category: '相談と変更の境界',
+    input: evalInput(
+      '条件は変えず、今のネオンサインとシャボン玉の順番を入れ替えた案を見せて',
+    ),
+    expect: ['reorder_proposal'],
+    check: (output) => {
+      if (output.type !== 'reorder_proposal') return '並べ替え案がない'
+      const neon = output.placements.find((p) => p.bandId === 'b02')
+      const bubble = output.placements.find((p) => p.bandId === 'b04')
+      return neon?.partId === 'p1' &&
+        neon.order === 3 &&
+        bubble?.partId === 'p1' &&
+        bubble.order === 1
+        ? null
+        : '指定した2組の入れ替えになっていない'
+    },
   },
 
   // 3. Wishes and circumstances about specific bands or members.
