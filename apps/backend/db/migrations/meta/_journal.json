@@ -78,6 +78,20 @@
       "when": 1794565537090,
       "tag": "0010_remove_custom_avatar",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1794690717392,
+      "tag": "0011_guest_registration",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1794690952578,
+      "tag": "0012_backfill_login_ids",
+      "breakpoints": true
     }
   ]
 }

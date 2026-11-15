@@ -56,8 +56,16 @@ it('shares registration, login, session and logout contracts through Hono RPC', 
     )
     if (session.status !== 200) throw new Error('Session restore failed')
     const restored = await session.json()
-    expectTypeOf(restored).toEqualTypeOf<{ userId: string }>()
-    expect(restored).toEqual({ userId: credentials.userId })
+    expectTypeOf(restored).toEqualTypeOf<{
+      userId: string
+      loginId: string | null
+      isRegistered: boolean
+    }>()
+    expect(restored).toEqual({
+      userId: credentials.userId,
+      loginId: credentials.userId,
+      isRegistered: true,
+    })
 
     const loggedOut = await client.api.auth.logout.$post()
     expect(loggedOut.status).toBe(204)

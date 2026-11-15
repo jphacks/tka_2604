@@ -1,10 +1,10 @@
 import { Hono, type MiddlewareHandler } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { HTTPException } from 'hono/http-exception'
-import { validator } from 'hono/validator'
 import { z } from 'zod'
 
 import { AuthError } from '../services/auth/errors'
+import { credentials } from './auth-input'
 import {
   type AuthEnv,
   clearSessionCookie,
@@ -35,26 +35,6 @@ const registrationInput = z.strictObject({
     .max(32)
     .refine((value) => /\S/u.test(value)),
 })
-function credentials<T extends z.ZodType>(
-  schema: T,
-  message = 'ログインIDとパスワードの入力を確認してください。',
-) {
-  return validator('json', (value: unknown, c) => {
-    const result = schema.safeParse(value)
-    if (!result.success)
-      return c.json(
-        {
-          error: {
-            code: 'invalid_input',
-            message,
-            details: [],
-          },
-        },
-        422,
-      )
-    return result.data
-  })
-}
 const requireAuthOrigin: MiddlewareHandler<AuthEnv> = async (c, next) => {
   c.header('Cache-Control', 'no-store')
   // Plain HTTP credentials are permitted only for local development.
@@ -155,6 +135,52 @@ export const authRoutes = new Hono<AuthEnv>()
     writeSessionCookie(c, session.token)
     return c.json({ userId: session.userId }, 201)
   })
+  .post('/guest', async (c) => {
+    const service = createAuthService(c)
+    const previousToken = readSessionCookie(c)
+    const current = await service.session(previousToken)
+    if (current) return c.json(current, 200)
+    await service.limitAttempts(
+      'guest',
+      'guest',
+      c.req.header('CF-Connecting-IP') ?? 'local',
+    )
+    const session = await service.guest(previousToken)
+    if ('token' in session) writeSessionCookie(c, session.token)
+    return c.json(
+      { userId: session.userId, isRegistered: session.isRegistered },
+      201,
+    )
+  })
+  .post(
+    '/complete-registration',
+    requireSession,
+    credentials(registrationInput),
+    async (c) => {
+      const input = c.req.valid('json')
+      const service = createAuthService(c)
+      await service.limitAttempts(
+        'register',
+        input.userId,
+        c.req.header('CF-Connecting-IP') ?? 'local',
+      )
+      const session = await service.completeRegistration(
+        input.userId,
+        input.password,
+        readSessionCookie(c),
+      )
+      if (!session) return unauthorized(c)
+      writeSessionCookie(c, session.token)
+      return c.json(
+        {
+          userId: session.userId,
+          loginId: session.loginId,
+          isRegistered: session.isRegistered,
+        },
+        200,
+      )
+    },
+  )
   .get('/session', async (c) => {
     const token = readSessionCookie(c)
     if (!token) return unauthorized(c)

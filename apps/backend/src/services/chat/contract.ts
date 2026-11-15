@@ -91,7 +91,12 @@ const actionSchema = z.discriminatedUnion('type', [
 
 export const aiChatInputSchema: z.ZodType<AIChatInput> = z.strictObject({
   context: z.strictObject({
-    event: z.strictObject({ title: z.string() }),
+    event: z.strictObject({
+      title: z.string(),
+      date: z.string().nullable().optional(),
+      venue: z.string().nullable().optional(),
+      description: z.string().nullable().optional(),
+    }),
     parts: z.array(
       z.strictObject({
         partId: id,

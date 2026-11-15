@@ -2831,7 +2831,7 @@
       "post": {
         "operationId": "sendChatMessage",
         "summary": "チャット本文を保存し、AIの返信を保存して返す",
-        "description": "有効なセッションが必要。セッションのユーザーが所有する未削除イベントだけを扱い、クライアントから所有者IDを受け取らない。未認証は401、別所有者のイベントは404。入力検証・イベント所有者と削除状態の確認後、ユーザー発言を先に保存する。最新状態と直近6メッセージでGeminiを呼び、検証済みのmessage本文だけをassistantとして保存する。制約変更案がある新規応答は、検証済みproposalを一時的に返す。確認・必須／任意・必要な優先度の選択後、frontendが既存の制約保存APIで反映する。未適用案は履歴へ保存せず、同じ発言の再送では本文だけを返して変更を再実行しない。チャット送信自体で制約適用やSolver実行は行わない。",
+        "description": "有効なセッションが必要。セッションのユーザーが所有する未削除イベントだけを扱い、クライアントから所有者IDを受け取らない。未認証は401、別所有者のイベントは404。入力検証・イベント所有者と削除状態の確認後、ユーザー発言を先に保存する。件数・部固定の内訳・出演間隔をbackendで計算し、集計失敗時も結果をnullとして会話を続ける。取得できなかった集計値は推測しない。最新状態と直近6メッセージとともにGeminiを呼び、検証済みのmessage本文だけをassistantとして保存する。制約変更案がある新規応答は、検証済みproposalを一時的に返す。hardからsoftへの変更で未指定の優先度にmidを提案することを許容する。確認・必須／任意・必要な優先度の選択後、frontendが既存の制約保存APIで反映する。未適用案は履歴へ保存せず、同じ発言の再送では本文だけを返して変更を再実行しない。チャット送信自体で制約適用やSolver実行は行わない。",
         "tags": ["Chat"],
         "parameters": [
           {
@@ -5211,7 +5211,8 @@
                 }
               }
             }
-          }
+          },
+          "description": "Content-Typeのメディアタイプがapplication/jsonなら、空白・末尾のセミコロン・任意のパラメータ表記を含む場合もJSONとして検証する。本文不正は400、項目不正は422。"
         },
         "responses": {
           "201": {
@@ -5352,7 +5353,8 @@
                 }
               }
             }
-          }
+          },
+          "description": "Content-Typeのメディアタイプがapplication/jsonなら、空白・末尾のセミコロン・任意のパラメータ表記を含む場合もJSONとして検証する。本文不正は400、項目不正は422。"
         },
         "responses": {
           "200": {
@@ -5482,7 +5484,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthenticatedUser"
+                  "$ref": "#/components/schemas/UserSession"
                 }
               }
             }
@@ -5777,6 +5779,254 @@
                     "maxLength": 40,
                     "pattern": "\\S"
                   }
+                }
+              }
+            }
+          },
+          "description": "Content-Typeのメディアタイプがapplication/jsonなら、空白・末尾のセミコロン・任意のパラメータ表記を含む場合もJSONとして検証する。本文不正は400、項目不正は422。"
+        }
+      }
+    },
+    "/api/auth/guest": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "ゲストとして利用開始",
+        "description": "入力不要でゲストと24時間のCookieセッションを発行する。有効なセッションがある場合は再利用する。ゲスト作成はIPごと10回/60秒、認証操作合算30回/60秒。ゲストIDによる通常ログインは不可。",
+        "security": [],
+        "responses": {
+          "201": {
+            "description": "ゲストを作成しセッションを発行",
+            "headers": {
+              "Set-Cookie": {
+                "description": "新しいセッションCookie。HttpOnly・SameSite=Lax・Path=/。HTTPSではSecureと__Host-接頭辞を付ける。有効期間24時間。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticatedUser"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Originの欠落・不一致、異なる送信元、または許可していないHTTP環境。処理は実行しない。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidOriginError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "短時間の試行上限に達しました。時間をおいて再試行してください。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRateLimitError"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "再試行までの秒数。",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "認証処理に失敗しました。内部情報は応答に含めません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationInternalError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "認証リクエストの本文が4KiBを超えています。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationInputError"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "既存のセッションを再利用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSession"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/complete-registration": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "ゲストのアカウント登録",
+        "description": "有効なゲストセッションのユーザーにログインIDとパスワードを設定する。内部userIdと全業務データは維持する。登録とセッション更新を原子的に実行し、旧セッションは失効する。本登録済み・ID重複・予約IDは409。",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "localSessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["userId", "password"],
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 20,
+                    "pattern": "^[A-Za-z0-9_-]+$",
+                    "description": "半角英数字・ハイフン・アンダースコア。demo-ownerは予約済みのため登録不可。"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 7,
+                    "maxLength": 32,
+                    "writeOnly": true,
+                    "description": "7〜32文字。空白のみは不可。前後の空白は削らず保持する。",
+                    "pattern": "\\S"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "JSONの形式が不正です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationInputError"
+                },
+                "example": {
+                  "error": {
+                    "code": "invalid_input",
+                    "message": "JSONの形式が不正です。",
+                    "details": []
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Originの欠落・不一致、異なる送信元、または許可していないHTTP環境。処理は実行しない。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidOriginError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "入力データが不正です。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationInputError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "短時間の試行上限に達しました。時間をおいて再試行してください。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRateLimitError"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "再試行までの秒数。",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "認証処理に失敗しました。内部情報は応答に含めません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationInternalError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "このユーザーIDは利用できません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserIdUnavailableError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "認証リクエストの本文が4KiBを超えています。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationInputError"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "同じユーザーを本登録しセッションを更新",
+            "headers": {
+              "Set-Cookie": {
+                "description": "新しいセッションCookie。HttpOnly・SameSite=Lax・Path=/。HTTPSではSecureと__Host-接頭辞を付ける。有効期間24時間。",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSession"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証、無効または期限切れのセッション。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationError"
                 }
               }
             }
@@ -7351,6 +7601,14 @@
           "userId": {
             "type": "string",
             "minLength": 1
+          },
+          "isRegistered": {
+            "type": "boolean",
+            "description": "本登録済みか。falseのユーザーはパスワードでログインできない。"
+          },
+          "loginId": {
+            "type": ["string", "null"],
+            "description": "ログイン用ID。ゲストはnull。内部userIdとは独立する。"
           }
         }
       },
@@ -7598,6 +7856,25 @@
                 }
               }
             }
+          }
+        }
+      },
+      "UserSession": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["userId", "isRegistered", "loginId"],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "isRegistered": {
+            "type": "boolean",
+            "description": "本登録済みか。falseのユーザーはパスワードでログインできない。"
+          },
+          "loginId": {
+            "type": ["string", "null"],
+            "description": "ログイン用ID。ゲストはnull。内部userIdとは独立する。"
           }
         }
       }

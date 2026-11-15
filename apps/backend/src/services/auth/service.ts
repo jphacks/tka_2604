@@ -38,7 +38,9 @@ export function authService(repository: AuthRepository) {
     async profile(userId: string) {
       const profile = await repository.findProfile(userId)
       if (!profile) return null
-      const displayName = profile.displayName ?? userId
+      const displayName =
+        profile.displayName ??
+        (profile.isRegistered ? (profile.loginId ?? userId) : 'ゲスト')
       return {
         displayName,
       }
@@ -48,7 +50,7 @@ export function authService(repository: AuthRepository) {
       return saved ? profile : null
     },
     async limitAttempts(
-      operation: 'login' | 'register',
+      operation: 'login' | 'register' | 'guest',
       userId: string,
       address: string,
     ) {
@@ -72,13 +74,56 @@ export function authService(repository: AuthRepository) {
     },
     async login(userId: string, password: string, previousToken?: string) {
       const user = await repository.findUser(userId)
-      if (!(await verifyPassword(password, user?.passwordHash)) || !user)
+      if (
+        !(await verifyPassword(
+          password,
+          user?.isRegistered ? user.passwordHash : undefined,
+        )) ||
+        !user?.isRegistered
+      )
         throw new AuthError('invalid_credentials', 401)
       return issueSession(
         user.userId,
         { kind: 'login', passwordHash: user.passwordHash },
         previousToken,
       )
+    },
+    async guest(previousToken?: string) {
+      const current = await this.session(previousToken)
+      if (current) return { ...current, created: false }
+      const userId = `guest_${crypto.randomUUID()}`
+      const session = await issueSession(
+        userId,
+        {
+          kind: 'guest',
+          passwordHash: `guest:${await hashToken(newSessionToken())}`,
+        },
+        previousToken,
+      )
+      return { ...session, isRegistered: false, created: true }
+    },
+    async completeRegistration(
+      loginId: string,
+      password: string,
+      previousToken?: string,
+    ) {
+      const current = await this.session(previousToken)
+      if (!current) return null
+      if (current.isRegistered || loginId === 'demo-owner')
+        throw new AuthError('user_id_unavailable', 409)
+      const token = newSessionToken()
+      const now = Date.now()
+      const saved = await repository.completeRegistration(
+        current.userId,
+        loginId,
+        await hashPassword(password),
+        await hashToken(previousToken!),
+        await hashToken(token),
+        now,
+        now + SESSION_SECONDS * 1000,
+      )
+      if (!saved) throw new AuthError('user_id_unavailable', 409)
+      return { userId: current.userId, loginId, isRegistered: true, token }
     },
     async register(userId: string, password: string, previousToken?: string) {
       // The legacy owner must only be provisioned administratively, even on a

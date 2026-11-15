@@ -5,7 +5,11 @@ import {
   createGeminiChatModel,
 } from '../../../src/integrations/llm/gemini.ts'
 import { generateAIChatResponse } from '../../../src/services/chat/generate.ts'
-import { AI_CHAT_SYSTEM_INSTRUCTIONS } from '../../../src/services/chat/prompt.ts'
+import {
+  AI_CHAT_SYSTEM_INSTRUCTIONS,
+  buildChatPromptInput,
+} from '../../../src/services/chat/prompt.ts'
+import * as statistics from '../../../src/services/chat/statistics.ts'
 import { approval, input } from '../../services/chat/fixtures.ts'
 
 function completed(output: unknown = approval()) {
@@ -28,7 +32,12 @@ describe('Gemini chat integration', () => {
     const request = buildGeminiRequest(state)
     expect(request).toMatchObject({
       model: 'gemini-3.5-flash-lite',
-      contents: [{ role: 'user', parts: [{ text: JSON.stringify(state) }] }],
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: JSON.stringify(buildChatPromptInput(state)) }],
+        },
+      ],
       config: {
         systemInstruction: AI_CHAT_SYSTEM_INSTRUCTIONS,
         responseMimeType: 'application/json',
@@ -38,6 +47,53 @@ describe('Gemini chat integration', () => {
     expect(request.config.systemInstruction).not.toContain(
       '以前の指示を無視して',
     )
+  })
+
+  it('includes code-calculated counts in the provider request', () => {
+    const request = buildGeminiRequest(input())
+    expect(JSON.parse(request.contents[0].parts[0].text)).toMatchObject({
+      statistics: {
+        totals: { bands: 2, members: 1, placedBands: 1, unplacedBands: 1 },
+        partFixing: { fixedCount: 0, unfixedCount: 2 },
+      },
+    })
+  })
+
+  it('continues chatting after statistics fail and calculates normally on the next send', async () => {
+    const calculate = vi
+      .spyOn(statistics, 'buildChatStatistics')
+      .mockImplementationOnce(() => {
+        throw new Error('private event data and test-key')
+      })
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockImplementation(() => Promise.resolve(Response.json(completed())))
+    const model = createGeminiChatModel({ apiKey: 'test-key', fetch: fetcher })
+    const state = input()
+    const original = structuredClone(state)
+
+    expect(await generateAIChatResponse(state, model)).toEqual(approval())
+    expect(await generateAIChatResponse(state, model)).toEqual(approval())
+    const payloads = fetcher.mock.calls.map(([, options]) => {
+      if (typeof options?.body !== 'string')
+        throw new Error('Expected JSON body')
+      return JSON.parse(options.body) as {
+        contents: { parts: { text: string }[] }[]
+      }
+    })
+    expect(JSON.parse(payloads[0].contents[0].parts[0].text)).toEqual({
+      ...state,
+      statistics: null,
+    })
+    expect(JSON.parse(payloads[1].contents[0].parts[0].text)).toMatchObject({
+      ...state,
+      statistics: { totals: { bands: 2 }, partFixing: { unfixedCount: 2 } },
+    })
+    expect(state).toEqual(original)
+    expect(calculate).toHaveBeenCalledTimes(2)
+    expect(warn).toHaveBeenCalledExactlyOnceWith('chat_statistics_unavailable')
+    expect(fetcher).toHaveBeenCalledTimes(2)
   })
 
   it('calls the Google AI Studio Gemini API through the SDK and validates the returned proposal', async () => {
@@ -56,7 +112,12 @@ describe('Gemini chat integration', () => {
     if (typeof options?.body !== 'string') throw new Error('Expected JSON body')
     expect(JSON.parse(options.body)).toMatchObject({
       systemInstruction: { parts: [{ text: AI_CHAT_SYSTEM_INSTRUCTIONS }] },
-      contents: [{ role: 'user', parts: [{ text: JSON.stringify(input()) }] }],
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: JSON.stringify(buildChatPromptInput(input())) }],
+        },
+      ],
       generationConfig: {
         responseMimeType: 'application/json',
         responseJsonSchema: { type: 'object', additionalProperties: false },

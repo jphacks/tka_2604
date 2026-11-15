@@ -112,7 +112,7 @@ export function evalInput(
     unplaced?: boolean
   } = {},
 ): AIChatInput {
-  return {
+  return structuredClone({
     context: {
       event: { title: '秋の学内ライブ' },
       parts,
@@ -141,5 +141,5 @@ export function evalInput(
     recentMessages: options.recentMessages ?? [],
     userMessage,
     pendingProposal: null,
-  }
+  })
 }

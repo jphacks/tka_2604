@@ -123,6 +123,8 @@ describe('authentication races', () => {
     ).toEqual([{ userId: 'current-user' }])
     expect(await service.session(currentToken)).toEqual({
       userId: 'current-user',
+      loginId: 'current-user',
+      isRegistered: true,
     })
     const signedIn = await service.login(
       'reset-user',
@@ -131,6 +133,8 @@ describe('authentication races', () => {
     )
     expect(await service.session(signedIn.token)).toEqual({
       userId: 'reset-user',
+      loginId: 'reset-user',
+      isRegistered: true,
     })
     expect(await service.session(currentToken)).toBeNull()
   })

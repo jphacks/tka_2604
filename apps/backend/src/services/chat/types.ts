@@ -38,7 +38,8 @@ export type ConstraintProposalAction =
 
 export type AIChatInput = {
   context: {
-    event: Pick<EventDetails, 'title'>
+    event: Pick<EventDetails, 'title'> &
+      Partial<Pick<EventDetails, 'date' | 'venue' | 'description'>>
     parts: EventSchedule['parts']
     bands: Pick<
       EventSchedule['bands'][number],

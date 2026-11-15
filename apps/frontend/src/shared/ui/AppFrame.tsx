@@ -3,8 +3,10 @@ import { Link, NavLink } from 'react-router'
 
 import { useSession } from '../../app/sessionContext'
 import { AccountProfile } from '../../features/auth/components/AccountProfile'
+import { AccountRegistration } from '../../features/auth/components/AccountRegistration'
 import { AppHeader } from './AppHeader'
 import { Button } from './Button'
+import { Dialog } from './Dialog'
 import { Icon } from './Icon'
 
 export function AppFrame({
@@ -24,6 +26,9 @@ export function AppFrame({
 }) {
   const width = workspace ? '' : wide ? 'max-w-[1600px]' : 'max-w-[1200px]'
   const { session, signOut } = useSession()
+  const [registering, setRegistering] = useState(false)
+  const [confirmingLogout, setConfirmingLogout] = useState(false)
+  const guest = session?.isRegistered === false
   const [signingOut, setSigningOut] = useState(false)
   const [logoutError, setLogoutError] = useState('')
   const logoutInFlight = useRef(false)
@@ -53,27 +58,94 @@ export function AppFrame({
         navigation={
           <Link
             to="/event"
-            className="shrink-0 text-xs whitespace-nowrap text-muted hover:text-brand"
+            className={`${guest ? 'hidden sm:inline' : ''} shrink-0 text-xs whitespace-nowrap text-muted hover:text-brand`}
           >
             マイイベント
           </Link>
         }
       >
-        {session && (
-          <AccountProfile key={session.userId} userId={session.userId} />
+        {guest ? (
+          <Button
+            variant="subtle"
+            className="min-h-11 text-xs sm:min-h-9"
+            onClick={() => setRegistering(true)}
+          >
+            アカウント登録
+          </Button>
+        ) : (
+          session && (
+            <AccountProfile
+              key={session.userId}
+              userId={session.loginId ?? session.userId}
+            />
+          )
         )}
         <Button
           variant="ghost"
           className="text-xs"
           aria-label="ログアウト"
           disabled={signingOut}
-          onClick={() => void logout()}
+          onClick={() => {
+            if (guest) setConfirmingLogout(true)
+            else void logout()
+          }}
         >
           <Icon name="logout" />
           <span className="hidden sm:inline">ログアウト</span>
         </Button>
       </AppHeader>
-      {logoutError && (
+      {guest && registering && (
+        <AccountRegistration onClose={() => setRegistering(false)} />
+      )}
+      {confirmingLogout && guest && (
+        <Dialog
+          title="ログアウトしますか？"
+          busy={signingOut}
+          onClose={() => {
+            if (!signingOut) setConfirmingLogout(false)
+          }}
+        >
+          <p className="mb-5 text-sm leading-7 text-muted">
+            ログアウトすると、データは戻りません。
+            <br />
+            残す場合は、アカウント登録してください。
+          </p>
+          {logoutError && (
+            <p role="alert" className="mb-4 text-sm text-red-600">
+              {logoutError}
+            </p>
+          )}
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+            <Button
+              variant="primary"
+              className="col-span-2 min-h-11 sm:order-3 sm:min-h-9"
+              disabled={signingOut}
+              onClick={() => {
+                setConfirmingLogout(false)
+                setRegistering(true)
+              }}
+            >
+              アカウント登録
+            </Button>
+            <Button
+              className="min-h-11 sm:order-1 sm:min-h-9"
+              disabled={signingOut}
+              onClick={() => setConfirmingLogout(false)}
+            >
+              キャンセル
+            </Button>
+            <Button
+              variant="danger"
+              className="min-h-11 sm:order-2 sm:min-h-9"
+              disabled={signingOut}
+              onClick={() => void logout()}
+            >
+              ログアウト
+            </Button>
+          </div>
+        </Dialog>
+      )}
+      {logoutError && !confirmingLogout && (
         <p role="alert" className="bg-red-50 px-4 py-3 text-sm text-red-600">
           {logoutError}
         </p>

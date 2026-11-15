@@ -61,7 +61,7 @@ export function LoginPage() {
       </section>
       <main className="flex items-start justify-center bg-white px-6 py-6 md:px-8 md:pt-[max(1.5rem,calc((100dvh-34rem)/2))]">
         <div className="w-full max-w-[380px]">
-          <fieldset className="mb-6 grid grid-cols-2 gap-1 rounded-lg bg-canvas p-1">
+          <fieldset className="mb-7 grid grid-cols-2 border-b border-line">
             <legend className="sr-only">認証方法</legend>
             {[
               { label: 'ログイン', registering: false },
@@ -77,20 +77,15 @@ export function LoginPage() {
                   onChange={() => login.selectMode(mode.registering)}
                   disabled={login.busy}
                 />
-                <span className="flex min-h-10 cursor-pointer items-center justify-center rounded-md text-sm font-medium text-muted transition-colors peer-checked:bg-white peer-checked:text-brand peer-checked:shadow-sm peer-focus-visible:ring-2 peer-focus-visible:ring-brand/50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
+                <span className="-mb-px flex min-h-11 cursor-pointer items-center justify-center border-b-2 border-transparent text-sm font-medium text-muted transition-colors peer-checked:border-brand peer-checked:text-brand peer-focus-visible:outline-2 peer-focus-visible:outline-brand/50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
                   {mode.label}
                 </span>
               </label>
             ))}
           </fieldset>
-          <h2 className="text-xl font-semibold md:text-2xl">
+          <h2 className="sr-only">
             {login.registering ? 'アカウントを作成' : 'ログイン'}
           </h2>
-          <p className="mt-2 mb-5 text-sm leading-6 text-muted">
-            {login.registering
-              ? 'ログインIDとパスワードを設定して、イベントの管理を始めましょう。'
-              : 'ログインして、イベントの管理と出演順の調整を始めましょう。'}
-          </p>
           <form
             onSubmit={(event) => {
               event.preventDefault()
@@ -179,7 +174,6 @@ export function LoginPage() {
               className="h-11 w-full"
               disabled={login.busy}
             >
-              <Icon name="lock" />
               {login.busy
                 ? login.registering
                   ? '登録中…'
@@ -189,6 +183,24 @@ export function LoginPage() {
                   : 'ログイン'}
             </Button>
           </form>
+          <div className="mt-6">
+            <div className="mb-5 flex items-center gap-4" aria-hidden="true">
+              <span className="h-px flex-1 bg-line" />
+              <span className="text-xs text-muted">または</span>
+              <span className="h-px flex-1 bg-line" />
+            </div>
+            <Button
+              className="h-11 w-full"
+              variant="subtle"
+              disabled={login.busy}
+              onClick={() => void login.guest()}
+            >
+              登録せずにはじめる
+            </Button>
+            <p className="mt-3 text-center text-xs leading-5 text-muted">
+              あとから登録して、データを引き継げます。
+            </p>
+          </div>
         </div>
       </main>
     </div>
