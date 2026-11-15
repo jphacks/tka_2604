@@ -161,11 +161,11 @@ export const evalCases: EvalCase[] = [
           a.constraintId === SATO_GAP_ID &&
           a.constraint.type === 'min_gap_member' &&
           a.constraint.hardness === 'soft' &&
-          a.constraint.priority === null &&
+          a.constraint.priority === 'mid' &&
           a.constraint.params.min_diff === 2,
       )
         ? null
-        : '既存の佐藤の条件を、優先度未指定のsoftへ更新していない',
+        : '既存の佐藤の条件を、優先度midのsoftへ更新していない',
   },
   {
     name: 'ソフト変更の追記で過去の誤回答に従わない',
@@ -216,6 +216,10 @@ export const evalCases: EvalCase[] = [
     category: '質問',
     input: evalInput('佐藤さんの条件ってどうなってる？'),
     expect: ['answer'],
+    check: (output) =>
+      /1組|１組/u.test(output.message)
+        ? null
+        : '位置差2を間に1組以上と説明していない',
   },
 
   // Consultation must remain distinct from requests to change settings.

@@ -6,7 +6,10 @@ import {
 import { z } from 'zod'
 
 import { AIChatError } from '../../services/chat/errors.ts'
-import { AI_CHAT_SYSTEM_INSTRUCTIONS } from '../../services/chat/prompt.ts'
+import {
+  AI_CHAT_SYSTEM_INSTRUCTIONS,
+  buildChatPromptInput,
+} from '../../services/chat/prompt.ts'
 import type { AIChatInput, ChatModel } from '../../services/chat/types.ts'
 import { geminiOutputJsonSchema } from './gemini-schema.ts'
 
@@ -15,7 +18,12 @@ export const GEMINI_CHAT_MODEL = 'gemini-3.5-flash-lite'
 export function buildGeminiRequest(input: AIChatInput) {
   return {
     model: GEMINI_CHAT_MODEL,
-    contents: [{ role: 'user', parts: [{ text: JSON.stringify(input) }] }],
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: JSON.stringify(buildChatPromptInput(input)) }],
+      },
+    ],
     config: {
       systemInstruction: AI_CHAT_SYSTEM_INSTRUCTIONS,
       responseMimeType: 'application/json',

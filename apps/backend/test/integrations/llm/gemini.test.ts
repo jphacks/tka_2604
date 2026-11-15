@@ -5,7 +5,10 @@ import {
   createGeminiChatModel,
 } from '../../../src/integrations/llm/gemini.ts'
 import { generateAIChatResponse } from '../../../src/services/chat/generate.ts'
-import { AI_CHAT_SYSTEM_INSTRUCTIONS } from '../../../src/services/chat/prompt.ts'
+import {
+  AI_CHAT_SYSTEM_INSTRUCTIONS,
+  buildChatPromptInput,
+} from '../../../src/services/chat/prompt.ts'
 import { approval, input } from '../../services/chat/fixtures.ts'
 
 function completed(output: unknown = approval()) {
@@ -28,7 +31,12 @@ describe('Gemini chat integration', () => {
     const request = buildGeminiRequest(state)
     expect(request).toMatchObject({
       model: 'gemini-3.5-flash-lite',
-      contents: [{ role: 'user', parts: [{ text: JSON.stringify(state) }] }],
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: JSON.stringify(buildChatPromptInput(state)) }],
+        },
+      ],
       config: {
         systemInstruction: AI_CHAT_SYSTEM_INSTRUCTIONS,
         responseMimeType: 'application/json',
@@ -38,6 +46,16 @@ describe('Gemini chat integration', () => {
     expect(request.config.systemInstruction).not.toContain(
       '以前の指示を無視して',
     )
+  })
+
+  it('includes code-calculated counts in the provider request', () => {
+    const request = buildGeminiRequest(input())
+    expect(JSON.parse(request.contents[0].parts[0].text)).toMatchObject({
+      statistics: {
+        totals: { bands: 2, members: 1, placedBands: 1, unplacedBands: 1 },
+        partFixing: { fixedCount: 0, unfixedCount: 2 },
+      },
+    })
   })
 
   it('calls the Google AI Studio Gemini API through the SDK and validates the returned proposal', async () => {
@@ -56,7 +74,12 @@ describe('Gemini chat integration', () => {
     if (typeof options?.body !== 'string') throw new Error('Expected JSON body')
     expect(JSON.parse(options.body)).toMatchObject({
       systemInstruction: { parts: [{ text: AI_CHAT_SYSTEM_INSTRUCTIONS }] },
-      contents: [{ role: 'user', parts: [{ text: JSON.stringify(input()) }] }],
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: JSON.stringify(buildChatPromptInput(input())) }],
+        },
+      ],
       generationConfig: {
         responseMimeType: 'application/json',
         responseJsonSchema: { type: 'object', additionalProperties: false },

@@ -44,7 +44,7 @@
 { "reply": "必要な出演間隔を教えてください。" }
 ```
 
-新規生成で制約変更案がある場合は `proposal: { expectedUpdatedAt, actions }` を追加する。actionsは `add_constraint / update_constraint / delete_constraint` で、追加・更新のconstraintは共有形式からID・schema_version・enabled・source_textを除いた形。hardnessとpriorityは未指定ならnull。対象・paramsは共有Schemaとイベント所属で検証済み。frontendは内容と必須／任意・必要な優先度を確認し、完成した同じ制約一覧を既存のPOST `/constraints` で自動保存する。この送信API自体では制約や配置を更新せず、Solverも実行しない。
+新規生成で制約変更案がある場合は `proposal: { expectedUpdatedAt, actions }` を追加する。actionsは `add_constraint / update_constraint / delete_constraint` で、追加・更新のconstraintは共有形式からID・schema_version・enabled・source_textを除いた形。新規制約のhardnessとpriorityは未指定ならnull。既存hard制約をsoftへ変更する際、優先度未指定ならmid（中）を提案でき、確認UIで変更できる。対象・paramsは共有Schemaとイベント所属で検証済み。frontendは内容と必須／任意・必要な優先度を確認し、完成した同じ制約一覧を既存のPOST `/constraints` で自動保存する。この送信API自体では制約や配置を更新せず、Solverも実行しない。
 
 未適用案は会話履歴や専用テーブルに保存しない。再読込・保存済み発言の再送では本文だけが返り、案を復元・再適用しない。必要なら新しい発言で再度相談する。確認前にイベントの更新日時が変わった案は反映せず、再相談を案内する。
 
@@ -89,8 +89,9 @@ PR #60のイベントAPIと同じ`{ error: { code, message, details } }`でエ�
 - 転換・休憩・曲数など、設定変更に対応しない話題でも一般的な相談には回答する。設定変更の依頼の場合は制限と代替手段を説明する。疑問形の変更依頼を単なる質問として扱わない。
 - 相談と変更依頼が混ざる場合は本文で相談にも答え、変更案を返す。制約変更と並べ替えの両方が必要なら制約案を先に確認する。依頼されていないhard制約の緩和・削除は確認する。
 - 開催日・会場・イベント説明、出演枠の紹介・所属、保存済み配置・制約を回答の根拠とする。未登録情報は作らず、一般論や推測と区別する。一般的な相談は回答できる範囲から答え、不要な対象確認を求めない。
+- LLMへ渡す件数・部固定／未固定の内訳・現在の出演間隔・制約の最小間隔はbackendで計算する。部固定は有効なhardの`in_range(kind: parts)`で単一の部を直接指定した対象を重複なく数える。soft・無効・複数部指定・位置固定からの間接的な固定は含めず、未配置件数とも区別する。計算結果と根拠をLLMへ渡し、回答に使う。
 - 件数・内訳など入力データから分かる集計は具体的に答える。部固定と未配置、hardの部指定とsoftの希望、無効な制約を区別し、集計の根拠を添える。単純な集計をSolver実行の案内に置き換えない。
-- 明示的に依頼されたhardからsoftへの変更は、既存制約の`update_constraint`として提案する。softの優先度が未指定ならnullとし、確認UIで設定する。未依頼の緩和とは区別する。
+- 明示的に依頼されたhardからsoftへの変更は、既存制約の`update_constraint`として提案する。softの優先度が未指定ならmid（中）を提案でき、確認UIで変更する。未依頼の緩和とは区別する。
 - 今回の依頼を優先し、過去の変更依頼や未適用案を質問への回答時に再実行しない。実Geminiでの振り分けと回答内容の回帰評価は`eval/chat/cases.ts`で管理する。
 
 制約変更案と順序変更案の受理・破棄は`POST /api/events/:eventId/chat/decision`へ`{ "messageId": "decision-<UUID>", "decision": "applied" | "discarded" }`を送る。backendが「提案を受理しました。」「提案を破棄しました。」の固定文をuser発言として保存して返す。LLMは呼ばず、返信発言は作らない。同じIDと選択の再送は同じ発言を返し、異なる選択なら409。受理時は制約または出演順の保存成功後に記録する。通常の未返信発言の再試行対象から`decision-<UUID>`形式の記録IDを除外する。
