@@ -10,6 +10,8 @@ export interface WorkspaceRepository {
   getSession: () => Promise<Session | null>
   signIn: (userId: string, password: string) => Promise<Session>
   signUp: (userId: string, password: string) => Promise<Session>
+  startGuest: () => Promise<Session>
+  completeRegistration: (userId: string, password: string) => Promise<Session>
   signOut: () => Promise<void>
   getRoster(id: string, signal?: AbortSignal): Promise<EventData>
   getDetails(id: string, signal?: AbortSignal): Promise<EventDetails>

@@ -113,6 +113,8 @@ it('adds profile settings while preserving existing credentials, sessions and ev
     ).toEqual([
       {
         user_id: 'legacy-owner',
+        login_id: 'legacy-owner',
+        is_registered: 1,
         password_hash: 'unchanged-hash',
         display_name: null,
       },

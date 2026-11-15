@@ -2,9 +2,9 @@ import { useRef, useState } from 'react'
 
 import { useSession } from '../../../app/sessionContext'
 
-export function useLogin() {
-  const { signIn, signUp, notice } = useSession()
-  const [registering, setRegistering] = useState(false)
+export function useLogin(registrationOnly = false) {
+  const { signIn, signUp, startGuest, notice } = useSession()
+  const [registering, setRegistering] = useState(registrationOnly)
   const [userId, setUserId] = useState('')
   const [password, setPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
@@ -51,6 +51,24 @@ export function useLogin() {
       setBusy(false)
     }
   }
+  async function guest() {
+    if (inFlight.current) return
+    inFlight.current = true
+    setBusy(true)
+    setError('')
+    try {
+      await startGuest()
+    } catch (cause) {
+      setError(
+        cause instanceof Error && !(cause instanceof TypeError)
+          ? cause.message
+          : '接続を確認して、もう一度お試しください。',
+      )
+    } finally {
+      inFlight.current = false
+      setBusy(false)
+    }
+  }
   function selectMode(nextRegistering: boolean) {
     if (inFlight.current || nextRegistering === registering) return
     setRegistering(nextRegistering)
@@ -71,5 +89,6 @@ export function useLogin() {
     error,
     notice,
     login,
+    guest,
   }
 }

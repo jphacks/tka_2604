@@ -17,7 +17,16 @@ async function readSession(
   ) {
     throw new Error('ログイン情報を読み取れませんでした。')
   }
-  return { userId: body.userId }
+  return {
+    userId: body.userId,
+    ...('isRegistered' in body && typeof body.isRegistered === 'boolean'
+      ? { isRegistered: body.isRegistered }
+      : {}),
+    ...('loginId' in body &&
+    (typeof body.loginId === 'string' || body.loginId === null)
+      ? { loginId: body.loginId }
+      : {}),
+  }
 }
 
 export const workspaceSession = {
@@ -32,6 +41,16 @@ export const workspaceSession = {
   async signUp(userId: string, password: string) {
     return readSession(
       await client.register.$post({ json: { userId, password } }),
+    )
+  },
+  async startGuest() {
+    return readSession(await client.guest.$post())
+  },
+  async completeRegistration(userId: string, password: string) {
+    return readSession(
+      await client['complete-registration'].$post({
+        json: { userId, password },
+      }),
     )
   },
   async signOut() {

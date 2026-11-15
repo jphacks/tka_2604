@@ -1,5 +1,7 @@
 export interface Session {
   userId: string
+  isRegistered?: boolean
+  loginId?: string | null
 }
 export interface EventDetails {
   id: string

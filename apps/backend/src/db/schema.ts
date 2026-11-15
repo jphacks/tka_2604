@@ -12,11 +12,15 @@ import {
 
 // ユーザー：ログインIDとパスワードのハッシュを管理する。
 export const users = sqliteTable('users', {
-  // ログインID（ユーザーの主キー）
+  // 内部ユーザーID。本登録後も変更せず、イベント所有者として使用する。
   userId: text('user_id').primaryKey().notNull(),
   // パスワードのハッシュ
   passwordHash: text('password_hash').notNull(),
   displayName: text('display_name'),
+  loginId: text('login_id').unique(),
+  isRegistered: integer('is_registered', { mode: 'boolean' })
+    .notNull()
+    .default(true),
 })
 
 // 生のCookie値は保存せず、ランダムなセッショントークンのSHA-256のみ保持する。

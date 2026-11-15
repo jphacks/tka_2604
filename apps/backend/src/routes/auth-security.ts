@@ -122,7 +122,12 @@ function publicOperation(method: string, path: string) {
   if (method === 'GET' && path === '/api/auth/session') return true
   if (
     method === 'POST' &&
-    ['/api/auth/login', '/api/auth/register', '/api/auth/logout'].includes(path)
+    [
+      '/api/auth/login',
+      '/api/auth/register',
+      '/api/auth/logout',
+      '/api/auth/guest',
+    ].includes(path)
   )
     return true
   return (

@@ -37,7 +37,9 @@ erDiagram
     Event ||--o{ Chat_Message : "チャット履歴"
 
     User {
-        TEXT user_id PK "必須・ログインID"
+        TEXT user_id PK "必須・不変の内部ID"
+        TEXT login_id UK "本登録のログインID・ゲストはNULL"
+        INTEGER is_registered "本登録済みなら1、ゲストは0"
         TEXT password_hash "必須"
     }
     Auth_Session {
@@ -188,3 +190,11 @@ Band.descriptionはジャンル・雰囲気などのバンド紹介（NULL可、
 ### アカウント表示設定
 
 `0009_account_profile.sql`でUserに表示設定を追加し、`0010_remove_custom_avatar.sql`で不要なavatar_text・avatar_colorを削除する。display_nameは任意で、未設定ならAPIでログインIDを補う。更新は認証済みユーザーの表示名だけを対象とし、パスワード・セッション・イベント所有者には触れない。アイコンの文字は表示名から導出し、DBには保存しない。入力の検証は認証APIで行う。
+
+## ゲストと本登録の保存
+
+`0011_guest_registration.sql`はDrizzle生成の差分で、Userに一意な`login_id`（NULL可）と`is_registered`（必須、既定値true）を追加する。`0012_backfill_login_ids.sql`は既存ユーザーの`login_id`を`user_id`で埋めるカスタムSQL。既存の管理コマンド・seedとの互換性のため、本登録済みユーザーのINSERTでログインIDが省略された場合に内部IDを補うトリガーを追加する。既存の所有者・セッション・パスワード・業務データは保持する。
+
+ゲストはランダムな内部ID、`is_registered=false`、`login_id=NULL`で作成する。password_hashにはログイン用に使えないランダムなプレースホルダーを入れ、認証では本登録済みのlogin_idだけを検索する。ゲストの開始はUserとセッションを同じD1 batchで保存する。
+
+本登録は有効なゲストセッションと未登録状態をbatch内でも再確認し、login_id・salt付きパスワードハッシュ・登録フラグ・新セッションを原子的に更新し、ゲスト時のセッションを失効させる。user_idと業務データは変更しない。競合した登録やID重複では新セッションを発行せず、途中のDB失敗はすべてロールバックする。ゲストデータの物理削除や保持期限は今回追加しない。
