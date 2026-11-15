@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { TrieRouter } from 'hono/router/trie-router'
 
 import { createDb } from './db/index'
 import { apiDocs, openApiDocument } from './openapi'
@@ -14,7 +15,8 @@ const formRoutes = createFormRoutes<CloudflareBindings>((bindings) =>
   formService(formRepository(createDb(bindings.DB))),
 )
 
-const app = new Hono<AuthEnv>()
+// Keep wildcard authentication on paths containing encoded line terminators.
+const app = new Hono<AuthEnv>({ router: new TrieRouter() })
 app.use('/api/*', protectApi)
 
 export const routes = app

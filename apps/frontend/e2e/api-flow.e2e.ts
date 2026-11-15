@@ -505,6 +505,7 @@ test('chat contract: retry uses the same ID after reopening, with no duplicate m
       data: { title: '別イベントの履歴確認' },
     })
   ).json()) as { eventId: string }
+  let sameNameEventId: string | undefined
   const messages: {
     messageId: string
     role: string
@@ -550,6 +551,12 @@ test('chat contract: retry uses the same ID after reopening, with no duplicate m
     }
   })
   try {
+    // Event titles are not unique, including across repeated E2E runs.
+    const sameName = await request.post('/api/events', {
+      data: { title: '別イベントの履歴確認' },
+    })
+    expect(sameName.status()).toBe(201)
+    sameNameEventId = ((await sameName.json()) as { eventId: string }).eventId
     await page.goto('/event/demo-event')
     await expect(page).not.toHaveURL(/\/login(?:[?#]|$)/)
     await page
@@ -587,9 +594,15 @@ test('chat contract: retry uses the same ID after reopening, with no duplicate m
     await page.getByRole('link', { name: 'マイイベント', exact: true }).click()
     await page
       .getByRole('link', { name: '別イベントの履歴確認', exact: true })
+      .and(page.locator(`a[href="/event/${created.eventId}"]`))
       .click()
+    await expect(page).toHaveURL(`/event/${created.eventId}`)
     await expect(
-      page.getByRole('heading', { name: '別イベントの履歴確認', exact: true }),
+      page.getByRole('heading', {
+        name: '別イベントの履歴確認',
+        exact: true,
+        level: 1,
+      }),
     ).toBeVisible()
     await expect(page.getByText('再送確認の希望', { exact: true })).toHaveCount(
       0,
@@ -610,6 +623,7 @@ test('chat contract: retry uses the same ID after reopening, with no duplicate m
     expect(await cached.json()).toEqual({ reply: '保存確認用の固定応答です。' })
   } finally {
     await request.delete(`/api/events/${created.eventId}`)
+    if (sameNameEventId) await request.delete(`/api/events/${sameNameEventId}`)
   }
 })
 

@@ -17,11 +17,33 @@ describe('AI chat input from event API DTOs', () => {
     const result = buildAIChatInput(state, turn)
     expect(result).toEqual({
       ...input(),
-      context: { ...input().context, constraints: [currentConstraint()] },
+      context: {
+        ...input().context,
+        event: {
+          title: '秋ライブ',
+          date: null,
+          venue: null,
+          description: null,
+        },
+        constraints: [currentConstraint()],
+      },
     })
     expect(JSON.stringify(result)).not.toContain('private form request')
     expect(JSON.stringify(result)).not.toContain('sourceBandId')
     expect(result.context.constraints[0].enabled).toBe(false)
+  })
+
+  it('includes saved event details for live consultations without exposing ownership', () => {
+    const state = snapshot()
+    state.event.date = '2026-11-14'
+    state.event.venue = '学内ホール'
+    state.event.description = 'OBOGと現役の交流ライブ'
+    expect(buildAIChatInput(state, turn).context.event).toEqual({
+      title: '秋ライブ',
+      date: '2026-11-14',
+      venue: '学内ホール',
+      description: 'OBOGと現役の交流ライブ',
+    })
   })
 
   it('ignores caller-supplied context and histories in favor of repository data', () => {
